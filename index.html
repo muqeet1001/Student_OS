@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student OS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              "on-background": "#2f2f2e",
+              "surface-variant": "#dfdcdc",
+              "on-surface": "#2f2f2e",
+              "tertiary-container": "#d6beff",
+              "outline-variant": "#afadac",
+              "tertiary-fixed-dim": "#c8b1f0",
+              "primary-dim": "#952800",
+              outline: "#787676",
+              "on-error-container": "#570008",
+              "surface-container-highest": "#dfdcdc",
+              "on-secondary": "#fff1db",
+              "on-secondary-fixed-variant": "#674c00",
+              "tertiary-dim": "#59467d",
+              "on-tertiary": "#f8efff",
+              "surface-dim": "#d6d4d3",
+              "primary-container": "#ff784e",
+              secondary: "#755700",
+              "on-primary-fixed": "#000000",
+              "secondary-dim": "#664b00",
+              "on-secondary-container": "#5c4400",
+              "inverse-surface": "#0e0e0e",
+              "inverse-on-surface": "#9e9c9c",
+              "on-tertiary-fixed": "#362459",
+              "on-error": "#ffefee",
+              "primary-fixed": "#ff784e",
+              "secondary-container": "#ffca4d",
+              "on-primary-container": "#470e00",
+              "on-tertiary-fixed-variant": "#544178",
+              primary: "#a83206",
+              "error-dim": "#9f0519",
+              "surface-container-low": "#f3f0ef",
+              "inverse-primary": "#fe6f42",
+              "on-secondary-fixed": "#443100",
+              surface: "#f9f6f5",
+              "primary-fixed-dim": "#f3683b",
+              "on-tertiary-container": "#4b386e",
+              "on-surface-variant": "#5c5b5b",
+              "secondary-fixed-dim": "#f7ba00",
+              "secondary-fixed": "#ffca4d",
+              "on-primary-fixed-variant": "#571400",
+              "tertiary-fixed": "#d6beff",
+              "surface-bright": "#f9f6f5",
+              "on-primary": "#ffefeb",
+              "surface-container": "#eae7e7",
+              "surface-container-lowest": "#ffffff",
+              background: "#f9f6f5",
+              "surface-container-high": "#e4e2e1",
+              "surface-tint": "#a83206",
+              "error-container": "#fb5151",
+              error: "#b31b25",
+              tertiary: "#65518a",
+            },
+            fontFamily: {
+              headline: ["Plus Jakarta Sans", "sans-serif"],
+              body: ["Manrope", "sans-serif"],
+              label: ["Plus Jakarta Sans", "sans-serif"],
+              mono: ["JetBrains Mono", "monospace"],
+            },
+            borderRadius: {
+              DEFAULT: "1rem",
+              lg: "2rem",
+              xl: "3rem",
+              full: "9999px",
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
