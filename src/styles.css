@@ -130,27 +130,44 @@ h6,
 
 .mobile-route-link {
   display: flex;
-  min-width: 58px;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 2px;
-  border-radius: 18px;
-  padding: 7px 8px;
+  gap: 4px;
+  flex: 1;
+  padding: 8px 4px;
   color: #787676;
   font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   font-size: 10px;
-  font-weight: 800;
+  font-weight: 700;
   line-height: 1.1;
+  text-align: center;
+  border-radius: 12px;
+  transition: all 0.2s ease;
+  min-width: 0;
 }
 
-.mobile-route-link .material-symbols-outlined {
-  font-size: 21px;
+.mobile-route-link:active {
+  transform: scale(0.95);
+}
+
+.mobile-route-icon {
+  font-size: 24px;
+  display: block;
+}
+
+.mobile-route-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100%;
 }
 
 .mobile-route-link.active {
   background: #ff784e;
   color: #ffffff;
+  font-weight: 800;
 }
 
 .not-found {
@@ -187,9 +204,9 @@ h6,
     padding-bottom: 5rem;
   }
 
-  .page-dashboard main > div,
-  .page-coding-practice main > div,
-  .page-ai-interview main > div {
+  .page-dashboard main>div,
+  .page-coding-practice main>div,
+  .page-ai-interview main>div {
     padding-inline: 1rem !important;
   }
 
@@ -197,7 +214,7 @@ h6,
     grid-template-columns: minmax(0, 1fr) !important;
   }
 
-  .page-dashboard .bento-grid > * {
+  .page-dashboard .bento-grid>* {
     grid-column: 1 / -1 !important;
     min-width: 0 !important;
   }
@@ -211,8 +228,8 @@ h6,
     min-height: 100vh;
   }
 
-  .page-coding-practice main > div.flex,
-  .page-ai-interview main > div.flex {
+  .page-coding-practice main>div.flex,
+  .page-ai-interview main>div.flex {
     flex-direction: column !important;
   }
 
@@ -236,17 +253,29 @@ h6,
     left: 0;
     z-index: 80;
     display: flex;
-    align-items: center;
-    justify-content: space-around;
+    align-items: stretch;
+    justify-content: stretch;
+    gap: 0;
     min-height: 70px;
     border-top: 1px solid rgba(175, 173, 172, 0.35);
-    background: rgba(255, 255, 255, 0.94);
-    padding: 8px 10px 10px;
+    background: rgba(255, 255, 255, 0.96);
+    padding: 8px 8px 12px;
     backdrop-filter: blur(18px);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
+  }
+
+  .mobile-route-link {
+    gap: 3px;
+    padding: 6px 4px;
+  }
+
+  .mobile-route-icon {
+    font-size: 22px;
   }
 }
 
 @media (max-width: 640px) {
+
   .page-export header,
   .page-export main,
   .page-export section,
