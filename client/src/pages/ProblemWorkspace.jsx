@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import SideNavBar from '../components/SideNavBar.jsx';
 import CodeEditor from '../features/coding/CodeEditor.jsx';
 import { ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
@@ -155,9 +154,8 @@ export default function ProblemWorkspace() {
 
   if (loading) {
     return (
-      <div className="page-export bg-background min-h-screen">
-        <SideNavBar />
-        <main className="ml-72">
+      <div className="bg-background min-h-dvh">
+        <main>
           <LoadingBlock label="Loading problem" />
         </main>
       </div>
@@ -166,9 +164,8 @@ export default function ProblemWorkspace() {
 
   if (error || !problem) {
     return (
-      <div className="page-export bg-background min-h-screen">
-        <SideNavBar />
-        <main className="ml-72 p-8">
+      <div className="bg-background min-h-dvh">
+        <main className="p-8">
           <ErrorBlock error={error} onRetry={refetch} />
         </main>
       </div>
@@ -178,10 +175,9 @@ export default function ProblemWorkspace() {
   const tone = report ? VERDICT_TONE[report.status] ?? VERDICT_TONE.internal_error : null;
 
   return (
-    <div className="page-export page-coding-practice bg-background font-body text-on-surface min-h-screen">
-      <SideNavBar />
+    <div className="bg-background font-body text-on-surface">
 
-      <main className="ml-72 min-h-screen flex flex-col">
+      <main className="min-h-dvh flex flex-col">
         <div className="flex-1 p-6 flex flex-col gap-6">
           {/* Problem header */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">

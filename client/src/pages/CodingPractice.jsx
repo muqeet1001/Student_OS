@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import SideNavBar from '../components/SideNavBar.jsx';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
 import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
@@ -63,10 +62,9 @@ export default function CodingPractice() {
   };
 
   return (
-    <div className="page-export page-coding-practice bg-background font-body text-on-surface min-h-screen">
-      <SideNavBar />
+    <div className="page-coding-practice bg-background font-body text-on-surface min-h-dvh">
 
-      <main className="ml-72 min-h-screen">
+      <main className="min-h-dvh">
         <header className="w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-8 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-outline-variant/10">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Practice lab</p>
@@ -230,7 +228,7 @@ export default function CodingPractice() {
                     {problem.topics.slice(0, 3).map((item) => (
                       <span
                         key={item}
-                        className="text-[10px] px-2 py-0.5 bg-surface-container text-on-surface-variant font-medium rounded"
+                        className="text-[10px] px-2 py-0.5 bg-surface-container text-on-surface-variant font-medium rounded-2xl"
                       >
                         {item}
                       </span>

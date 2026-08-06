@@ -1,19 +1,25 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { pages } from '../routes/pageRegistry.js';
+import { mobileLinks } from '../routes/pageRegistry.js';
 
 export default function MobileRouteNav() {
   return (
-    <nav className="mobile-route-nav" aria-label="Mobile navigation">
-      {pages.map((page) => (
+    <nav
+      aria-label="Primary"
+      className="lg:hidden fixed inset-x-0 bottom-0 z-40 flex items-stretch gap-1 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-xl border-t border-outline-variant/30"
+    >
+      {mobileLinks.map((link) => (
         <NavLink
-          className={({ isActive }) => (isActive ? 'mobile-route-link active' : 'mobile-route-link')}
-          key={page.path}
-          to={page.path}
-          title={page.label}
+          key={link.path}
+          to={link.path}
+          className={({ isActive }) =>
+            `flex-1 min-w-0 flex flex-col items-center justify-center gap-1 py-2 rounded-2xl text-[10px] font-bold transition-colors ${
+              isActive ? 'bg-primary-container text-white' : 'text-outline hover:text-on-surface'
+            }`
+          }
         >
-          <span className="mobile-route-icon material-symbols-outlined">{page.icon}</span>
-          <span className="mobile-route-label">{page.label}</span>
+          <span className="material-symbols-outlined text-[22px]">{link.icon}</span>
+          <span className="truncate max-w-full">{link.short}</span>
         </NavLink>
       ))}
     </nav>

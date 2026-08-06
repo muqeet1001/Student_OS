@@ -60,8 +60,8 @@ export default function Register() {
   }
 
   return (
-    <div className="page-export page-login bg-surface text-on-surface min-h-screen flex items-center justify-center">
-      <div className="flex w-full min-h-screen overflow-hidden">
+    <div className="bg-surface text-on-surface min-h-dvh flex items-center justify-center">
+      <div className="flex w-full min-h-dvh overflow-hidden">
         <AuthShowcase />
 
         <main className="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-16 bg-surface-container-lowest">

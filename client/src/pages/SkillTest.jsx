@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import SideNavBar from '../components/SideNavBar.jsx';
 import Modal from '../components/Modal.jsx';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
@@ -63,10 +62,9 @@ export default function SkillTest() {
   const summary = history?.summary;
 
   return (
-    <div className="page-export page-skill-test bg-background font-body text-on-surface min-h-screen">
-      <SideNavBar />
+    <div className="bg-background font-body text-on-surface min-h-dvh">
 
-      <main className="ml-72 min-h-screen">
+      <main className="min-h-dvh">
         <header className="sticky top-0 z-20 bg-background/85 backdrop-blur-md border-b border-outline-variant/20">
           <div className="flex flex-col gap-5 px-8 py-6 lg:flex-row lg:items-center lg:justify-between">
             <div>

@@ -1,7 +1,6 @@
 import React, { Suspense, lazy } from 'react';
-import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
+import { Navigate, Route, Routes } from 'react-router-dom';
 
-import AiInterview from './pages/AiInterview.jsx';
 import CodingPractice from './pages/CodingPractice.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Login from './pages/Login.jsx';
@@ -13,32 +12,18 @@ import ResumeBuilder from './pages/ResumeBuilder.jsx';
 import SkillTest from './pages/SkillTest.jsx';
 import TestReview from './pages/TestReview.jsx';
 import TestRunner from './pages/TestRunner.jsx';
+import AiInterview from './pages/AiInterview.jsx';
 
+import AppLayout from './components/AppLayout.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import PublicOnlyRoute from './components/PublicOnlyRoute.jsx';
-import MobileRouteNav from './components/MobileRouteNav.jsx';
 import FullPageLoader from './components/FullPageLoader.jsx';
-import { useAuth } from './context/AuthContext.jsx';
 
 // The editor pulls in CodeMirror, which is larger than the rest of the app
 // combined. Loading it on demand keeps the initial bundle small.
 const ProblemWorkspace = lazy(() => import('./pages/ProblemWorkspace.jsx'));
 
-const pagesWithGeneratedMobileNav = new Set([
-  '/dashboard',
-  '/profile',
-  '/coding-practice',
-  '/pyq-library',
-  '/resume-builder',
-  '/ai-interview',
-  '/skill-test',
-]);
-
 export default function App() {
-  const location = useLocation();
-  const { isAuthenticated } = useAuth();
-  const showMobileNav = isAuthenticated && pagesWithGeneratedMobileNav.has(location.pathname);
-
   return (
     <Suspense fallback={<FullPageLoader label="Loading workspace" />}>
       <Routes>
@@ -48,23 +33,27 @@ export default function App() {
         </Route>
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/profile" element={<Profile />} />
-          <Route path="/skill-test" element={<SkillTest />} />
-          <Route path="/skill-test/review/:attemptId" element={<TestReview />} />
+          {/* Screens that share the navigation chrome. */}
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/skill-test" element={<SkillTest />} />
+            <Route path="/skill-test/review/:attemptId" element={<TestReview />} />
+            <Route path="/coding-practice" element={<CodingPractice />} />
+            <Route path="/coding-practice/:slug" element={<ProblemWorkspace />} />
+            <Route path="/pyq-library" element={<PyqLibrary />} />
+            <Route path="/resume-builder" element={<ResumeBuilder />} />
+            <Route path="/ai-interview" element={<AiInterview />} />
+          </Route>
+
+          {/* The test runner is deliberately full screen: no navigation to
+              wander off into while the clock is running. */}
           <Route path="/skill-test/:slug" element={<TestRunner />} />
-          <Route path="/coding-practice" element={<CodingPractice />} />
-          <Route path="/coding-practice/:slug" element={<ProblemWorkspace />} />
-          <Route path="/pyq-library" element={<PyqLibrary />} />
-          <Route path="/resume-builder" element={<ResumeBuilder />} />
-          <Route path="/ai-interview" element={<AiInterview />} />
         </Route>
 
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
-
-      {showMobileNav ? <MobileRouteNav /> : null}
     </Suspense>
   );
 }

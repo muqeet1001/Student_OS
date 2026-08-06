@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link, useParams } from 'react-router-dom';
-import SideNavBar from '../components/SideNavBar.jsx';
 import { ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
 
@@ -11,10 +10,9 @@ export default function TestReview() {
   const attempt = data?.attempt;
 
   return (
-    <div className="page-export bg-background min-h-screen text-on-surface">
-      <SideNavBar />
+    <div className="bg-background min-h-dvh text-on-surface">
 
-      <main className="ml-72 min-h-screen p-8">
+      <main className="min-h-dvh p-8">
         <div className="max-w-3xl mx-auto space-y-8">
           <Link
             to="/skill-test"

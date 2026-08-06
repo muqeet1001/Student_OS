@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import SideNavBar from '../components/SideNavBar.jsx';
 import Modal from '../components/Modal.jsx';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
@@ -190,10 +189,9 @@ export default function PyqLibrary() {
   }
 
   return (
-    <div className="page-export page-pyq-library bg-background text-on-background min-h-screen">
-      <SideNavBar />
+    <div className="page-pyq-library bg-background text-on-background min-h-dvh">
 
-      <main className="md:ml-72 min-h-screen">
+      <main className="min-h-dvh">
         <header className="sticky top-0 z-30 bg-white/85 backdrop-blur-md px-8 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-outline-variant/10">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Question bank</p>
@@ -380,13 +378,13 @@ export default function PyqLibrary() {
                             {question.topics.slice(0, 2).map((item) => (
                               <span
                                 key={item}
-                                className="text-[10px] px-2 py-0.5 bg-surface-container text-on-surface-variant font-medium rounded"
+                                className="text-[10px] px-2 py-0.5 bg-surface-container text-on-surface-variant font-medium rounded-2xl"
                               >
                                 {item}
                               </span>
                             ))}
                             <span
-                              className={`text-[10px] px-2 py-0.5 font-bold rounded uppercase ${
+                              className={`text-[10px] px-2 py-0.5 font-bold rounded-2xl uppercase ${
                                 DIFFICULTY_STYLES[question.difficulty]
                               }`}
                             >

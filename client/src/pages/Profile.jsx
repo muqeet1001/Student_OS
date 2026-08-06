@@ -1,5 +1,4 @@
 import React, { useRef, useState } from 'react';
-import SideNavBar from '../components/SideNavBar.jsx';
 import Avatar from '../components/Avatar.jsx';
 import Modal from '../components/Modal.jsx';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
@@ -36,10 +35,10 @@ function SectionCard({ icon, title, action, children, className = '' }) {
     <section
       className={`bg-surface-container-lowest rounded-xl p-6 md:p-8 shadow-[0px_24px_48px_rgba(14,14,14,0.04)] ${className}`}
     >
-      <div className="flex items-center justify-between gap-4 mb-6">
-        <h3 className="text-xl font-bold font-headline flex items-center gap-3">
-          <span className="material-symbols-outlined text-primary">{icon}</span>
-          {title}
+      <div className="flex items-center justify-between gap-4 mb-6 min-w-0">
+        <h3 className="text-xl font-bold font-headline flex items-center gap-3 min-w-0">
+          <span className="material-symbols-outlined text-primary shrink-0">{icon}</span>
+          <span className="truncate">{title}</span>
         </h3>
         {action}
       </div>
@@ -146,10 +145,9 @@ export default function Profile() {
   };
 
   return (
-    <div className="page-export page-profile bg-surface text-on-surface min-h-screen">
-      <SideNavBar />
+    <div className="bg-surface text-on-surface min-h-dvh">
 
-      <main className="md:ml-72 pt-10 pb-16 px-6 md:px-12">
+      <main className="pt-16 lg:pt-10 pb-16 px-5 md:px-8 lg:px-12">
         <div className="max-w-6xl mx-auto">
           {loading && !profile && <LoadingBlock label="Loading profile" />}
           {error && !profile && <ErrorBlock error={error} onRetry={refetch} />}
@@ -349,7 +347,7 @@ export default function Profile() {
                             {project.techStack.map((tech) => (
                               <span
                                 key={tech}
-                                className="text-[10px] font-bold text-stone-400 border border-stone-300 px-2 py-0.5 rounded uppercase"
+                                className="text-[10px] font-bold text-stone-400 border border-stone-300 px-2 py-0.5 rounded-2xl uppercase"
                               >
                                 {tech}
                               </span>

@@ -3,7 +3,10 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import App from './App.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
+import { revealIconsWhenFontReady } from './lib/iconFont.js';
 import './styles.css';
+
+revealIconsWhenFontReady();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

@@ -131,7 +131,7 @@ export function Checkbox({ label, className = '', ...props }) {
       <input
         id={id}
         type="checkbox"
-        className="w-5 h-5 rounded border-2 border-outline-variant text-primary focus:ring-2 focus:ring-primary-container cursor-pointer"
+        className="w-5 h-5 rounded-md border-2 border-outline-variant text-primary focus:ring-2 focus:ring-primary-container cursor-pointer"
         {...props}
       />
       <span className="text-sm font-bold text-on-surface">{label}</span>

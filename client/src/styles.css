@@ -1,62 +1,176 @@
-:root {
-  color: #2f2f2e;
-  background: #f9f6f5;
-  font-family: "Manrope", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@import 'tailwindcss';
+
+/*
+ * The design is light-only. Binding `dark:` to a class (rather than v4's
+ * default `prefers-color-scheme`) keeps the leftover dark: utilities inert
+ * instead of half-darkening the UI for anyone whose OS prefers dark.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Material-style role palette */
+  --color-background: #f9f6f5;
+  --color-on-background: #2f2f2e;
+
+  --color-surface: #f9f6f5;
+  --color-on-surface: #2f2f2e;
+  --color-surface-variant: #dfdcdc;
+  --color-on-surface-variant: #5c5b5b;
+  --color-surface-dim: #d6d4d3;
+  --color-surface-bright: #f9f6f5;
+  --color-surface-tint: #a83206;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f3f0ef;
+  --color-surface-container: #eae7e7;
+  --color-surface-container-high: #e4e2e1;
+  --color-surface-container-highest: #dfdcdc;
+
+  --color-primary: #a83206;
+  --color-on-primary: #ffefeb;
+  --color-primary-dim: #952800;
+  --color-primary-container: #ff784e;
+  --color-on-primary-container: #470e00;
+  --color-primary-fixed: #ff784e;
+  --color-primary-fixed-dim: #f3683b;
+  --color-on-primary-fixed: #000000;
+  --color-on-primary-fixed-variant: #571400;
+
+  --color-secondary: #755700;
+  --color-on-secondary: #fff1db;
+  --color-secondary-dim: #664b00;
+  --color-secondary-container: #ffca4d;
+  --color-on-secondary-container: #5c4400;
+  --color-secondary-fixed: #ffca4d;
+  --color-secondary-fixed-dim: #f7ba00;
+  --color-on-secondary-fixed: #443100;
+  --color-on-secondary-fixed-variant: #674c00;
+
+  --color-tertiary: #65518a;
+  --color-on-tertiary: #f8efff;
+  --color-tertiary-dim: #59467d;
+  --color-tertiary-container: #d6beff;
+  --color-on-tertiary-container: #4b386e;
+  --color-tertiary-fixed: #d6beff;
+  --color-tertiary-fixed-dim: #c8b1f0;
+  --color-on-tertiary-fixed: #362459;
+  --color-on-tertiary-fixed-variant: #544178;
+
+  --color-error: #b31b25;
+  --color-on-error: #ffefee;
+  --color-error-dim: #9f0519;
+  --color-error-container: #fb5151;
+  --color-on-error-container: #570008;
+
+  --color-outline: #787676;
+  --color-outline-variant: #afadac;
+
+  --color-inverse-surface: #0e0e0e;
+  --color-inverse-on-surface: #9e9c9c;
+  --color-inverse-primary: #fe6f42;
+
+  /* Typography */
+  --font-headline: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-label: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /*
+   * The prototype's rounding scale is deliberately much softer than
+   * Tailwind's default — these three carry the visual identity.
+   */
+  --radius-sm: 0.125rem;
+  --radius-2xl: 1rem;
+  --radius-lg: 2rem;
+  --radius-xl: 3rem;
 }
 
-* {
-  box-sizing: border-box;
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    overflow-x: hidden;
+    background: var(--color-background);
+    color: var(--color-on-surface);
+    font-family: var(--font-body);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-headline);
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  /* Visible focus for keyboard users, suppressed for pointer interaction. */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
 }
 
-html,
-body,
-#root {
-  min-height: 100%;
+/* --------------------------------------------------------------------------
+   Components
+   -------------------------------------------------------------------------- */
+
+/*
+ * Material Symbols renders its glyphs from ligature text, so until the font
+ * is confirmed loaded every icon would show as a raw word ("arrow_forward").
+ * On a blocked or slow CDN that fills the UI with stray words and blows out
+ * layouts. Icons stay invisible in a square placeholder until `fonts-ready`
+ * is set, so a failed font degrades to blank space rather than garbage text.
+ */
+.material-symbols-outlined {
+  visibility: hidden;
+  width: 1em;
+  overflow: hidden;
 }
 
-body {
-  margin: 0;
-  min-width: 320px;
-  overflow-x: hidden;
-  font-family: "Manrope", ui-sans-serif, system-ui, sans-serif;
-}
-
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-img {
-  max-width: 100%;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-.brand-font,
-.font-headline,
-.font-plus-jakarta {
-  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+.fonts-ready .material-symbols-outlined {
+  visibility: visible;
+  width: auto;
+  overflow: visible;
 }
 
 .material-symbols-outlined {
   display: inline-block;
   vertical-align: middle;
-  font-family: "Material Symbols Outlined";
+  font-family: 'Material Symbols Outlined';
   font-weight: normal;
   font-style: normal;
   font-size: 24px;
@@ -66,40 +180,22 @@ h6,
   white-space: nowrap;
   word-wrap: normal;
   direction: ltr;
-  font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
-  -webkit-font-feature-settings: "liga";
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  -webkit-font-feature-settings: 'liga';
   -webkit-font-smoothing: antialiased;
-}
-
-.page-export {
-  min-height: 100vh;
-}
-
-.page-login .bento-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(4, 1fr);
-  gap: 1.5rem;
-}
-
-.page-dashboard .bento-grid {
-  display: grid;
-  grid-template-columns: repeat(12, 1fr);
-  grid-auto-rows: minmax(100px, auto);
-  gap: 1.5rem;
 }
 
 .code-editor-gradient {
   background: linear-gradient(145deg, #1a1a1a 0%, #0e0e0e 100%);
 }
 
-.hide-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 .custom-scrollbar::-webkit-scrollbar,
@@ -124,172 +220,53 @@ h6,
   background: rgba(168, 50, 6, 0.38);
 }
 
-.mobile-route-nav {
-  display: none;
-}
-
-.mobile-route-link {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  flex: 1;
-  padding: 8px 4px;
-  color: #787676;
-  font-family: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  line-height: 1.1;
-  text-align: center;
-  border-radius: 12px;
-  transition: all 0.2s ease;
-  min-width: 0;
-}
-
-.mobile-route-link:active {
-  transform: scale(0.95);
-}
-
-.mobile-route-icon {
-  font-size: 24px;
-  display: block;
-}
-
-.mobile-route-label {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 100%;
-}
-
-.mobile-route-link.active {
-  background: #ff784e;
-  color: #ffffff;
-  font-weight: 800;
-}
-
-.not-found {
+/* The decorative bento collage on the auth screens. */
+.bento-grid {
   display: grid;
-  min-height: 100vh;
-  place-items: center;
-  padding: 2rem;
-  background: #f9f6f5;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 1.5rem;
 }
 
-@media (max-width: 900px) {
-  .page-export aside.fixed.left-0.top-0 {
-    display: none !important;
+/*
+ * Printing is how the resume becomes a PDF. Everything except the resume
+ * sheet is removed, and the sheet drops its screen chrome.
+ */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
   }
 
-  .page-export main[class*="ml-72"],
-  .page-export main[class*="md:ml-72"] {
-    margin-left: 0 !important;
+  body {
+    background: #fff;
   }
 
-  .page-export main[class*="pl-72"] {
-    padding-left: 0 !important;
+  body * {
+    visibility: hidden;
   }
 
-  .page-export nav.fixed.top-0.right-0,
-  .page-export nav[class*="w-[calc(100%-18rem)]"] {
-    left: 0 !important;
-    right: 0 !important;
-    width: 100% !important;
-    padding-inline: 1rem !important;
+  #resume-sheet,
+  #resume-sheet * {
+    visibility: visible;
   }
 
-  .page-export main {
-    padding-bottom: 5rem;
-  }
-
-  .page-dashboard main>div,
-  .page-coding-practice main>div,
-  .page-ai-interview main>div {
-    padding-inline: 1rem !important;
-  }
-
-  .page-dashboard .bento-grid {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
-
-  .page-dashboard .bento-grid>* {
-    grid-column: 1 / -1 !important;
-    min-width: 0 !important;
-  }
-
-  .page-dashboard section.mb-10 {
-    align-items: flex-start !important;
-    flex-direction: column !important;
-  }
-
-  .page-coding-practice main {
-    min-height: 100vh;
-  }
-
-  .page-coding-practice main>div.flex,
-  .page-ai-interview main>div.flex {
-    flex-direction: column !important;
-  }
-
-  .page-resume-builder main {
-    padding-top: 5rem !important;
-  }
-
-  .page-resume-builder section[class*="h-[calc(100vh-80px)]"] {
-    height: auto !important;
-    min-height: auto !important;
-  }
-
-  .page-skill-test main {
-    margin-left: 0 !important;
-  }
-
-  .mobile-route-nav {
-    position: fixed;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    z-index: 80;
-    display: flex;
-    align-items: stretch;
-    justify-content: stretch;
-    gap: 0;
-    min-height: 70px;
-    border-top: 1px solid rgba(175, 173, 172, 0.35);
-    background: rgba(255, 255, 255, 0.96);
-    padding: 8px 8px 12px;
-    backdrop-filter: blur(18px);
-    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.04);
-  }
-
-  .mobile-route-link {
-    gap: 3px;
-    padding: 6px 4px;
-  }
-
-  .mobile-route-icon {
-    font-size: 22px;
+  #resume-sheet {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    max-width: none;
+    box-shadow: none;
   }
 }
 
-@media (max-width: 640px) {
-
-  .page-export header,
-  .page-export main,
-  .page-export section,
-  .page-export article {
-    min-width: 0;
-  }
-
-  .page-login main {
-    padding-inline: 1.25rem !important;
-  }
-
-  .page-export input,
-  .page-export select,
-  .page-export textarea {
-    max-width: 100%;
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
