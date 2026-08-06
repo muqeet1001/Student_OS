@@ -1,191 +1,280 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import SideNavBar from '../components/SideNavBar.jsx';
+import { EmptyBlock, ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
+import { useApiResource } from '../hooks/useApiResource.js';
+import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
+
+const DIFFICULTY_STYLES = {
+  easy: 'bg-green-100 text-green-800',
+  medium: 'bg-tertiary-container text-on-tertiary-container',
+  hard: 'bg-error-container/30 text-on-error-container',
+};
+
+function StatBar({ label, solved, total, color }) {
+  const pct = total ? Math.round((solved / total) * 100) : 0;
+  return (
+    <div className="space-y-3">
+      <div className="relative h-32 bg-neutral-800 rounded-2xl overflow-hidden">
+        <div
+          className={`absolute bottom-0 w-full ${color} transition-all duration-500`}
+          style={{ height: `${pct}%` }}
+        />
+      </div>
+      <div className="text-center">
+        <p className="font-bold capitalize">{label}</p>
+        <p className="text-xs text-neutral-500">
+          {solved}/{total}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 export default function CodingPractice() {
+  const [search, setSearch] = useState('');
+  const [difficulty, setDifficulty] = useState('');
+  const [topic, setTopic] = useState('');
+  const [status, setStatus] = useState('');
+  const [page, setPage] = useState(1);
+
+  const debouncedSearch = useDebouncedValue(search, 350);
+
+  const query = useMemo(() => {
+    const params = new URLSearchParams({ page: String(page), limit: '12' });
+    if (debouncedSearch) params.set('search', debouncedSearch);
+    if (difficulty) params.set('difficulty', difficulty);
+    if (topic) params.set('topic', topic);
+    if (status) params.set('status', status);
+    return params.toString();
+  }, [debouncedSearch, difficulty, topic, status, page]);
+
+  const { data, loading, error, refetch } = useApiResource(`/problems?${query}`);
+  const { data: filters } = useApiResource('/problems/meta/filters');
+  const { data: stats } = useApiResource('/problems/stats/me');
+
+  const problems = data?.problems ?? [];
+  const pagination = data?.pagination;
+
+  /** Any filter change restarts pagination, otherwise page 3 of a new filter is empty. */
+  const withReset = (setter) => (value) => {
+    setter(value);
+    setPage(1);
+  };
+
   return (
-    <div className="page-export page-coding-practice bg-background font-body text-on-surface">
-      {/* Sidebar Wrapper */}
+    <div className="page-export page-coding-practice bg-background font-body text-on-surface min-h-screen">
       <SideNavBar />
-      {/* Main Content Area */}
-      <main className="ml-72 min-h-screen flex flex-col">
-        {/* Top Navigation */}
-        <header className="w-full h-20 sticky top-0 z-40 bg-white/80 backdrop-blur-xl flex justify-between items-center px-8 font-['Manrope'] font-semibold text-base">
-          <div className="flex items-center gap-4 bg-surface-container-low px-4 py-2 rounded-full focus-within:ring-2 focus-within:ring-orange-500/20 w-96">
-            <span className="material-symbols-outlined text-outline" data-icon="search">search</span>
-            <input className="bg-transparent border-none focus:ring-0 text-sm w-full placeholder:text-outline" placeholder="Search problems or topics..." type="text" />
+
+      <main className="ml-72 min-h-screen">
+        <header className="w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-8 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-outline-variant/10">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Practice lab</p>
+            <h1 className="font-headline text-3xl font-black tracking-tight mt-1">Coding Practice</h1>
           </div>
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 px-4 py-2 bg-secondary-container/20 rounded-full">
-              <span className="material-symbols-outlined text-secondary" style={{fontVariationSettings: '"FILL" 1'}}>bolt</span>
-              <span className="text-secondary-fixed-dim font-bold text-sm">42 Day Streak</span>
-            </div>
-            <button className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-neutral-100 transition-colors">
-              <span className="material-symbols-outlined text-on-surface-variant" data-icon="notifications">notifications</span>
-            </button>
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden sm:block">
-                <p className="text-xs text-outline leading-tight">Welcome back,</p>
-                <p className="text-sm font-bold text-on-surface leading-tight">Alex Rivera</p>
+
+          <div className="flex items-center gap-4">
+            {stats && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-secondary-container/20 rounded-full">
+                <span
+                  className="material-symbols-outlined text-secondary"
+                  style={{ fontVariationSettings: '"FILL" 1' }}
+                >
+                  bolt
+                </span>
+                <span className="text-secondary-fixed-dim font-bold text-sm">
+                  {stats.streak.current} day streak
+                </span>
               </div>
-              <img alt="User Avatar" className="w-10 h-10 rounded-full border-2 border-white shadow-sm" data-alt="portrait of a confident young male professional with a friendly smile, outdoor urban background with soft natural lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAQNRSO8JeG_NtyAif_TDsodf68DLiT7_UaBXA6_JTuYa7tRXCEIdbknglH0d-4YjVVYmLukRA4ryLXcoaBJyavLaqb6GDDqyCKnOtWewZhvyC2mZyKc7kJFvR9DR8txhXtdaan5kBJek3mR0Sk1IT16jLug061zxyrrWJibBHl_YhdFs00Zhco8kpQ6EHer2kiISq7UfOH1XFYwEYJ04dj4Vmy9Yulqi4JkRWYYeNJ3EomV73JhU8yyTELPHAObFVA85dDQXJiySs" />
+            )}
+            <div className="flex items-center gap-3 bg-surface-container-low px-4 py-2 rounded-full focus-within:ring-2 focus-within:ring-primary/20 w-full lg:w-80">
+              <span className="material-symbols-outlined text-outline">search</span>
+              <input
+                value={search}
+                onChange={(event) => withReset(setSearch)(event.target.value)}
+                className="bg-transparent border-none focus:ring-0 focus:outline-none text-sm w-full placeholder:text-outline"
+                placeholder="Search problems or topics…"
+                type="search"
+              />
             </div>
           </div>
         </header>
-        {/* Editor Workspace */}
-        <div className="flex-1 p-6 flex flex-col gap-6">
-          {/* Problem Header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <span className="px-3 py-1 bg-tertiary-container text-on-tertiary-container rounded-full text-[10px] font-bold tracking-widest uppercase font-headline">Medium</span>
-                <div className="flex items-center gap-1 ml-2">
-                  <span className="material-symbols-outlined text-xs text-outline" data-icon="apartment">apartment</span>
-                  <span className="text-xs text-on-surface-variant font-medium">Amazon, Google, Meta</span>
-                </div>
-              </div>
-              <h2 className="text-3xl font-black font-headline text-on-surface tracking-tight">Problem 243: Reverse a Linked List</h2>
-            </div>
-            <div className="flex items-center gap-3">
-              <button className="flex items-center gap-2 px-5 py-2.5 bg-surface-container-highest text-on-surface font-bold rounded-full transition-transform active:scale-95">
-                <span className="material-symbols-outlined text-sm" data-icon="lightbulb">lightbulb</span>
-                <span>Hint</span>
-              </button>
-              <button className="flex items-center gap-2 px-5 py-2.5 bg-surface-container-highest text-on-surface font-bold rounded-full transition-transform active:scale-95">
-                <span className="material-symbols-outlined text-sm" data-icon="bookmark">bookmark</span>
-                <span>Save</span>
-              </button>
-            </div>
-          </div>
-          {/* Main Layout Bento Grid */}
-          <div className="flex-1 grid grid-cols-12 gap-6 min-h-0">
-            {/* Left Panel: Problem Description */}
-            <div className="col-span-12 lg:col-span-4 bg-surface-container-lowest rounded-xl shadow-sm flex flex-col overflow-hidden">
-              <div className="p-1 flex border-b border-surface-container">
-                <button className="flex-1 py-3 text-sm font-bold text-primary border-b-2 border-primary bg-primary/5">Description</button>
-                <button className="flex-1 py-3 text-sm font-bold text-outline hover:text-on-surface transition-colors">Solutions</button>
-                <button className="flex-1 py-3 text-sm font-bold text-outline hover:text-on-surface transition-colors">Submissions</button>
-              </div>
-              <div className="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-6">
-                <div className="space-y-4">
-                  <p className="text-on-surface leading-relaxed font-medium">
-                    Given the <code className="bg-surface-container px-1.5 py-0.5 rounded font-mono text-sm">head</code> of a singly linked list, reverse the list, and return <em className="italic">the reversed list</em>.
+
+        <div className="p-8 space-y-8">
+          {stats && (
+            <section className="bg-inverse-surface text-white p-8 rounded-xl shadow-2xl relative overflow-hidden">
+              <div className="relative z-10 flex flex-col lg:flex-row gap-8 lg:items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold font-headline mb-1">Your proficiency</h2>
+                  <p className="text-neutral-400">
+                    {stats.totalSolved} of {stats.totalAvailable} problems solved
+                    {stats.streak.longest > 0 && ` • longest streak ${stats.streak.longest} days`}
                   </p>
-                  <div className="relative py-4">
-                    <img className="w-full rounded-lg opacity-80" data-alt="abstract visualization of a data structure using glowing geometric shapes and interconnected lines on a dark background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDofB4SN_j7ezH9r95bkit1xNFwc6G-Kgdl1ac910n8WtrFthFDmDo7TyFGET2k9l3bBVefiivhxvxozeKK1YzIxD7PG_HWoMZLkr4pjdiSgj-_wlh7kFBxN23y3EfLEvhzLkbM8uotsc_DlR_7G41bAq9c7O7Crap8FpPTZd9iatL2kx19K6FqprjwvcJmjIo_83bJxOdZktbOWjbStxrU14N5OevgoJNbZI6rCu5feoT3jpuC0B52WOOfr2XpacIiWqlw_-V31Ng" />
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="bg-black/40 backdrop-blur-md text-white text-[10px] font-bold px-3 py-1 rounded-full border border-white/20">Conceptual Visualization</span>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-headline font-extrabold text-sm text-on-surface uppercase tracking-wider">Example 1:</h4>
-                    <div className="bg-surface-container-low p-4 rounded-xl border border-outline-variant/10 font-mono text-sm space-y-2">
-                      <p><span className="text-outline">Input:</span> head = [1,2,3,4,5]</p>
-                      <p><span className="text-outline">Output:</span> [5,4,3,2,1]</p>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <h4 className="font-headline font-extrabold text-sm text-on-surface uppercase tracking-wider">Constraints:</h4>
-                    <ul className="list-disc list-inside text-sm text-on-surface-variant space-y-1 font-medium">
-                      <li>The number of nodes in the list is the range <code className="font-mono">[0, 5000]</code>.</li>
-                      <li><code className="font-mono">-5000 ≤ Node.val ≤ 5000</code></li>
-                    </ul>
-                  </div>
-                  <div className="p-4 bg-tertiary-container/10 rounded-xl border-l-4 border-tertiary">
-                    <p className="text-xs text-tertiary-dim font-bold leading-relaxed">
-                      <span className="material-symbols-outlined align-middle mr-1 text-sm" data-icon="info">info</span>
-                      Follow up: A linked list can be reversed either iteratively or recursively. Could you implement both?
-                    </p>
-                  </div>
+                </div>
+                <div className="grid grid-cols-3 gap-6 items-end lg:w-[26rem]">
+                  <StatBar label="easy" solved={stats.solved.easy} total={stats.available.easy} color="bg-secondary-fixed" />
+                  <StatBar label="medium" solved={stats.solved.medium} total={stats.available.medium} color="bg-tertiary-fixed" />
+                  <StatBar label="hard" solved={stats.solved.hard} total={stats.available.hard} color="bg-primary-fixed" />
                 </div>
               </div>
-            </div>
-            {/* Right Panel: Code Editor */}
-            <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 min-h-0">
-              {/* Editor Shell */}
-              <div className="flex-1 code-editor-gradient rounded-xl shadow-2xl overflow-hidden flex flex-col border border-white/5">
-                {/* Editor Header */}
-                <div className="h-12 bg-white/5 border-b border-white/10 flex items-center justify-between px-4">
-                  <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2 px-3 py-1.5 bg-white/10 rounded-lg">
-                      <span className="material-symbols-outlined text-sm text-primary-fixed" data-icon="javascript">javascript</span>
-                      <select className="bg-transparent border-none text-white text-xs font-bold focus:ring-0 p-0 cursor-pointer">
-                        <option className="bg-neutral-900">JavaScript</option>
-                        <option className="bg-neutral-900">Python 3</option>
-                        <option className="bg-neutral-900">Java</option>
-                        <option className="bg-neutral-900">C++</option>
-                      </select>
-                    </div>
-                    <div className="h-4 w-[1px] bg-white/10" />
-                    <button className="flex items-center gap-2 text-white/50 hover:text-white transition-colors text-xs font-bold">
-                      <span className="material-symbols-outlined text-sm" data-icon="settings">settings</span>
-                      Editor Settings
-                    </button>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <button className="p-1.5 text-white/50 hover:text-white transition-colors">
-                      <span className="material-symbols-outlined text-sm" data-icon="fullscreen">fullscreen</span>
-                    </button>
-                  </div>
-                </div>
-                {/* Main Editor Body */}
-                <div className="flex-1 flex overflow-hidden font-mono text-[13px] leading-relaxed">
-                  {/* Line Numbers */}
-                  <div className="w-12 bg-black/30 text-white/20 py-4 flex flex-col items-center select-none text-right pr-2">
-                    <span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span><span>10</span><span>11</span><span>12</span><span>13</span><span>14</span>
-                  </div>
-                  {/* Code Content */}
-                  <div className="flex-1 py-4 px-4 overflow-y-auto custom-scrollbar">
-                    <pre className="text-white/90"><span className="text-orange-400">/**</span>{"\n"}<span className="text-orange-400"> * Definition for singly-linked list.</span>{"\n"}<span className="text-orange-400"> * function ListNode(val, next) {"{"}</span>{"\n"}<span className="text-orange-400"> *{"     "}this.val = (val===undefined ? 0 : val)</span>{"\n"}<span className="text-orange-400"> *{"     "}this.next = (next===undefined ? null : next)</span>{"\n"}<span className="text-orange-400"> * {"}"}</span>{"\n"}<span className="text-orange-400"> */</span>{"\n"}<span className="text-orange-400">/**</span>{"\n"}<span className="text-orange-400"> * @param {"{"}ListNode{"}"} head</span>{"\n"}<span className="text-orange-400"> * @return {"{"}ListNode{"}"}</span>{"\n"}<span className="text-orange-400"> */</span>{"\n"}<span className="text-purple-400">var</span> <span className="text-blue-300">reverseList</span> = <span className="text-purple-400">function</span>(<span className="text-orange-300">head</span>) {"{"}{"\n"}{"    "}<span className="text-purple-400">let</span> prev = <span className="text-blue-300">null</span>;{"\n"}{"    "}<span className="text-purple-400">let</span> curr = head;{"\n"}{"    "}{"\n"}{"    "}<span className="text-purple-400">while</span> (curr !== <span className="text-blue-300">null</span>) {"{"}{"\n"}{"        "}<span className="text-purple-400">let</span> nextTemp = curr.next;{"\n"}{"        "}curr.next = prev;{"\n"}{"        "}prev = curr;{"\n"}{"        "}curr = nextTemp;{"\n"}{"    "}{"}"}{"\n"}{"    "}{"\n"}{"    "}<span className="text-purple-400">return</span> prev;{"\n"}{"}"};</pre>
-                  </div>
-                </div>
-                {/* Execution Results */}
-                <div className="bg-black/50 border-t border-white/10">
-                  <div className="flex items-center justify-between px-6 py-3">
-                    <div className="flex items-center gap-6">
-                      <button className="flex items-center gap-2 text-white text-xs font-bold opacity-100">
-                        <span className="material-symbols-outlined text-sm text-green-400" style={{fontVariationSettings: '"FILL" 1'}}>check_circle</span>
-                        Console
-                      </button>
-                      <button className="flex items-center gap-2 text-white/50 text-xs font-bold hover:opacity-100">
-                        Test Cases
-                      </button>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <button className="px-6 py-2 bg-white/10 text-white font-bold rounded-lg text-sm hover:bg-white/20 transition-all active:scale-95">
-                        Run Code
-                      </button>
-                      <button className="px-8 py-2 bg-primary-container text-on-primary-container font-black rounded-lg text-sm hover:shadow-[0_0_20px_rgba(255,120,78,0.3)] transition-all active:scale-95">
-                        Submit
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* Bottom Status Bar */}
-              <div className="bg-surface-container-low rounded-xl p-4 flex items-center justify-between">
-                <div className="flex items-center gap-4 text-xs font-bold text-on-surface-variant">
-                  <span className="flex items-center gap-1">
-                    <span className="w-2 h-2 rounded-full bg-green-500" />
-                    Connected
-                  </span>
-                  <span className="text-outline">|</span>
-                  <span>Memory: 12.4 MB</span>
-                  <span className="text-outline">|</span>
-                  <span>Runtime: 0ms</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-outline">Autosaved 2m ago</span>
-                </div>
-              </div>
-            </div>
+              <div className="absolute -right-20 -bottom-20 w-64 h-64 bg-primary/20 rounded-full blur-[100px] pointer-events-none" />
+            </section>
+          )}
+
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={difficulty}
+              onChange={(event) => withReset(setDifficulty)(event.target.value)}
+              className="bg-surface-container-lowest border border-outline-variant/20 rounded-full px-5 py-2.5 text-sm font-bold cursor-pointer focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="">All difficulties</option>
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+
+            <select
+              value={topic}
+              onChange={(event) => withReset(setTopic)(event.target.value)}
+              className="bg-surface-container-lowest border border-outline-variant/20 rounded-full px-5 py-2.5 text-sm font-bold cursor-pointer focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="">All topics</option>
+              {(filters?.topics ?? []).map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={status}
+              onChange={(event) => withReset(setStatus)(event.target.value)}
+              className="bg-surface-container-lowest border border-outline-variant/20 rounded-full px-5 py-2.5 text-sm font-bold cursor-pointer focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="">All problems</option>
+              <option value="unsolved">Unsolved</option>
+              <option value="solved">Solved</option>
+            </select>
+
+            {(difficulty || topic || status || search) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch('');
+                  setDifficulty('');
+                  setTopic('');
+                  setStatus('');
+                  setPage(1);
+                }}
+                className="px-5 py-2.5 rounded-full text-sm font-bold text-on-surface-variant hover:bg-surface-container transition-colors"
+              >
+                Clear filters
+              </button>
+            )}
           </div>
+
+          {loading && <LoadingBlock label="Loading problems" />}
+          {error && <ErrorBlock error={error} onRetry={refetch} />}
+
+          {!loading && !error && problems.length === 0 && (
+            <EmptyBlock
+              icon="code_off"
+              title="No problems match those filters"
+              description="Try widening your search, or seed the database with `npm run seed`."
+            />
+          )}
+
+          {problems.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {problems.map((problem) => (
+                <Link
+                  key={problem._id}
+                  to={`/coding-practice/${problem.slug}`}
+                  className="group bg-surface-container-lowest p-6 rounded-xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all border border-outline-variant/10 flex flex-col"
+                >
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <span
+                      className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase ${
+                        DIFFICULTY_STYLES[problem.difficulty]
+                      }`}
+                    >
+                      {problem.difficulty}
+                    </span>
+                    <div className="flex items-center gap-1">
+                      {problem.bookmarked && (
+                        <span
+                          className="material-symbols-outlined text-primary text-lg"
+                          style={{ fontVariationSettings: '"FILL" 1' }}
+                          title="Bookmarked"
+                        >
+                          bookmark
+                        </span>
+                      )}
+                      {problem.solved && (
+                        <span
+                          className="material-symbols-outlined text-green-600 text-lg"
+                          style={{ fontVariationSettings: '"FILL" 1' }}
+                          title="Solved"
+                        >
+                          check_circle
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <h3 className="font-bold text-lg text-on-surface group-hover:text-primary transition-colors mb-3">
+                    {problem.title}
+                  </h3>
+
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {problem.topics.slice(0, 3).map((item) => (
+                      <span
+                        key={item}
+                        className="text-[10px] px-2 py-0.5 bg-surface-container text-on-surface-variant font-medium rounded"
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+
+                  <div className="mt-auto pt-4 flex items-center justify-between text-xs font-bold text-on-surface-variant border-t border-outline-variant/10">
+                    <span>{problem.acceptanceRate}% acceptance</span>
+                    {problem.companies.length > 0 && (
+                      <span className="truncate max-w-[10rem]" title={problem.companies.join(', ')}>
+                        {problem.companies.slice(0, 2).join(', ')}
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {pagination && pagination.pages > 1 && (
+            <div className="flex items-center justify-center gap-4 pt-4">
+              <button
+                type="button"
+                disabled={page <= 1}
+                onClick={() => setPage((current) => current - 1)}
+                className="px-6 py-2.5 rounded-full bg-surface-container-lowest border border-outline-variant/20 font-bold text-sm disabled:opacity-40 hover:bg-surface-container transition-colors"
+              >
+                Previous
+              </button>
+              <span className="text-sm font-bold text-on-surface-variant">
+                Page {pagination.page} of {pagination.pages}
+              </span>
+              <button
+                type="button"
+                disabled={page >= pagination.pages}
+                onClick={() => setPage((current) => current + 1)}
+                className="px-6 py-2.5 rounded-full bg-surface-container-lowest border border-outline-variant/20 font-bold text-sm disabled:opacity-40 hover:bg-surface-container transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       </main>
-      {/* Floating Action for Help */}
-      <button className="fixed bottom-8 right-8 w-14 h-14 bg-inverse-surface text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform z-50">
-        <span className="material-symbols-outlined" data-icon="psychology">psychology</span>
-      </button>
     </div>
-    
   );
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import AiInterview from './pages/AiInterview.jsx';
@@ -15,7 +15,12 @@ import SkillTest from './pages/SkillTest.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import PublicOnlyRoute from './components/PublicOnlyRoute.jsx';
 import MobileRouteNav from './components/MobileRouteNav.jsx';
+import FullPageLoader from './components/FullPageLoader.jsx';
 import { useAuth } from './context/AuthContext.jsx';
+
+// The editor pulls in CodeMirror, which is larger than the rest of the app
+// combined. Loading it on demand keeps the initial bundle small.
+const ProblemWorkspace = lazy(() => import('./pages/ProblemWorkspace.jsx'));
 
 const pagesWithGeneratedMobileNav = new Set([
   '/dashboard',
@@ -33,7 +38,7 @@ export default function App() {
   const showMobileNav = isAuthenticated && pagesWithGeneratedMobileNav.has(location.pathname);
 
   return (
-    <>
+    <Suspense fallback={<FullPageLoader label="Loading workspace" />}>
       <Routes>
         <Route element={<PublicOnlyRoute />}>
           <Route path="/login" element={<Login />} />
@@ -45,6 +50,7 @@ export default function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/skill-test" element={<SkillTest />} />
           <Route path="/coding-practice" element={<CodingPractice />} />
+          <Route path="/coding-practice/:slug" element={<ProblemWorkspace />} />
           <Route path="/pyq-library" element={<PyqLibrary />} />
           <Route path="/resume-builder" element={<ResumeBuilder />} />
           <Route path="/ai-interview" element={<AiInterview />} />
@@ -55,6 +61,6 @@ export default function App() {
       </Routes>
 
       {showMobileNav ? <MobileRouteNav /> : null}
-    </>
+    </Suspense>
   );
 }
