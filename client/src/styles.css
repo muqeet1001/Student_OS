@@ -1,0 +1,272 @@
+@import 'tailwindcss';
+
+/*
+ * The design is light-only. Binding `dark:` to a class (rather than v4's
+ * default `prefers-color-scheme`) keeps the leftover dark: utilities inert
+ * instead of half-darkening the UI for anyone whose OS prefers dark.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* Material-style role palette */
+  --color-background: #f9f6f5;
+  --color-on-background: #2f2f2e;
+
+  --color-surface: #f9f6f5;
+  --color-on-surface: #2f2f2e;
+  --color-surface-variant: #dfdcdc;
+  --color-on-surface-variant: #5c5b5b;
+  --color-surface-dim: #d6d4d3;
+  --color-surface-bright: #f9f6f5;
+  --color-surface-tint: #a83206;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f3f0ef;
+  --color-surface-container: #eae7e7;
+  --color-surface-container-high: #e4e2e1;
+  --color-surface-container-highest: #dfdcdc;
+
+  --color-primary: #a83206;
+  --color-on-primary: #ffefeb;
+  --color-primary-dim: #952800;
+  --color-primary-container: #ff784e;
+  --color-on-primary-container: #470e00;
+  --color-primary-fixed: #ff784e;
+  --color-primary-fixed-dim: #f3683b;
+  --color-on-primary-fixed: #000000;
+  --color-on-primary-fixed-variant: #571400;
+
+  --color-secondary: #755700;
+  --color-on-secondary: #fff1db;
+  --color-secondary-dim: #664b00;
+  --color-secondary-container: #ffca4d;
+  --color-on-secondary-container: #5c4400;
+  --color-secondary-fixed: #ffca4d;
+  --color-secondary-fixed-dim: #f7ba00;
+  --color-on-secondary-fixed: #443100;
+  --color-on-secondary-fixed-variant: #674c00;
+
+  --color-tertiary: #65518a;
+  --color-on-tertiary: #f8efff;
+  --color-tertiary-dim: #59467d;
+  --color-tertiary-container: #d6beff;
+  --color-on-tertiary-container: #4b386e;
+  --color-tertiary-fixed: #d6beff;
+  --color-tertiary-fixed-dim: #c8b1f0;
+  --color-on-tertiary-fixed: #362459;
+  --color-on-tertiary-fixed-variant: #544178;
+
+  --color-error: #b31b25;
+  --color-on-error: #ffefee;
+  --color-error-dim: #9f0519;
+  --color-error-container: #fb5151;
+  --color-on-error-container: #570008;
+
+  --color-outline: #787676;
+  --color-outline-variant: #afadac;
+
+  --color-inverse-surface: #0e0e0e;
+  --color-inverse-on-surface: #9e9c9c;
+  --color-inverse-primary: #fe6f42;
+
+  /* Typography */
+  --font-headline: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-label: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  /*
+   * The prototype's rounding scale is deliberately much softer than
+   * Tailwind's default — these three carry the visual identity.
+   */
+  --radius-sm: 0.125rem;
+  --radius-2xl: 1rem;
+  --radius-lg: 2rem;
+  --radius-xl: 3rem;
+}
+
+/* --------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    margin: 0;
+    min-width: 320px;
+    overflow-x: hidden;
+    background: var(--color-background);
+    color: var(--color-on-surface);
+    font-family: var(--font-body);
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: var(--font-headline);
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  img {
+    max-width: 100%;
+  }
+
+  /* Visible focus for keyboard users, suppressed for pointer interaction. */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Components
+   -------------------------------------------------------------------------- */
+
+/*
+ * Material Symbols renders its glyphs from ligature text, so until the font
+ * is confirmed loaded every icon would show as a raw word ("arrow_forward").
+ * On a blocked or slow CDN that fills the UI with stray words and blows out
+ * layouts. Icons stay invisible in a square placeholder until `fonts-ready`
+ * is set, so a failed font degrades to blank space rather than garbage text.
+ */
+.material-symbols-outlined {
+  visibility: hidden;
+  width: 1em;
+  overflow: hidden;
+}
+
+.fonts-ready .material-symbols-outlined {
+  visibility: visible;
+  width: auto;
+  overflow: visible;
+}
+
+.material-symbols-outlined {
+  display: inline-block;
+  vertical-align: middle;
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+.code-editor-gradient {
+  background: linear-gradient(145deg, #1a1a1a 0%, #0e0e0e 100%);
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar,
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track,
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb,
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 120, 78, 0.22);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(168, 50, 6, 0.38);
+}
+
+/* The decorative bento collage on the auth screens. */
+.bento-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+/*
+ * Printing is how the resume becomes a PDF. Everything except the resume
+ * sheet is removed, and the sheet drops its screen chrome.
+ */
+@media print {
+  @page {
+    size: A4;
+    margin: 14mm;
+  }
+
+  body {
+    background: #fff;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  #resume-sheet,
+  #resume-sheet * {
+    visibility: visible;
+  }
+
+  #resume-sheet {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    max-width: none;
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,46 @@
+import crypto from 'node:crypto';
+import jwt from 'jsonwebtoken';
+import { config } from '../config/env.js';
+
+const REFRESH_COOKIE = 'sos_refresh';
+
+export function signAccessToken(user) {
+  return jwt.sign(
+    { sub: user._id.toString(), role: user.role },
+    config.jwt.accessSecret,
+    { expiresIn: config.jwt.accessExpiresIn },
+  );
+}
+
+export function signRefreshToken(user) {
+  return jwt.sign(
+    { sub: user._id.toString(), jti: crypto.randomUUID() },
+    config.jwt.refreshSecret,
+    { expiresIn: config.jwt.refreshExpiresIn },
+  );
+}
+
+export function verifyAccessToken(token) {
+  return jwt.verify(token, config.jwt.accessSecret);
+}
+
+export function verifyRefreshToken(token) {
+  return jwt.verify(token, config.jwt.refreshSecret);
+}
+
+/** Refresh tokens are persisted as SHA-256 hashes, never in plaintext. */
+export function hashToken(token) {
+  return crypto.createHash('sha256').update(token).digest('hex');
+}
+
+export function refreshCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: config.isProduction,
+    sameSite: config.isProduction ? 'none' : 'lax',
+    path: '/api/auth',
+    maxAge: 30 * 24 * 60 * 60 * 1000,
+  };
+}
+
+export { REFRESH_COOKIE };
