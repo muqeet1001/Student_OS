@@ -1,5 +1,6 @@
 import { Router } from 'express';
+import { authRoutes } from './auth.routes.js';
 
 export const routes = Router();
 
-// Feature routers are mounted here as each feature lands.
+routes.use('/auth', authRoutes);

@@ -1,5 +1,7 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext.jsx';
+import Avatar from './Avatar.jsx';
 
 const navLinks = [
   { label: 'Dashboard', path: '/dashboard', icon: 'dashboard' },
@@ -11,15 +13,14 @@ const navLinks = [
   { label: 'AI Interview', path: '/ai-interview', icon: 'psychology' },
 ];
 
-const extraLinks = [
-  { label: 'Placement Tracker', path: '#', icon: 'leaderboard' },
-  { label: 'Company Prep', path: '#', icon: 'business_center' },
-  { label: 'Applications', path: '#', icon: 'assignment' },
-  { label: 'Students', path: '#', icon: 'group' },
-];
-
 export default function SideNavBar() {
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  async function handleLogout() {
+    await logout();
+    navigate('/login', { replace: true });
+  }
 
   return (
     <aside className="fixed left-0 top-0 h-full z-40 py-8 flex flex-col justify-between h-screen w-72 bg-[#0e0e0e] dark:bg-[#0e0e0e] rounded-r-[3rem] overflow-hidden shadow-[0px_24px_48px_rgba(14,14,14,0.06)] font-plus-jakarta text-sm font-medium tracking-wide">
@@ -54,20 +55,6 @@ export default function SideNavBar() {
             </NavLink>
           ))}
 
-          {/* Divider */}
-          <div className="h-[1px] bg-white/5 my-3 mx-6" />
-
-          {/* Extra placeholder links */}
-          {extraLinks.map((link) => (
-            <a
-              key={link.label}
-              href={link.path}
-              className="flex items-center gap-3 px-6 py-4 text-gray-400 hover:text-white rounded-full mx-4 mb-1 hover:bg-[#f9f6f5]/10 hover:scale-[1.02] transition-all duration-200 active:scale-95"
-            >
-              <span className="material-symbols-outlined">{link.icon}</span>
-              <span className="font-['Plus_Jakarta_Sans'] font-medium text-sm tracking-wide">{link.label}</span>
-            </a>
-          ))}
         </nav>
       </div>
 
@@ -84,21 +71,18 @@ export default function SideNavBar() {
 
         {/* User Card Widget & Logout */}
         <div className="flex items-center justify-between p-2 bg-white/5 rounded-2xl mx-2">
-          <div className="flex items-center gap-3">
-            <img
-              alt="Alex Rivera Profile"
-              className="w-10 h-10 rounded-xl object-cover"
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuDDNadEtcu5cxiembL5jwQQy46a9oM4BDYyjOv2HaRM6Rnd_CAyTYd8GpTckCb6isxW4QZtpeKZ8Rco-1L2X5KeEw7y-ynexdD9rSFqLG3jNQzH3CnMtvd-BaIwDyNygEN6zDShAxP8_1qchQrKrc7QUvhxc5TgkGfr4cmYDX3cRfVHaTHswZAEyuiqxN6F3341LlWOlf5HDaiXkGFQiGKNjx_N1whaDaVsuJE_XSYv46yuA5X0BI7hyrNN3kbAxNllEUG8fDYELfQ"
-            />
-            <div className="flex flex-col">
-              <span className="text-white text-xs font-bold">Alex Rivera</span>
-              <span className="text-gray-500 text-[10px]">Premium Member</span>
+          <div className="flex items-center gap-3 min-w-0">
+            <Avatar user={user} size={40} className="rounded-xl" />
+            <div className="flex flex-col min-w-0">
+              <span className="text-white text-xs font-bold truncate">{user?.name || 'Student'}</span>
+              <span className="text-gray-500 text-[10px] capitalize">{user?.role || 'student'}</span>
             </div>
           </div>
           <button
-            onClick={() => navigate('/login')}
-            className="p-2 text-gray-400 hover:text-white transition-colors"
-            title="Logout"
+            onClick={handleLogout}
+            className="p-2 text-gray-400 hover:text-white transition-colors shrink-0"
+            title="Sign out"
+            aria-label="Sign out"
           >
             <span className="material-symbols-outlined text-lg">logout</span>
           </button>
