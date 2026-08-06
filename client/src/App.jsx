@@ -11,6 +11,8 @@ import PyqLibrary from './pages/PyqLibrary.jsx';
 import Register from './pages/Register.jsx';
 import ResumeBuilder from './pages/ResumeBuilder.jsx';
 import SkillTest from './pages/SkillTest.jsx';
+import TestReview from './pages/TestReview.jsx';
+import TestRunner from './pages/TestRunner.jsx';
 
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import PublicOnlyRoute from './components/PublicOnlyRoute.jsx';
@@ -49,6 +51,8 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/skill-test" element={<SkillTest />} />
+          <Route path="/skill-test/review/:attemptId" element={<TestReview />} />
+          <Route path="/skill-test/:slug" element={<TestRunner />} />
           <Route path="/coding-practice" element={<CodingPractice />} />
           <Route path="/coding-practice/:slug" element={<ProblemWorkspace />} />
           <Route path="/pyq-library" element={<PyqLibrary />} />
