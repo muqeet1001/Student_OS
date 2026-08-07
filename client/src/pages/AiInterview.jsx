@@ -82,7 +82,7 @@ export default function AiInterview() {
 
   return (
     <div className="bg-background text-on-surface min-h-dvh">
-      <div className="max-w-6xl mx-auto px-5 md:px-8 pt-20 lg:pt-10 pb-16 space-y-6">
+      <div className="max-w-6xl mx-auto px-5 md:px-8 pt-16 lg:pt-6 pb-10 space-y-4">
         <header>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Interview lab</p>
           <h1 className="font-headline text-2xl md:text-3xl font-black tracking-tight mt-1">
@@ -91,7 +91,7 @@ export default function AiInterview() {
         </header>
 
         {active && (
-          <div className="rounded-xl bg-secondary-container/40 border border-secondary-fixed p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="rounded-xl bg-secondary-container/40 border border-secondary-fixed p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
               <p className="font-bold text-on-secondary-container">You have an interview in progress</p>
               <p className="text-sm text-on-secondary-container/80">
@@ -108,9 +108,9 @@ export default function AiInterview() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-3">
           {/* Setup */}
-          <section className="xl:col-span-8 bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/10 space-y-6">
+          <section className="xl:col-span-8 bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/10 space-y-4">
             <div>
               <h2 className="font-headline text-xl font-bold mb-1">Set up your round</h2>
               <p className="text-sm text-on-surface-variant">
@@ -127,7 +127,7 @@ export default function AiInterview() {
                 {ROUNDS.map((item) => (
                   <label
                     key={item.value}
-                    className={`cursor-pointer rounded-lg p-4 border-2 transition-all ${
+                    className={`cursor-pointer rounded-lg p-3 border-2 transition-all ${
                       round === item.value
                         ? 'border-primary bg-primary-container/10'
                         : 'border-transparent bg-surface-container hover:bg-surface-container-high'
@@ -157,7 +157,7 @@ export default function AiInterview() {
               </div>
             </fieldset>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <label
                   htmlFor="target-role"
@@ -236,12 +236,12 @@ export default function AiInterview() {
           </section>
 
           {/* Results */}
-          <aside className="xl:col-span-4 space-y-6">
-            <div className="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/10">
-              <p className="text-sm font-bold text-on-surface-variant uppercase tracking-[0.16em] mb-5">
+          <aside className="xl:col-span-4 space-y-4">
+            <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/10">
+              <p className="text-sm font-bold text-on-surface-variant uppercase tracking-[0.16em] mb-3">
                 Your results
               </p>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-primary-container p-5">
                   <p className="text-3xl font-black font-headline text-on-primary-container">
                     {summary?.averageScore ?? 0}%
@@ -257,7 +257,7 @@ export default function AiInterview() {
               </div>
             </div>
 
-            <div className="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/10">
+            <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/10">
               <h3 className="font-headline font-bold mb-4">Recent sessions</h3>
 
               {loading && <LoadingBlock label="Loading" />}

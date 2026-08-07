@@ -12,7 +12,7 @@ export default function CompanyHub() {
   if (loading) return <LoadingBlock label="Loading prep hub" className="min-h-dvh" />;
   if (error) {
     return (
-      <div className="p-6 pt-20 lg:pt-8">
+      <div className="p-6 pt-16 lg:pt-6">
         <ErrorBlock error={error} onRetry={refetch} />
       </div>
     );
@@ -22,7 +22,7 @@ export default function CompanyHub() {
 
   return (
     <div className="bg-background text-on-surface min-h-dvh">
-      <div className="max-w-6xl mx-auto px-5 md:px-8 pt-20 lg:pt-10 pb-16 space-y-5">
+      <div className="max-w-6xl mx-auto px-5 md:px-8 pt-16 lg:pt-6 pb-10 space-y-3">
         <div>
           <Link
             to="/company-prep"
@@ -37,9 +37,9 @@ export default function CompanyHub() {
         </div>
 
         {/* Overview + mock CTA */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
           <section
-            className="lg:col-span-2 rounded-xl p-6 border"
+            className="lg:col-span-2 rounded-xl p-4 border"
             style={{
               background: `${company.brandColor}0d`,
               borderColor: `${company.brandColor}26`,
@@ -58,7 +58,7 @@ export default function CompanyHub() {
               </span>
             </div>
 
-            <div className="flex items-start gap-4">
+            <div className="flex items-start gap-3">
               <CompanyLogo company={company} size={56} />
               <div className="min-w-0">
                 <h2 className="font-headline text-xl font-bold">{company.tagline}</h2>
@@ -80,7 +80,7 @@ export default function CompanyHub() {
             </div>
           </section>
 
-          <section className="rounded-xl p-6 bg-primary-container text-white flex flex-col justify-between">
+          <section className="rounded-xl p-4 bg-primary-container text-white flex flex-col justify-between">
             <div>
               <span className="material-symbols-outlined text-3xl">videocam</span>
               <h2 className="font-headline text-lg font-bold mt-3">Ready to speak?</h2>
@@ -99,9 +99,9 @@ export default function CompanyHub() {
         </div>
 
         {/* Journey + insights */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <section className="lg:col-span-2 bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/15">
-            <div className="flex items-baseline justify-between gap-3 mb-5">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+          <section className="lg:col-span-2 bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/15">
+            <div className="flex items-baseline justify-between gap-3 mb-3">
               <h2 className="font-headline text-base font-bold">The interview journey</h2>
               {company.processDuration && (
                 <span className="text-[10px] font-black uppercase tracking-wider text-on-surface-variant">
@@ -112,7 +112,7 @@ export default function CompanyHub() {
 
             <ol className="space-y-4">
               {company.rounds.map((round, index) => (
-                <li key={round.order} className="flex gap-4">
+                <li key={round.order} className="flex gap-3">
                   <div className="flex flex-col items-center shrink-0">
                     <span
                       className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-black ${
@@ -140,7 +140,7 @@ export default function CompanyHub() {
             </ol>
           </section>
 
-          <section className="bg-tertiary-container/25 rounded-xl p-6 border border-tertiary-container/40">
+          <section className="bg-tertiary-container/25 rounded-xl p-4 border border-tertiary-container/40">
             <h2 className="font-headline text-base font-bold flex items-center gap-2 mb-4">
               <span className="material-symbols-outlined text-tertiary text-lg">lightbulb</span>
               Strategy
@@ -150,7 +150,7 @@ export default function CompanyHub() {
               {company.insights.map((insight, index) => (
                 <blockquote
                   key={index}
-                  className="bg-surface-container-lowest rounded-lg p-4 border border-outline-variant/10"
+                  className="bg-surface-container-lowest rounded-lg p-3 border border-outline-variant/10"
                 >
                   <p className="text-xs text-on-surface leading-relaxed">“{insight.quote}”</p>
                   <footer className="text-[10px] text-on-surface-variant font-bold mt-2">
@@ -176,7 +176,7 @@ export default function CompanyHub() {
           </div>
 
           {topQuestions.length === 0 ? (
-            <p className="text-sm text-on-surface-variant bg-surface-container-lowest rounded-xl p-5 border border-outline-variant/15">
+            <p className="text-sm text-on-surface-variant bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/15">
               No reported questions for {company.name} yet.
             </p>
           ) : (

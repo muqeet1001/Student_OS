@@ -13,7 +13,7 @@ export function ErrorBlock({ error, onRetry, className = '' }) {
   return (
     <div
       role="alert"
-      className={`flex flex-col items-center gap-4 py-10 px-6 text-center rounded-xl bg-error-container/10 border border-error/20 ${className}`}
+      className={`flex flex-col items-center gap-3 py-10 px-6 text-center rounded-xl bg-error-container/10 border border-error/20 ${className}`}
     >
       <span className="material-symbols-outlined text-error text-4xl">cloud_off</span>
       <div>

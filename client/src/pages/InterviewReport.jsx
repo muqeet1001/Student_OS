@@ -43,7 +43,7 @@ export default function InterviewReport() {
   if (loading) return <LoadingBlock label="Loading your report" className="min-h-dvh" />;
   if (error) {
     return (
-      <div className="p-6 pt-20 lg:pt-8">
+      <div className="p-6 pt-16 lg:pt-6">
         <ErrorBlock error={error} onRetry={refetch} />
       </div>
     );
@@ -53,7 +53,7 @@ export default function InterviewReport() {
 
   return (
     <div className="bg-background text-on-surface min-h-dvh">
-      <div className="max-w-4xl mx-auto px-5 md:px-8 pt-20 lg:pt-10 pb-16 space-y-6">
+      <div className="max-w-4xl mx-auto px-5 md:px-8 pt-16 lg:pt-6 pb-10 space-y-4">
         <Link
           to="/ai-interview"
           className="inline-flex items-center gap-1 text-sm font-bold text-on-surface-variant hover:text-primary"
@@ -63,13 +63,13 @@ export default function InterviewReport() {
         </Link>
 
         {/* Headline score */}
-        <header className="bg-surface-container-lowest rounded-xl p-6 border border-outline-variant/10">
+        <header className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/10">
           <p className="text-xs font-bold uppercase tracking-widest text-primary capitalize">
             {session.round.replace('-', ' ')} round
             {session.targetRole && ` • ${session.targetRole}`}
           </p>
 
-          <div className="flex flex-wrap items-baseline gap-4 mt-3">
+          <div className="flex flex-wrap items-baseline gap-3 mt-3">
             <h1 className="font-headline text-4xl font-black tracking-tight">
               {session.overallScore}%
             </h1>
@@ -91,7 +91,7 @@ export default function InterviewReport() {
 
         {/* Coaching summary */}
         {session.summary?.length > 0 && (
-          <section className="bg-tertiary-container/20 rounded-xl p-6 border border-tertiary-container/30">
+          <section className="bg-tertiary-container/20 rounded-xl p-4 border border-tertiary-container/30">
             <h2 className="font-headline text-lg font-bold mb-4 flex items-center gap-2">
               <span className="material-symbols-outlined text-tertiary">tips_and_updates</span>
               What to work on
@@ -110,7 +110,7 @@ export default function InterviewReport() {
         )}
 
         {/* Per-question breakdown */}
-        <section className="space-y-5">
+        <section className="space-y-3">
           <h2 className="font-headline text-xl font-bold">Question by question</h2>
 
           {session.answers.map((item, index) => {
@@ -118,11 +118,11 @@ export default function InterviewReport() {
             return (
               <article
                 key={item.question?._id ?? index}
-                className={`bg-surface-container-lowest rounded-xl p-6 border-l-4 ${
+                className={`bg-surface-container-lowest rounded-xl p-4 border-l-4 ${
                   item.skipped ? 'border-outline-variant' : itemTone.bar.replace('bg-', 'border-')
                 }`}
               >
-                <div className="flex items-start justify-between gap-4 mb-3">
+                <div className="flex items-start justify-between gap-3 mb-3">
                   <h3 className="font-bold text-on-surface">
                     {index + 1}. {item.question?.prompt}
                   </h3>
@@ -135,7 +135,7 @@ export default function InterviewReport() {
                   <p className="text-sm text-on-surface-variant italic">Skipped.</p>
                 ) : (
                   <>
-                    <p className="text-sm text-on-surface-variant leading-relaxed whitespace-pre-line bg-surface-container-low rounded-lg p-4">
+                    <p className="text-sm text-on-surface-variant leading-relaxed whitespace-pre-line bg-surface-container-low rounded-lg p-3">
                       {item.answer}
                     </p>
 
@@ -168,7 +168,7 @@ export default function InterviewReport() {
                           <span className="material-symbols-outlined text-sm">visibility</span>
                           Show a strong sample answer
                         </summary>
-                        <p className="mt-2 text-sm text-on-surface-variant leading-relaxed bg-tertiary-container/10 rounded-lg p-4">
+                        <p className="mt-2 text-sm text-on-surface-variant leading-relaxed bg-tertiary-container/10 rounded-lg p-3">
                           {item.question.modelAnswer}
                         </p>
                       </details>

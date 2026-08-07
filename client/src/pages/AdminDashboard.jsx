@@ -64,7 +64,7 @@ export default function AdminDashboard() {
 
   if (user?.role !== 'admin') {
     return (
-      <div className="p-6 pt-20 lg:pt-10 max-w-2xl mx-auto">
+      <div className="p-6 pt-16 lg:pt-6 max-w-2xl mx-auto">
         <EmptyBlock
           icon="lock"
           title="Admins only"
@@ -76,7 +76,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="bg-background text-on-surface min-h-dvh">
-      <div className="max-w-7xl mx-auto px-5 md:px-8 pt-20 lg:pt-10 pb-16 space-y-5">
+      <div className="max-w-7xl mx-auto px-5 md:px-8 pt-16 lg:pt-6 pb-10 space-y-3">
         <header>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Placement office</p>
           <h1 className="font-headline text-2xl md:text-3xl font-black tracking-tight mt-1">

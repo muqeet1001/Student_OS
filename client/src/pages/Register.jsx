@@ -66,7 +66,7 @@ export default function Register() {
 
         <main className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-surface-container-lowest">
           <div className="w-full max-w-md">
-            <div className="mb-6">
+            <div className="mb-4">
               <h2 className="text-2xl font-extrabold text-on-surface tracking-tight mb-1.5">
                 Create your account
               </h2>

@@ -65,13 +65,13 @@ export default function CodingPractice() {
     <div className="page-coding-practice bg-background font-body text-on-surface min-h-dvh">
 
       <main className="min-h-dvh">
-        <header className="w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-8 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-outline-variant/10">
+        <header className="w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-8 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-outline-variant/10">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Practice lab</p>
             <h1 className="font-headline text-3xl font-black tracking-tight mt-1">Coding Practice</h1>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {stats && (
               <div className="flex items-center gap-2 px-4 py-2 bg-secondary-container/20 rounded-full">
                 <span
@@ -98,10 +98,10 @@ export default function CodingPractice() {
           </div>
         </header>
 
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-4">
           {stats && (
-            <section className="bg-inverse-surface text-white p-6 rounded-xl shadow-2xl relative overflow-hidden">
-              <div className="relative z-10 flex flex-col lg:flex-row gap-5 lg:items-center justify-between">
+            <section className="bg-inverse-surface text-white p-4 rounded-xl shadow-2xl relative overflow-hidden">
+              <div className="relative z-10 flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
                 <div>
                   <h2 className="text-lg font-bold font-headline mb-1">Your proficiency</h2>
                   <p className="text-neutral-400">
@@ -109,7 +109,7 @@ export default function CodingPractice() {
                     {stats.streak.longest > 0 && ` • longest streak ${stats.streak.longest} days`}
                   </p>
                 </div>
-                <div className="grid grid-cols-3 gap-6 items-end lg:w-[26rem]">
+                <div className="grid grid-cols-3 gap-3 items-end lg:w-[26rem]">
                   <StatBar label="easy" solved={stats.solved.easy} total={stats.available.easy} color="bg-secondary-fixed" />
                   <StatBar label="medium" solved={stats.solved.medium} total={stats.available.medium} color="bg-tertiary-fixed" />
                   <StatBar label="hard" solved={stats.solved.hard} total={stats.available.hard} color="bg-primary-fixed" />
@@ -183,12 +183,12 @@ export default function CodingPractice() {
           )}
 
           {problems.length > 0 && (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
               {problems.map((problem) => (
                 <Link
                   key={problem._id}
                   to={`/coding-practice/${problem.slug}`}
-                  className="group bg-surface-container-lowest p-6 rounded-xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all border border-outline-variant/10 flex flex-col"
+                  className="group bg-surface-container-lowest p-4 rounded-xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all border border-outline-variant/10 flex flex-col"
                 >
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <span
@@ -249,7 +249,7 @@ export default function CodingPractice() {
           )}
 
           {pagination && pagination.pages > 1 && (
-            <div className="flex items-center justify-center gap-4 pt-4">
+            <div className="flex items-center justify-center gap-3 pt-4">
               <button
                 type="button"
                 disabled={page <= 1}

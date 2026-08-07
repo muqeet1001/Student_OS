@@ -125,7 +125,7 @@ export default function InterviewSession() {
       {/* Progress header */}
       <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-outline-variant/20">
         <div className="max-w-4xl mx-auto px-5 md:px-6 py-3">
-          <div className="flex items-center justify-between gap-4 mb-3">
+          <div className="flex items-center justify-between gap-3 mb-3">
             <div className="min-w-0">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-primary capitalize">
                 {session.round.replace('-', ' ')} round
@@ -165,9 +165,9 @@ export default function InterviewSession() {
         </div>
       </header>
 
-      <main className="flex-1 max-w-4xl w-full mx-auto px-5 md:px-8 py-8 md:py-8 space-y-6">
+      <main className="flex-1 max-w-4xl w-full mx-auto px-5 md:px-8 py-5 md:py-5 space-y-4">
         {/* Interviewer */}
-        <div className="flex gap-4">
+        <div className="flex gap-3">
           <div className="w-11 h-11 shrink-0 rounded-2xl bg-inverse-surface text-white flex items-center justify-center">
             <span className="material-symbols-outlined">smart_toy</span>
           </div>

@@ -51,8 +51,8 @@ export default function Login() {
 
         <main className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-surface-container-lowest">
           <div className="w-full max-w-md">
-            <header className="mb-6 lg:hidden">
-              <div className="flex items-center gap-2 mb-6">
+            <header className="mb-4 lg:hidden">
+              <div className="flex items-center gap-2 mb-4">
                 <span className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-on-primary">
                   <span
                     className="material-symbols-outlined text-sm"
@@ -67,7 +67,7 @@ export default function Login() {
               </div>
             </header>
 
-            <div className="mb-6">
+            <div className="mb-4">
               <h2 className="text-2xl font-extrabold text-on-surface tracking-tight mb-1.5">Welcome Back</h2>
               <p className="text-on-surface-variant font-medium">
                 Enter your credentials to access your workspace.

@@ -41,7 +41,7 @@ export default function ResumePreview({ profile, user, accent = '#a83206' }) {
       />
 
       <header
-        className="flex flex-wrap justify-between items-end gap-4 pb-6 border-b-2"
+        className="flex flex-wrap justify-between items-end gap-3 pb-6 border-b-2"
         style={{ borderColor: `${accent}33` }}
       >
         <div className="min-w-0">

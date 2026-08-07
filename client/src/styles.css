@@ -104,13 +104,13 @@
    * behaviour is unchanged.
    */
   html {
-    font-size: 81.25%; /* 13px */
+    font-size: 75%; /* 12px */
     scroll-behavior: smooth;
   }
 
   @media (min-width: 1536px) {
     html {
-      font-size: 87.5%; /* 14px — more room to breathe on large displays */
+      font-size: 81.25%; /* 13px — a little more room on large displays */
     }
   }
 

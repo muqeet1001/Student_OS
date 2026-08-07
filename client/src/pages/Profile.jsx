@@ -33,9 +33,9 @@ const LEVEL_STYLES = {
 function SectionCard({ icon, title, action, children, className = '' }) {
   return (
     <section
-      className={`bg-surface-container-lowest rounded-xl p-6 shadow-[0px_24px_48px_rgba(14,14,14,0.04)] ${className}`}
+      className={`bg-surface-container-lowest rounded-xl p-4 shadow-[0px_24px_48px_rgba(14,14,14,0.04)] ${className}`}
     >
-      <div className="flex items-center justify-between gap-4 mb-6 min-w-0">
+      <div className="flex items-center justify-between gap-3 mb-4 min-w-0">
         <h3 className="text-base font-bold font-headline flex items-center gap-3 min-w-0">
           <span className="material-symbols-outlined text-primary shrink-0">{icon}</span>
           <span className="truncate">{title}</span>
@@ -147,15 +147,15 @@ export default function Profile() {
   return (
     <div className="bg-surface text-on-surface min-h-dvh">
 
-      <main className="pt-16 lg:pt-10 pb-16 px-5 md:px-8 lg:px-12">
+      <main className="pt-16 lg:pt-10 pb-10 px-5 md:px-8 lg:px-12">
         <div className="max-w-6xl mx-auto">
           {loading && !profile && <LoadingBlock label="Loading profile" />}
           {error && !profile && <ErrorBlock error={error} onRetry={refetch} />}
 
           {profile && (
             <>
-              <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-6">
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-5">
+              <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-3 mb-4">
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-3">
                   <div className="relative group">
                     <div className="h-32 w-32 md:h-40 md:w-40 rounded-full border-4 border-surface-container-low shadow-xl overflow-hidden">
                       <Avatar user={account} size={160} className="!rounded-full w-full h-full" />
@@ -215,7 +215,7 @@ export default function Profile() {
                 </button>
               </header>
 
-              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
                 {/* Skills */}
                 <SectionCard
                   className="md:col-span-5"
@@ -230,7 +230,7 @@ export default function Profile() {
                       description="Add the languages, frameworks and soft skills you want to be hired for."
                     />
                   ) : (
-                    <div className="space-y-6">
+                    <div className="space-y-4">
                       {SKILL_GROUPS.map((group) => {
                         const items = profile.skills.filter((skill) => skill.category === group.key);
                         if (!items.length) return null;
@@ -288,11 +288,11 @@ export default function Profile() {
                       description="Projects are the strongest signal on a student resume — add your best two."
                     />
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {profile.projects.map((project) => (
                         <article
                           key={project._id}
-                          className="group bg-surface-container-low p-6 rounded-lg transition-all hover:bg-white hover:shadow-xl hover:-translate-y-1"
+                          className="group bg-surface-container-low p-4 rounded-lg transition-all hover:bg-white hover:shadow-xl hover:-translate-y-1"
                         >
                           <div className="flex justify-between items-start mb-4">
                             <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center shadow-sm">
@@ -373,7 +373,7 @@ export default function Profile() {
                       {profile.education.map((entry) => (
                         <li
                           key={entry._id}
-                          className="flex items-start justify-between gap-4 p-4 bg-surface-container-low rounded-lg"
+                          className="flex items-start justify-between gap-3 p-4 bg-surface-container-low rounded-lg"
                         >
                           <div className="min-w-0">
                             <p className="font-bold text-on-surface">{entry.institution}</p>
@@ -424,7 +424,7 @@ export default function Profile() {
                       description="Cloud and platform certificates stand out on student profiles."
                     />
                   ) : (
-                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {profile.certifications.map((cert) => (
                         <li key={cert._id} className="p-4 bg-surface rounded-xl flex flex-col gap-2">
                           <div className="flex items-start justify-between gap-2">
@@ -459,9 +459,9 @@ export default function Profile() {
                 </SectionCard>
 
                 {/* Completeness */}
-                <section className="md:col-span-12 bg-primary text-white rounded-xl p-6 shadow-[0px_24px_48px_rgba(14,14,14,0.1)] relative overflow-hidden">
+                <section className="md:col-span-12 bg-primary text-white rounded-xl p-4 shadow-[0px_24px_48px_rgba(14,14,14,0.1)] relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full pointer-events-none" />
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div>
                       <h3 className="text-xl font-bold mb-2">Profile strength</h3>
                       <p className="text-white/70 text-sm max-w-md">

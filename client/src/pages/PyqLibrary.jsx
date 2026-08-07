@@ -46,7 +46,7 @@ function QuestionDetail({ questionId, onProgressChange }) {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <span className="px-3 py-1 bg-surface-container rounded-full text-xs font-bold">
           {question.company} • {question.year}
@@ -192,7 +192,7 @@ export default function PyqLibrary() {
     <div className="page-pyq-library bg-background text-on-background min-h-dvh">
 
       <main className="min-h-dvh">
-        <header className="sticky top-0 z-30 bg-white/85 backdrop-blur-md px-8 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-outline-variant/10">
+        <header className="sticky top-0 z-30 bg-white/85 backdrop-blur-md px-8 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-outline-variant/10">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Question bank</p>
             <h1 className="font-headline text-3xl font-black tracking-tight mt-1">PYQ Library</h1>
@@ -209,12 +209,12 @@ export default function PyqLibrary() {
           </div>
         </header>
 
-        <div className="px-8 py-8">
-          <div className="grid grid-cols-12 gap-5">
+        <div className="px-8 py-5">
+          <div className="grid grid-cols-12 gap-3">
             {/* Filters */}
-            <aside className="col-span-12 lg:col-span-3 space-y-6">
-              <div className="bg-surface-container-lowest p-6 rounded-xl shadow-[0px_24px_48px_rgba(14,14,14,0.06)]">
-                <h3 className="font-headline font-bold text-lg mb-5 flex items-center gap-2">
+            <aside className="col-span-12 lg:col-span-3 space-y-4">
+              <div className="bg-surface-container-lowest p-4 rounded-xl shadow-[0px_24px_48px_rgba(14,14,14,0.06)]">
+                <h3 className="font-headline font-bold text-lg mb-3 flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">filter_list</span>
                   Company Focus
                 </h3>
@@ -305,9 +305,9 @@ export default function PyqLibrary() {
             </aside>
 
             {/* Question list */}
-            <div className="col-span-12 lg:col-span-9 space-y-6">
+            <div className="col-span-12 lg:col-span-9 space-y-4">
               {pagination && (
-                <div className="bg-tertiary-container/30 rounded-xl p-6 flex flex-col md:flex-row items-center gap-6 border border-tertiary-container/20">
+                <div className="bg-tertiary-container/30 rounded-xl p-4 flex flex-col md:flex-row items-center gap-3 border border-tertiary-container/20">
                   <div className="flex-1">
                     <h2 className="text-2xl font-headline font-extrabold text-on-tertiary-container mb-1">
                       Practice makes permanent.
@@ -332,14 +332,14 @@ export default function PyqLibrary() {
               )}
 
               {questions.length > 0 && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {questions.map((question) => {
                     const progress = progressOf(question);
 
                     return (
                       <article
                         key={question._id}
-                        className={`bg-surface-container-lowest p-6 rounded-lg shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between group ${
+                        className={`bg-surface-container-lowest p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between group ${
                           progress === 'revisit' ? 'border-l-4 border-secondary-fixed' : ''
                         }`}
                       >
@@ -374,7 +374,7 @@ export default function PyqLibrary() {
                             {question.body}
                           </p>
 
-                          <div className="flex flex-wrap gap-2 mb-6">
+                          <div className="flex flex-wrap gap-2 mb-4">
                             {question.topics.slice(0, 2).map((item) => (
                               <span
                                 key={item}
@@ -422,7 +422,7 @@ export default function PyqLibrary() {
               )}
 
               {pagination && pagination.pages > 1 && (
-                <div className="flex items-center justify-center gap-4 pt-4">
+                <div className="flex items-center justify-center gap-3 pt-4">
                   <button
                     type="button"
                     disabled={page <= 1}

@@ -11,7 +11,7 @@ function ReadinessRing({ value }) {
   const offset = circumference - (value / 100) * circumference;
 
   return (
-    <div className="relative mb-6">
+    <div className="relative mb-4">
       <svg className="w-36 h-36 -rotate-90" viewBox="0 0 192 192" role="img" aria-label={`${value}% ready`}>
         <circle
           className="text-surface-container"
@@ -85,7 +85,7 @@ export default function Dashboard() {
   if (loading && !data) return <LoadingBlock label="Loading your dashboard" className="min-h-dvh" />;
   if (error && !data) {
     return (
-      <div className="p-6 pt-20 lg:pt-8">
+      <div className="p-6 pt-16 lg:pt-6">
         <ErrorBlock error={error} onRetry={refetch} />
       </div>
     );
@@ -95,8 +95,8 @@ export default function Dashboard() {
 
   return (
     <div className="bg-background font-body text-on-surface">
-      <div className="p-5 pt-20 lg:pt-8 md:p-6 max-w-7xl mx-auto">
-        <section className="mb-6 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+      <div className="p-5 pt-16 lg:pt-6 md:p-6 max-w-7xl mx-auto">
+        <section className="mb-4 flex flex-col lg:flex-row lg:items-end justify-between gap-3">
           <div className="space-y-2">
             <h1 className="text-2xl md:text-3xl font-extrabold font-headline tracking-tight text-on-surface">
               Welcome back, {firstName}
@@ -122,9 +122,9 @@ export default function Dashboard() {
           )}
         </section>
 
-        <div className="grid grid-cols-12 gap-4">
+        <div className="grid grid-cols-12 gap-3">
           {/* Readiness */}
-          <div className="col-span-12 md:col-span-5 lg:col-span-4 bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/10 flex flex-col items-center justify-center text-center">
+          <div className="col-span-12 md:col-span-5 lg:col-span-4 bg-surface-container-lowest p-4 rounded-xl shadow-sm border border-outline-variant/10 flex flex-col items-center justify-center text-center">
             <ReadinessRing value={readiness.score} />
 
             <h3 className="text-lg font-bold font-headline mb-4">
@@ -161,9 +161,9 @@ export default function Dashboard() {
           </div>
 
           {/* Coding proficiency */}
-          <div className="col-span-12 md:col-span-7 lg:col-span-8 bg-inverse-surface text-white p-6 rounded-xl shadow-2xl relative overflow-hidden">
+          <div className="col-span-12 md:col-span-7 lg:col-span-8 bg-inverse-surface text-white p-4 rounded-xl shadow-2xl relative overflow-hidden">
             <div className="relative z-10 flex flex-col h-full">
-              <div className="flex justify-between items-start mb-6 gap-4">
+              <div className="flex justify-between items-start mb-4 gap-3">
                 <div>
                   <h3 className="text-lg font-bold font-headline mb-1">Coding Proficiency</h3>
                   <p className="text-neutral-400">
@@ -178,7 +178,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="flex-1 min-h-0 mt-6 grid grid-cols-3 gap-4 md:gap-6 items-stretch">
+              <div className="flex-1 min-h-0 mt-4 grid grid-cols-3 gap-3 md:gap-3 items-stretch">
                 <DifficultyBar
                   label="easy"
                   solved={coding.solved.easy}
@@ -203,8 +203,8 @@ export default function Dashboard() {
           </div>
 
           {/* Verified skills */}
-          <div className="col-span-12 bg-surface-container-low p-6 rounded-xl">
-            <div className="flex justify-between items-center mb-6 gap-4">
+          <div className="col-span-12 bg-surface-container-low p-4 rounded-xl">
+            <div className="flex justify-between items-center mb-4 gap-3">
               <h3 className="text-base font-bold font-headline">Your Skillset</h3>
               <Link
                 to="/profile"
@@ -216,7 +216,7 @@ export default function Dashboard() {
             </div>
 
             {skills.length ? (
-              <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
+              <div className="flex gap-3 overflow-x-auto hide-scrollbar pb-2">
                 {skills.map((skill) => (
                   <div
                     key={skill._id}
@@ -248,7 +248,7 @@ export default function Dashboard() {
           </div>
 
           {/* Tests */}
-          <div className="col-span-12 lg:col-span-6 bg-secondary-container/30 p-6 rounded-xl border border-secondary-fixed flex flex-wrap items-center justify-between gap-6">
+          <div className="col-span-12 lg:col-span-6 bg-secondary-container/30 p-4 rounded-xl border border-secondary-fixed flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-secondary-fixed rounded-2xl text-on-secondary-fixed">
@@ -284,7 +284,7 @@ export default function Dashboard() {
           </div>
 
           {/* Interview */}
-          <div className="col-span-12 lg:col-span-7 bg-tertiary-container/25 p-6 rounded-xl border border-tertiary-container/40 flex flex-wrap items-center justify-between gap-5">
+          <div className="col-span-12 lg:col-span-7 bg-tertiary-container/25 p-4 rounded-xl border border-tertiary-container/40 flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2.5 bg-tertiary-fixed rounded-2xl text-on-tertiary-fixed">

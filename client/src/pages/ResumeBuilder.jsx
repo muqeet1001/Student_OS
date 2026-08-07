@@ -57,7 +57,7 @@ export default function ResumeBuilder() {
   if (loading && !profile) return <LoadingBlock label="Loading your resume" className="min-h-dvh" />;
   if (error && !profile) {
     return (
-      <div className="p-6 pt-20 lg:pt-8">
+      <div className="p-6 pt-16 lg:pt-6">
         <ErrorBlock error={error} onRetry={refetch} />
       </div>
     );
@@ -66,7 +66,7 @@ export default function ResumeBuilder() {
   return (
     <div className="bg-surface font-body text-on-surface">
       {/* Screen-only toolbar; print output is the resume alone. */}
-      <div className="print:hidden px-5 pt-20 lg:pt-8 md:px-8 pb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 max-w-[110rem] mx-auto">
+      <div className="print:hidden px-5 pt-16 lg:pt-6 md:px-8 pb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-3 max-w-[110rem] mx-auto">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Editorial resume</p>
           <h1 className="font-headline text-3xl font-black tracking-tight mt-1">Resume Builder</h1>
@@ -97,13 +97,13 @@ export default function ResumeBuilder() {
         </div>
       </div>
 
-      <div className="max-w-[110rem] mx-auto px-5 md:px-8 pb-12 grid grid-cols-12 gap-5">
+      <div className="max-w-[110rem] mx-auto px-5 md:px-8 pb-12 grid grid-cols-12 gap-3">
         {/* ATS panel */}
-        <aside className="print:hidden col-span-12 xl:col-span-4 space-y-6">
+        <aside className="print:hidden col-span-12 xl:col-span-4 space-y-4">
           {report && (
             <>
-              <div className="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10">
-                <div className="flex items-center justify-between gap-4 mb-5">
+              <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/10">
+                <div className="flex items-center justify-between gap-3 mb-3">
                   <h2 className="font-headline text-lg font-bold">ATS score</h2>
                   <span className={`px-3 py-1 rounded-full text-xs font-black uppercase ${tone.className}`}>
                     {tone.label}
@@ -123,7 +123,7 @@ export default function ResumeBuilder() {
                 </div>
               </div>
 
-              <div className="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10">
+              <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/10">
                 <h3 className="font-headline text-base font-bold mb-4 flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">checklist</span>
                   Checks
@@ -159,7 +159,7 @@ export default function ResumeBuilder() {
                 </ul>
               </div>
 
-              <div className="bg-tertiary-container/20 rounded-xl p-6 border border-tertiary-container/30">
+              <div className="bg-tertiary-container/20 rounded-xl p-4 border border-tertiary-container/30">
                 <p className="text-sm text-on-tertiary-container leading-relaxed">
                   Your resume is generated from your profile, so it never falls out of sync.{' '}
                   <Link to="/profile" className="font-bold underline">

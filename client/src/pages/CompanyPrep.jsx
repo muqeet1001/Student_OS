@@ -18,7 +18,7 @@ export default function CompanyPrep() {
 
   return (
     <div className="bg-background text-on-surface min-h-dvh">
-      <div className="max-w-6xl mx-auto px-5 md:px-8 pt-20 lg:pt-10 pb-16 space-y-6">
+      <div className="max-w-6xl mx-auto px-5 md:px-8 pt-16 lg:pt-6 pb-10 space-y-4">
         <header>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Company prep</p>
           <h1 className="font-headline text-2xl md:text-3xl font-black tracking-tight mt-1">
@@ -64,12 +64,12 @@ export default function CompanyPrep() {
           />
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {visible.map((company) => (
             <Link
               key={company.slug}
               to={`/company-prep/${company.slug}`}
-              className="group bg-surface-container-lowest rounded-xl p-5 border border-outline-variant/15 hover:border-primary/40 transition-all hover:shadow-lg flex flex-col"
+              className="group bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/15 hover:border-primary/40 transition-all hover:shadow-lg flex flex-col"
             >
               <div className="flex items-start justify-between gap-3 mb-4">
                 <CompanyLogo company={company} />

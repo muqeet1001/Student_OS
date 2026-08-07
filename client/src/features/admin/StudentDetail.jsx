@@ -38,7 +38,7 @@ export default function StudentDetail({ student, onClose }) {
       {error && <ErrorBlock error={error} onRetry={refetch} />}
 
       {data && (
-        <div className="space-y-5">
+        <div className="space-y-3">
           {/* Readiness breakdown, using the row already loaded by the table. */}
           <Section title="Readiness breakdown">
             <div className="space-y-2">
