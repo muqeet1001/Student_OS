@@ -1,6 +1,6 @@
 import { User } from '../models/User.js';
 import { Profile } from '../models/Profile.js';
-import { Submission } from '../models/Submission.js';
+import { SolvedProblem } from '../models/Submission.js';
 import { Problem } from '../models/Problem.js';
 import { TestAttempt } from '../models/Test.js';
 import { InterviewSession } from '../models/InterviewSession.js';
@@ -68,10 +68,11 @@ export const listStudents = asyncHandler(async (req, res) => {
       .select('user branch graduationYear headline completeness skills targetRoles')
       .lean(),
 
-    Submission.aggregate([
-      { $match: { user: { $in: ids }, verdict: 'accepted' } },
-      { $group: { _id: { user: '$user', problem: '$problem' } } },
-      { $group: { _id: '$_id.user', count: { $sum: 1 }, } },
+    // Same source as the student's own dashboard, so a staff member and a
+    // student never see different solved counts.
+    SolvedProblem.aggregate([
+      { $match: { user: { $in: ids } } },
+      { $group: { _id: '$user', count: { $sum: 1 } } },
     ]),
 
     Problem.countDocuments({ isPublished: true }),
@@ -197,7 +198,7 @@ export const getStudent = asyncHandler(async (req, res) => {
 
   if (!student) throw new ApiError(404, 'Student not found.');
 
-  const [profile, attempts, interviews, recentSubmissions] = await Promise.all([
+  const [profile, attempts, interviews, recentSolves] = await Promise.all([
     Profile.findOne({ user: student._id }).lean(),
     TestAttempt.find({ user: student._id, status: { $in: ['submitted', 'expired'] } })
       .select('percentage passed submittedAt test')
@@ -210,16 +211,16 @@ export const getStudent = asyncHandler(async (req, res) => {
       .sort({ completedAt: -1 })
       .limit(10)
       .lean(),
-    Submission.find({ user: student._id, verdict: 'accepted' })
-      .select('problem createdAt')
+    SolvedProblem.find({ user: student._id })
+      .select('problem solvedAt')
       .populate('problem', 'title slug difficulty')
-      .sort({ createdAt: -1 })
+      .sort({ solvedAt: -1 })
       .limit(10)
       .lean(),
   ]);
 
   res.json({
     success: true,
-    data: { student, profile, attempts, interviews, recentSubmissions },
+    data: { student, profile, attempts, interviews, recentSolves },
   });
 });

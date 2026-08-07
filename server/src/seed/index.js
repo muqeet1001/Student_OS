@@ -11,9 +11,9 @@
  * safe and never duplicates. User-generated data (submissions, attempts,
  * profiles) is never touched unless --fresh is passed.
  */
-import mongoose from 'mongoose';
+import { basename } from 'node:path';
 
-import { env } from '../config/env.js';
+import { connectDatabase, disconnectDatabase } from '../config/db.js';
 import { logger } from '../utils/logger.js';
 
 import { Problem } from '../models/Problem.js';
@@ -133,9 +133,8 @@ async function seedDemoUser() {
   logger.info(`Created demo account — ${email} / demo1234`);
 }
 
-async function run() {
-  await mongoose.connect(env.MONGODB_URI);
-  logger.info('Connected for seeding');
+export async function run() {
+  await connectDatabase();
 
   if (FRESH) {
     await Promise.all([
@@ -157,12 +156,16 @@ async function run() {
   await seedCompanies();
   if (DEMO) await seedDemoUser();
 
-  await mongoose.disconnect();
-  logger.info('Seeding complete');
+  await disconnectDatabase();
+  logger.success('Seeding complete');
 }
 
-run().catch(async (error) => {
-  logger.error({ err: error }, 'Seeding failed');
-  await mongoose.disconnect().catch(() => {});
-  process.exit(1);
-});
+// Only self-executes when invoked directly (`npm run seed`), so tests can
+// import this module to verify its wiring without opening a connection.
+if (process.argv[1] && import.meta.url.endsWith(basename(process.argv[1]))) {
+  run().catch(async (error) => {
+    logger.error('Seeding failed:', error.message);
+    await disconnectDatabase().catch(() => {});
+    process.exit(1);
+  });
+}

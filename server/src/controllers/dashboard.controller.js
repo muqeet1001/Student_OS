@@ -1,6 +1,6 @@
 import { Profile } from '../models/Profile.js';
 import { Problem } from '../models/Problem.js';
-import { Submission } from '../models/Submission.js';
+import { SolvedProblem } from '../models/Submission.js';
 import { TestAttempt } from '../models/Test.js';
 import { InterviewSession } from '../models/InterviewSession.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -22,23 +22,18 @@ const WEIGHTS = { profile: 0.2, coding: 0.35, tests: 0.25, interview: 0.2 };
 export const getDashboard = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  const [profile, solvedDocs, availableCounts, attempts, interviews, streak] = await Promise.all([
+  const [profile, solvedByDifficulty, availableCounts, attempts, interviews, streak] = await Promise.all([
     Profile.findOne({ user: userId }).lean(),
 
-    // Distinct accepted problems, with difficulty, in one pass.
-    Submission.aggregate([
-      { $match: { user: userId, verdict: 'accepted' } },
-      { $group: { _id: '$problem', firstSolvedAt: { $min: '$createdAt' } } },
-      {
-        $lookup: {
-          from: 'problems',
-          localField: '_id',
-          foreignField: '_id',
-          as: 'problem',
-        },
-      },
-      { $unwind: '$problem' },
-      { $project: { difficulty: '$problem.difficulty', firstSolvedAt: 1 } },
+    /*
+     * SolvedProblem is the single source of truth for "solved": one row per
+     * user and problem, written on first acceptance, with difficulty
+     * denormalised. Re-deriving this from Submission would disagree with the
+     * coding practice screen and needs a join to get difficulty.
+     */
+    SolvedProblem.aggregate([
+      { $match: { user: userId } },
+      { $group: { _id: '$difficulty', count: { $sum: 1 } } },
     ]),
 
     Problem.aggregate([
@@ -62,8 +57,8 @@ export const getDashboard = asyncHandler(async (req, res) => {
 
   const emptyByDifficulty = { easy: 0, medium: 0, hard: 0 };
 
-  const solved = solvedDocs.reduce(
-    (acc, item) => ({ ...acc, [item.difficulty]: (acc[item.difficulty] ?? 0) + 1 }),
+  const solved = solvedByDifficulty.reduce(
+    (acc, item) => ({ ...acc, [item._id]: item.count }),
     { ...emptyByDifficulty },
   );
   const available = availableCounts.reduce(
@@ -71,7 +66,7 @@ export const getDashboard = asyncHandler(async (req, res) => {
     { ...emptyByDifficulty },
   );
 
-  const totalSolved = solvedDocs.length;
+  const totalSolved = Object.values(solved).reduce((sum, n) => sum + n, 0);
   const totalAvailable = Object.values(available).reduce((sum, n) => sum + n, 0);
 
   const testsTaken = attempts.length;

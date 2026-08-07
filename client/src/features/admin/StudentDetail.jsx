@@ -65,18 +65,18 @@ export default function StudentDetail({ student, onClose }) {
           </Section>
 
           <Section title="Recent accepted solutions">
-            {data.recentSubmissions.length === 0 ? (
+            {data.recentSolves.length === 0 ? (
               <p className="text-sm text-on-surface-variant">No accepted submissions yet.</p>
             ) : (
               <ul className="space-y-1.5">
-                {data.recentSubmissions.map((submission) => (
+                {data.recentSolves.map((solve) => (
                   <li
-                    key={submission._id}
+                    key={solve._id}
                     className="flex items-center justify-between gap-3 text-sm px-3 py-2 bg-surface-container-low rounded-lg"
                   >
-                    <span className="font-bold truncate">{submission.problem?.title}</span>
+                    <span className="font-bold truncate">{solve.problem?.title}</span>
                     <span className="text-xs text-on-surface-variant shrink-0">
-                      {new Date(submission.createdAt).toLocaleDateString()}
+                      {new Date(solve.solvedAt).toLocaleDateString()}
                     </span>
                   </li>
                 ))}

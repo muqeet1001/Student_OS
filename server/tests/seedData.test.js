@@ -79,3 +79,27 @@ test('every reference solution passes its own test cases', async (t) => {
     });
   }
 });
+
+/**
+ * The seed once imported a binding the config module does not export, which
+ * only surfaced at run time — after a database connection was attempted.
+ * Importing the module here catches that class of wiring error in CI.
+ */
+test('the seed module wires up without opening a connection', async () => {
+  const seed = await import('../src/seed/index.js');
+  assert.equal(typeof seed.run, 'function', 'run() should be exported for testing');
+  assert.equal(
+    mongoose.connection.readyState,
+    0,
+    'importing the seed must not connect to a database',
+  );
+});
+
+test('the demo account password satisfies the registration policy', () => {
+  // The seed creates this through the model, so it must pass the same rules
+  // a real sign-up does, or `--demo` produces an account nobody can use.
+  const password = 'demo1234';
+  assert.ok(password.length >= 8);
+  assert.ok(/[a-zA-Z]/.test(password));
+  assert.ok(/[0-9]/.test(password));
+});
