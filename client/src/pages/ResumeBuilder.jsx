@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
-import { scoreResume } from '../features/resume/atsScore.js';
+import { api } from '../lib/api.js';
 import ResumePreview from '../features/resume/ResumePreview.jsx';
+import SavedVersions from '../features/resume/SavedVersions.jsx';
 
 const SCORE_TONES = [
   { min: 80, label: 'Strong', className: 'text-green-700 bg-green-100' },
@@ -13,19 +13,46 @@ const SCORE_TONES = [
 ];
 
 export default function ResumeBuilder() {
-  const { user } = useAuth();
-  const { data, loading, error, refetch } = useApiResource('/profile/me');
+  // The score is computed server-side so a saved version and the live
+  // preview can never disagree about the same profile.
+  const { data, setData, loading, error, refetch } = useApiResource('/resumes/builder');
   const [accent, setAccent] = useState('#a83206');
+  const [saving, setSaving] = useState(false);
 
   const profile = data?.profile;
-  const account = data?.user ?? user;
-
-  const report = useMemo(
-    () => (profile ? scoreResume({ profile, user: account }) : null),
-    [profile, account],
-  );
+  const account = data?.user;
+  const report = data?.report;
+  const versions = data?.versions ?? [];
 
   const tone = report ? SCORE_TONES.find((item) => report.score >= item.min) : null;
+
+  async function saveVersion() {
+    const title = window.prompt('Name this version', `Resume ${versions.length + 1}`);
+    if (!title?.trim()) return;
+
+    setSaving(true);
+    try {
+      const { resume } = await api.post('/resumes', { title: title.trim(), accent });
+      setData((current) => ({ ...current, versions: [resume, ...current.versions] }));
+    } catch (caught) {
+      window.alert(caught.message || 'Could not save that version.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteVersion(id) {
+    if (!window.confirm('Delete this saved version?')) return;
+    try {
+      await api.delete(`/resumes/${id}`);
+      setData((current) => ({
+        ...current,
+        versions: current.versions.filter((item) => item._id !== id),
+      }));
+    } catch (caught) {
+      window.alert(caught.message || 'Could not delete that version.');
+    }
+  }
 
   if (loading && !profile) return <LoadingBlock label="Loading your resume" className="min-h-dvh" />;
   if (error && !profile) {
@@ -143,6 +170,13 @@ export default function ResumeBuilder() {
               </div>
             </>
           )}
+
+          <SavedVersions
+            versions={versions}
+            saving={saving}
+            onSave={saveVersion}
+            onDelete={deleteVersion}
+          />
         </aside>
 
         {/* Live preview */}

@@ -1,7 +1,10 @@
 import React, { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
+import AdminDashboard from './pages/AdminDashboard.jsx';
 import CodingPractice from './pages/CodingPractice.jsx';
+import CompanyHub from './pages/CompanyHub.jsx';
+import CompanyPrep from './pages/CompanyPrep.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Login from './pages/Login.jsx';
 import NotFound from './pages/NotFound.jsx';
@@ -45,6 +48,9 @@ export default function App() {
             <Route path="/coding-practice/:slug" element={<ProblemWorkspace />} />
             <Route path="/pyq-library" element={<PyqLibrary />} />
             <Route path="/resume-builder" element={<ResumeBuilder />} />
+            <Route path="/company-prep" element={<CompanyPrep />} />
+            <Route path="/company-prep/:slug" element={<CompanyHub />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/ai-interview" element={<AiInterview />} />
             <Route path="/ai-interview/report/:sessionId" element={<InterviewReport />} />
           </Route>

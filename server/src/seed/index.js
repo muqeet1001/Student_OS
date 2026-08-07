@@ -20,6 +20,7 @@ import { Problem } from '../models/Problem.js';
 import { Question } from '../models/Question.js';
 import { Test, TestQuestion } from '../models/Test.js';
 import { InterviewQuestion } from '../models/InterviewQuestion.js';
+import { Company } from '../models/Company.js';
 import { User } from '../models/User.js';
 import { Profile } from '../models/Profile.js';
 
@@ -27,6 +28,7 @@ import { problems } from './data/problems.js';
 import { pyqs } from './data/pyqs.js';
 import { tests } from './data/tests.js';
 import { interviewQuestions } from './data/interviewQuestions.js';
+import { companies } from './data/companies.js';
 
 const flags = new Set(process.argv.slice(2));
 const FRESH = flags.has('--fresh');
@@ -91,6 +93,16 @@ async function seedInterviewQuestions() {
   logger.info(`Seeded ${interviewQuestions.length} interview questions`);
 }
 
+async function seedCompanies() {
+  for (const company of companies) {
+    await Company.findOneAndUpdate({ slug: company.slug }, company, {
+      upsert: true,
+      setDefaultsOnInsert: true,
+    });
+  }
+  logger.info(`Seeded ${companies.length} company prep hubs`);
+}
+
 async function seedDemoUser() {
   const email = 'demo@studentos.com';
   const existing = await User.findOne({ email });
@@ -132,6 +144,7 @@ async function run() {
       Test.deleteMany({}),
       TestQuestion.deleteMany({}),
       InterviewQuestion.deleteMany({}),
+      Company.deleteMany({}),
     ]);
     logger.warn('Cleared existing reference data (--fresh)');
   }
@@ -141,6 +154,7 @@ async function run() {
   await seedPyqs();
   await seedTests();
   await seedInterviewQuestions();
+  await seedCompanies();
   if (DEMO) await seedDemoUser();
 
   await mongoose.disconnect();

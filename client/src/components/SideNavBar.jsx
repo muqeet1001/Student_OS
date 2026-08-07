@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import Avatar from './Avatar.jsx';
-import { navLinks } from '../routes/pageRegistry.js';
+import { adminLinks, navLinks } from '../routes/pageRegistry.js';
 
 /**
  * Fixed navigation rail. Below `lg` it becomes an off-canvas drawer driven by
@@ -60,7 +60,8 @@ export default function SideNavBar({ open = false, onClose }) {
           </div>
 
           <nav className="flex flex-col" aria-label="Main navigation">
-            {navLinks.map((link) => (
+            {/* Staff-only destinations are appended, never mixed in. */}
+            {[...navLinks, ...(user?.role === 'admin' ? adminLinks : [])].map((link) => (
               <NavLink
                 key={link.path}
                 to={link.path}

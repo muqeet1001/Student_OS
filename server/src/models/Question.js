@@ -28,6 +28,8 @@ const questionSchema = new mongoose.Schema(
     problem: { type: mongoose.Schema.Types.ObjectId, ref: 'Problem', default: null },
 
     source: { type: String, default: '' },
+    /** How many cohorts have reported this question — drives "asked N times". */
+    askedCount: { type: Number, default: 1, min: 1, index: true },
     isPublished: { type: Boolean, default: true, index: true },
 
     stats: {

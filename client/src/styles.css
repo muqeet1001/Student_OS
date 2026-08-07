@@ -93,8 +93,25 @@
    -------------------------------------------------------------------------- */
 
 @layer base {
+  /*
+   * Every Tailwind spacing and type step is rem-based, so the root size is
+   * the one lever that rescales the whole interface proportionally. The
+   * prototype was drawn for a very large display; at 16px a laptop showed
+   * only a fraction of each screen.
+   *
+   * Media-query breakpoints are unaffected — rem inside a media query
+   * resolves against the initial 16px, not this value — so the responsive
+   * behaviour is unchanged.
+   */
   html {
+    font-size: 81.25%; /* 13px */
     scroll-behavior: smooth;
+  }
+
+  @media (min-width: 1536px) {
+    html {
+      font-size: 87.5%; /* 14px — more room to breathe on large displays */
+    }
   }
 
   body {

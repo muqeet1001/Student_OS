@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
-import { LoadingBlock } from '../components/StateBlocks.jsx';
+import { ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
+import NotificationList from '../features/dashboard/NotificationList.jsx';
 
 function ReadinessRing({ value }) {
   const radius = 88;
@@ -66,76 +67,31 @@ function DifficultyBar({ label, solved, total, color }) {
   );
 }
 
-function ActionCard({ to, icon, title, description, badge, tone }) {
-  const tones = {
-    primary: 'bg-primary/10 text-primary',
-    secondary: 'bg-secondary-container/40 text-secondary',
-    tertiary: 'bg-tertiary-container/40 text-tertiary',
-  };
-
-  return (
-    <Link
-      to={to}
-      className="group bg-surface-container-lowest p-6 rounded-lg border border-outline-variant/10 hover:border-primary/30 transition-all hover:shadow-xl hover:shadow-primary/5 flex flex-col"
-    >
-      <div
-        className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform ${tones[tone]}`}
-      >
-        <span className="material-symbols-outlined">{icon}</span>
-      </div>
-      <h4 className="text-lg font-bold font-headline mb-2">{title}</h4>
-      <p className="text-sm text-on-surface-variant mb-4 flex-1">{description}</p>
-      <div className="flex items-center justify-between">
-        <span className={`text-xs font-bold px-3 py-1 rounded-full ${tones[tone]}`}>{badge}</span>
-        <span className="material-symbols-outlined text-primary">arrow_forward</span>
-      </div>
-    </Link>
-  );
-}
-
 export default function Dashboard() {
   const { user } = useAuth();
 
-  const { data: profileData, loading: profileLoading } = useApiResource('/profile/me');
-  const { data: codingStats } = useApiResource('/problems/stats/me');
-  const { data: testData } = useApiResource('/tests/attempts');
+  // One aggregated call: readiness is weighted on the server so notifications
+  // and the dashboard can never disagree about the same number.
+  const { data, loading, error, refetch } = useApiResource('/dashboard');
 
-  const profile = profileData?.profile;
-  const testSummary = testData?.summary;
-
-  /**
-   * Readiness blends the three signals we actually have data for. Each
-   * component is capped so one strong area cannot mask an empty one.
-   */
-  const readiness = useMemo(() => {
-    const profileScore = profile?.completeness ?? 0;
-    const solved = codingStats?.totalSolved ?? 0;
-    const available = codingStats?.totalAvailable ?? 0;
-    const codingScore = available ? Math.min(100, Math.round((solved / available) * 100)) : 0;
-    const testScore = testSummary?.averagePercentage ?? 0;
-
-    const parts = [
-      { label: 'Profile', value: profileScore, weight: 0.25 },
-      { label: 'Coding', value: codingScore, weight: 0.45 },
-      { label: 'Tests', value: testScore, weight: 0.3 },
-    ];
-
-    return {
-      total: Math.round(parts.reduce((sum, part) => sum + part.value * part.weight, 0)),
-      parts,
-    };
-  }, [profile, codingStats, testSummary]);
-
-  const weakest = useMemo(
-    () => [...readiness.parts].sort((a, b) => a.value - b.value)[0],
-    [readiness],
-  );
+  const readiness = data?.readiness;
+  const coding = data?.coding;
+  const tests = data?.tests;
+  const interviews = data?.interviews;
+  const skills = data?.skills ?? [];
 
   const firstName = (user?.name ?? 'there').split(' ')[0];
 
-  if (profileLoading && !profile) {
-    return <LoadingBlock label="Loading your dashboard" className="min-h-dvh" />;
+  if (loading && !data) return <LoadingBlock label="Loading your dashboard" className="min-h-dvh" />;
+  if (error && !data) {
+    return (
+      <div className="p-6 pt-20 lg:pt-8">
+        <ErrorBlock error={error} onRetry={refetch} />
+      </div>
+    );
   }
+
+  const weakest = readiness.components.find((part) => part.key === readiness.weakest);
 
   return (
     <div className="bg-background font-body text-on-surface">
@@ -158,10 +114,10 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {codingStats?.streak?.current > 0 && (
+          {coding.streak.current > 0 && (
             <div className="flex items-center gap-2 bg-secondary-container px-6 py-3 rounded-full text-on-secondary-container font-bold text-sm shadow-sm shrink-0 self-start lg:self-auto">
               <span className="material-symbols-outlined">local_fire_department</span>
-              {codingStats.streak.current} day streak
+              {coding.streak.current} day streak
             </div>
           )}
         </section>
@@ -169,18 +125,18 @@ export default function Dashboard() {
         <div className="grid grid-cols-12 gap-4">
           {/* Readiness */}
           <div className="col-span-12 md:col-span-5 lg:col-span-4 bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/10 flex flex-col items-center justify-center text-center">
-            <ReadinessRing value={readiness.total} />
+            <ReadinessRing value={readiness.score} />
 
             <h3 className="text-lg font-bold font-headline mb-4">
-              {readiness.total >= 75
+              {readiness.score >= 75
                 ? 'Ready to apply'
-                : readiness.total >= 40
+                : readiness.score >= 40
                   ? 'Getting there'
                   : 'Just getting started'}
             </h3>
 
             <dl className="w-full space-y-3 text-left">
-              {readiness.parts.map((part) => (
+              {readiness.components.map((part) => (
                 <div key={part.label}>
                   <div className="flex justify-between text-xs font-bold mb-1.5">
                     <dt className="text-on-surface-variant">{part.label}</dt>
@@ -211,12 +167,12 @@ export default function Dashboard() {
                 <div>
                   <h3 className="text-lg font-bold font-headline mb-1">Coding Proficiency</h3>
                   <p className="text-neutral-400">
-                    {codingStats?.streak?.activeDays ?? 0} active days
+                    {coding.streak.activeDays} active days
                   </p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-4xl font-black font-headline text-primary-fixed">
-                    {codingStats?.totalSolved ?? 0}
+                    {coding.totalSolved}
                   </p>
                   <p className="text-xs uppercase font-bold tracking-widest text-neutral-500">Solved</p>
                 </div>
@@ -225,20 +181,20 @@ export default function Dashboard() {
               <div className="flex-1 min-h-0 mt-6 grid grid-cols-3 gap-4 md:gap-6 items-stretch">
                 <DifficultyBar
                   label="easy"
-                  solved={codingStats?.solved?.easy ?? 0}
-                  total={codingStats?.available?.easy ?? 0}
+                  solved={coding.solved.easy}
+                  total={coding.available.easy}
                   color="bg-secondary-fixed"
                 />
                 <DifficultyBar
                   label="medium"
-                  solved={codingStats?.solved?.medium ?? 0}
-                  total={codingStats?.available?.medium ?? 0}
+                  solved={coding.solved.medium}
+                  total={coding.available.medium}
                   color="bg-tertiary-fixed"
                 />
                 <DifficultyBar
                   label="hard"
-                  solved={codingStats?.solved?.hard ?? 0}
-                  total={codingStats?.available?.hard ?? 0}
+                  solved={coding.solved.hard}
+                  total={coding.available.hard}
                   color="bg-primary-fixed"
                 />
               </div>
@@ -259,9 +215,9 @@ export default function Dashboard() {
               </Link>
             </div>
 
-            {profile?.skills?.length ? (
+            {skills.length ? (
               <div className="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
-                {profile.skills.map((skill) => (
+                {skills.map((skill) => (
                   <div
                     key={skill._id}
                     className="flex-shrink-0 bg-surface-container-lowest p-2 pr-6 rounded-full flex items-center gap-3 shadow-sm border border-outline-variant/10"
@@ -301,13 +257,13 @@ export default function Dashboard() {
                 <div>
                   <h4 className="text-base font-bold font-headline">Skill Tests</h4>
                   <p className="text-sm text-on-secondary-fixed-variant">
-                    {testSummary?.taken ? `${testSummary.taken} taken` : 'None taken yet'}
+                    {tests.taken ? `${tests.taken} taken` : "None taken yet"}
                   </p>
                 </div>
               </div>
               <div className="flex items-baseline gap-2">
                 <span className="text-4xl font-black text-on-secondary-container">
-                  {testSummary?.averagePercentage ?? 0}%
+                  {tests.average}%
                 </span>
                 <span className="text-sm font-bold text-on-secondary-fixed-variant">average</span>
               </div>
@@ -316,68 +272,52 @@ export default function Dashboard() {
               to="/skill-test"
               className="px-8 py-3 bg-secondary-container text-on-secondary-container rounded-full font-bold hover:opacity-90 transition-opacity border border-on-secondary-container/10"
             >
-              {testSummary?.taken ? 'Take another' : 'Start a test'}
-            </Link>
-          </div>
-
-          {/* Streak */}
-          <div className="col-span-12 lg:col-span-6 bg-tertiary-container/30 p-6 rounded-xl border border-tertiary-fixed flex flex-wrap items-center justify-between gap-6">
-            <div>
-              <div className="flex items-center gap-3 mb-4">
-                <div className="p-3 bg-tertiary-fixed rounded-2xl text-on-tertiary-fixed">
-                  <span className="material-symbols-outlined">bolt</span>
-                </div>
-                <div>
-                  <h4 className="text-base font-bold font-headline">Practice Streak</h4>
-                  <p className="text-sm text-on-tertiary-fixed-variant">
-                    Longest {codingStats?.streak?.longest ?? 0} days
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-4xl font-black text-on-tertiary-container">
-                  {codingStats?.streak?.current ?? 0}
-                </span>
-                <span className="text-sm font-bold text-on-tertiary-fixed-variant">day streak</span>
-              </div>
-            </div>
-            <Link
-              to="/coding-practice"
-              className="px-8 py-3 bg-inverse-surface text-white rounded-full font-bold hover:bg-neutral-800 transition-colors shadow-lg"
-            >
-              Solve a problem
+              {tests.taken ? 'Take another' : 'Start a test'}
             </Link>
           </div>
 
           {/* Next steps */}
-          <div className="col-span-12 bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/10">
-            <h3 className="text-lg font-bold font-headline mb-6">Recommended next</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <ActionCard
-                to="/coding-practice"
-                icon="terminal"
-                tone="secondary"
-                title="Solve a problem"
-                description="Keep your streak alive and push your solved count up."
-                badge={`Streak ${codingStats?.streak?.current ?? 0}`}
-              />
-              <ActionCard
-                to="/pyq-library"
-                icon="history_edu"
-                tone="tertiary"
-                title="Study past questions"
-                description="Review what companies actually asked in previous rounds."
-                badge="High impact"
-              />
-              <ActionCard
-                to="/skill-test"
-                icon="quiz"
-                tone="primary"
-                title="Verify a skill"
-                description="Passing a test marks the skill as verified on your profile."
-                badge="15 mins"
-              />
+          {/* Needs attention */}
+          <div className="col-span-12 lg:col-span-5">
+            <h3 className="text-lg font-bold font-headline mb-3">Needs your attention</h3>
+            <NotificationList notifications={data.notifications} />
+          </div>
+
+          {/* Interview */}
+          <div className="col-span-12 lg:col-span-7 bg-tertiary-container/25 p-6 rounded-xl border border-tertiary-container/40 flex flex-wrap items-center justify-between gap-5">
+            <div>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 bg-tertiary-fixed rounded-2xl text-on-tertiary-fixed">
+                  <span className="material-symbols-outlined">record_voice_over</span>
+                </div>
+                <div>
+                  <h4 className="text-base font-bold font-headline">Mock Interviews</h4>
+                  <p className="text-sm text-on-tertiary-fixed-variant">
+                    {interviews.completed ? `${interviews.completed} completed` : 'None yet'}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-3xl font-black text-on-tertiary-container">
+                  {interviews.average}%
+                </span>
+                <span className="text-sm font-bold text-on-tertiary-fixed-variant">average</span>
+              </div>
             </div>
+            <Link
+              to={
+                interviews.activeSessionId
+                  ? `/ai-interview/session/${interviews.activeSessionId}`
+                  : '/ai-interview'
+              }
+              className="px-6 py-3 bg-inverse-surface text-white rounded-full font-bold text-sm shadow-lg"
+            >
+              {interviews.activeSessionId
+                ? 'Resume interview'
+                : interviews.completed
+                  ? 'Practise again'
+                  : 'Start a round'}
+            </Link>
           </div>
         </div>
       </div>

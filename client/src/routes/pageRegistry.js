@@ -4,9 +4,15 @@ export const navLinks = [
   { label: 'Coding Practice', path: '/coding-practice', icon: 'code', short: 'Code' },
   { label: 'Skill Test', path: '/skill-test', icon: 'quiz', short: 'Tests' },
   { label: 'PYQ Library', path: '/pyq-library', icon: 'history_edu', short: 'PYQs' },
+  { label: 'Company Prep', path: '/company-prep', icon: 'apartment', short: 'Company' },
   { label: 'Resume Builder', path: '/resume-builder', icon: 'description', short: 'Resume' },
   { label: 'AI Interview', path: '/ai-interview', icon: 'psychology', short: 'Interview' },
   { label: 'Profile', path: '/profile', icon: 'person', short: 'Profile' },
+];
+
+/** Shown only to admins, appended after the student links. */
+export const adminLinks = [
+  { label: 'Students', path: '/admin', icon: 'groups', short: 'Students' },
 ];
 
 /** The bottom bar only has room for the five most-used destinations. */
