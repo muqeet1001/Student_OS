@@ -11,7 +11,7 @@ function ReadinessRing({ value }) {
 
   return (
     <div className="relative mb-6">
-      <svg className="w-48 h-48 -rotate-90" viewBox="0 0 192 192" role="img" aria-label={`${value}% ready`}>
+      <svg className="w-36 h-36 -rotate-90" viewBox="0 0 192 192" role="img" aria-label={`${value}% ready`}>
         <circle
           className="text-surface-container"
           cx="96"
@@ -35,7 +35,7 @@ function ReadinessRing({ value }) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-5xl font-black font-headline text-on-surface">{value}%</span>
+        <span className="text-3xl font-black font-headline text-on-surface">{value}%</span>
         <span className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mt-1">
           Readiness
         </span>
@@ -47,8 +47,10 @@ function ReadinessRing({ value }) {
 function DifficultyBar({ label, solved, total, color }) {
   const pct = total ? Math.round((solved / total) * 100) : 0;
   return (
-    <div className="space-y-3">
-      <div className="relative h-40 bg-neutral-800 rounded-2xl overflow-hidden">
+    <div className="flex flex-col gap-3 min-h-0">
+      {/* Grows to fill the card so the chart never leaves a dead gap under
+          the heading, whatever height the row settles at. */}
+      <div className="relative flex-1 min-h-[5rem] bg-neutral-800 rounded-2xl overflow-hidden">
         <div
           className={`absolute bottom-0 w-full ${color} transition-all duration-700`}
           style={{ height: `${pct}%` }}
@@ -77,12 +79,12 @@ function ActionCard({ to, icon, title, description, badge, tone }) {
       className="group bg-surface-container-lowest p-6 rounded-lg border border-outline-variant/10 hover:border-primary/30 transition-all hover:shadow-xl hover:shadow-primary/5 flex flex-col"
     >
       <div
-        className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform ${tones[tone]}`}
+        className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform ${tones[tone]}`}
       >
         <span className="material-symbols-outlined">{icon}</span>
       </div>
       <h4 className="text-lg font-bold font-headline mb-2">{title}</h4>
-      <p className="text-sm text-on-surface-variant mb-6 flex-1">{description}</p>
+      <p className="text-sm text-on-surface-variant mb-4 flex-1">{description}</p>
       <div className="flex items-center justify-between">
         <span className={`text-xs font-bold px-3 py-1 rounded-full ${tones[tone]}`}>{badge}</span>
         <span className="material-symbols-outlined text-primary">arrow_forward</span>
@@ -137,13 +139,13 @@ export default function Dashboard() {
 
   return (
     <div className="bg-background font-body text-on-surface">
-      <div className="p-5 pt-20 lg:pt-8 md:p-8 max-w-7xl mx-auto">
-        <section className="mb-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+      <div className="p-5 pt-20 lg:pt-8 md:p-6 max-w-7xl mx-auto">
+        <section className="mb-6 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
           <div className="space-y-2">
-            <h1 className="text-3xl md:text-4xl font-extrabold font-headline tracking-tight text-on-surface">
+            <h1 className="text-2xl md:text-3xl font-extrabold font-headline tracking-tight text-on-surface">
               Welcome back, {firstName}
             </h1>
-            <p className="text-lg text-on-surface-variant max-w-2xl font-medium">
+            <p className="text-sm text-on-surface-variant max-w-2xl font-medium">
               {weakest && weakest.value < 100 ? (
                 <>
                   Your weakest area right now is{' '}
@@ -164,12 +166,12 @@ export default function Dashboard() {
           )}
         </section>
 
-        <div className="grid grid-cols-12 gap-6">
+        <div className="grid grid-cols-12 gap-4">
           {/* Readiness */}
-          <div className="col-span-12 md:col-span-5 lg:col-span-4 bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/10 flex flex-col items-center justify-center text-center">
+          <div className="col-span-12 md:col-span-5 lg:col-span-4 bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/10 flex flex-col items-center justify-center text-center">
             <ReadinessRing value={readiness.total} />
 
-            <h3 className="text-2xl font-bold font-headline mb-4">
+            <h3 className="text-lg font-bold font-headline mb-4">
               {readiness.total >= 75
                 ? 'Ready to apply'
                 : readiness.total >= 40
@@ -203,11 +205,11 @@ export default function Dashboard() {
           </div>
 
           {/* Coding proficiency */}
-          <div className="col-span-12 md:col-span-7 lg:col-span-8 bg-inverse-surface text-white p-8 rounded-xl shadow-2xl relative overflow-hidden">
+          <div className="col-span-12 md:col-span-7 lg:col-span-8 bg-inverse-surface text-white p-6 rounded-xl shadow-2xl relative overflow-hidden">
             <div className="relative z-10 flex flex-col h-full">
-              <div className="flex justify-between items-start mb-8 gap-4">
+              <div className="flex justify-between items-start mb-6 gap-4">
                 <div>
-                  <h3 className="text-2xl font-bold font-headline mb-1">Coding Proficiency</h3>
+                  <h3 className="text-lg font-bold font-headline mb-1">Coding Proficiency</h3>
                   <p className="text-neutral-400">
                     {codingStats?.streak?.activeDays ?? 0} active days
                   </p>
@@ -220,7 +222,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="mt-auto grid grid-cols-3 gap-4 md:gap-6 items-end">
+              <div className="flex-1 min-h-0 mt-6 grid grid-cols-3 gap-4 md:gap-6 items-stretch">
                 <DifficultyBar
                   label="easy"
                   solved={codingStats?.solved?.easy ?? 0}
@@ -245,9 +247,9 @@ export default function Dashboard() {
           </div>
 
           {/* Verified skills */}
-          <div className="col-span-12 bg-surface-container-low p-8 rounded-xl">
+          <div className="col-span-12 bg-surface-container-low p-6 rounded-xl">
             <div className="flex justify-between items-center mb-6 gap-4">
-              <h3 className="text-xl font-bold font-headline">Your Skillset</h3>
+              <h3 className="text-base font-bold font-headline">Your Skillset</h3>
               <Link
                 to="/profile"
                 className="text-primary font-bold text-sm flex items-center gap-1 shrink-0 whitespace-nowrap"
@@ -290,14 +292,14 @@ export default function Dashboard() {
           </div>
 
           {/* Tests */}
-          <div className="col-span-12 lg:col-span-6 bg-secondary-container/30 p-8 rounded-xl border border-secondary-fixed flex flex-wrap items-center justify-between gap-6">
+          <div className="col-span-12 lg:col-span-6 bg-secondary-container/30 p-6 rounded-xl border border-secondary-fixed flex flex-wrap items-center justify-between gap-6">
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-secondary-fixed rounded-2xl text-on-secondary-fixed">
                   <span className="material-symbols-outlined">quiz</span>
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold font-headline">Skill Tests</h4>
+                  <h4 className="text-base font-bold font-headline">Skill Tests</h4>
                   <p className="text-sm text-on-secondary-fixed-variant">
                     {testSummary?.taken ? `${testSummary.taken} taken` : 'None taken yet'}
                   </p>
@@ -319,14 +321,14 @@ export default function Dashboard() {
           </div>
 
           {/* Streak */}
-          <div className="col-span-12 lg:col-span-6 bg-tertiary-container/30 p-8 rounded-xl border border-tertiary-fixed flex flex-wrap items-center justify-between gap-6">
+          <div className="col-span-12 lg:col-span-6 bg-tertiary-container/30 p-6 rounded-xl border border-tertiary-fixed flex flex-wrap items-center justify-between gap-6">
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <div className="p-3 bg-tertiary-fixed rounded-2xl text-on-tertiary-fixed">
                   <span className="material-symbols-outlined">bolt</span>
                 </div>
                 <div>
-                  <h4 className="text-xl font-bold font-headline">Practice Streak</h4>
+                  <h4 className="text-base font-bold font-headline">Practice Streak</h4>
                   <p className="text-sm text-on-tertiary-fixed-variant">
                     Longest {codingStats?.streak?.longest ?? 0} days
                   </p>
@@ -348,8 +350,8 @@ export default function Dashboard() {
           </div>
 
           {/* Next steps */}
-          <div className="col-span-12 bg-surface-container-lowest p-8 rounded-xl shadow-sm border border-outline-variant/10">
-            <h3 className="text-2xl font-bold font-headline mb-8">Recommended next</h3>
+          <div className="col-span-12 bg-surface-container-lowest p-6 rounded-xl shadow-sm border border-outline-variant/10">
+            <h3 className="text-lg font-bold font-headline mb-6">Recommended next</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               <ActionCard
                 to="/coding-practice"

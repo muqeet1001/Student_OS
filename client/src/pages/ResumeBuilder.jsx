@@ -30,7 +30,7 @@ export default function ResumeBuilder() {
   if (loading && !profile) return <LoadingBlock label="Loading your resume" className="min-h-dvh" />;
   if (error && !profile) {
     return (
-      <div className="p-8 pt-20 lg:pt-8">
+      <div className="p-6 pt-20 lg:pt-8">
         <ErrorBlock error={error} onRetry={refetch} />
       </div>
     );
@@ -70,7 +70,7 @@ export default function ResumeBuilder() {
         </div>
       </div>
 
-      <div className="max-w-[110rem] mx-auto px-5 md:px-8 pb-12 grid grid-cols-12 gap-8">
+      <div className="max-w-[110rem] mx-auto px-5 md:px-8 pb-12 grid grid-cols-12 gap-5">
         {/* ATS panel */}
         <aside className="print:hidden col-span-12 xl:col-span-4 space-y-6">
           {report && (
@@ -84,7 +84,7 @@ export default function ResumeBuilder() {
                 </div>
 
                 <div className="flex items-baseline gap-2 mb-3">
-                  <span className="text-5xl font-black font-headline">{report.score}</span>
+                  <span className="text-4xl font-black font-headline">{report.score}</span>
                   <span className="text-xl font-bold text-on-surface-variant">/ 100</span>
                 </div>
 

@@ -33,10 +33,10 @@ const LEVEL_STYLES = {
 function SectionCard({ icon, title, action, children, className = '' }) {
   return (
     <section
-      className={`bg-surface-container-lowest rounded-xl p-6 md:p-8 shadow-[0px_24px_48px_rgba(14,14,14,0.04)] ${className}`}
+      className={`bg-surface-container-lowest rounded-xl p-6 shadow-[0px_24px_48px_rgba(14,14,14,0.04)] ${className}`}
     >
       <div className="flex items-center justify-between gap-4 mb-6 min-w-0">
-        <h3 className="text-xl font-bold font-headline flex items-center gap-3 min-w-0">
+        <h3 className="text-base font-bold font-headline flex items-center gap-3 min-w-0">
           <span className="material-symbols-outlined text-primary shrink-0">{icon}</span>
           <span className="truncate">{title}</span>
         </h3>
@@ -154,8 +154,8 @@ export default function Profile() {
 
           {profile && (
             <>
-              <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-12">
-                <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
+              <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-6 mb-6">
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-5">
                   <div className="relative group">
                     <div className="h-32 w-32 md:h-40 md:w-40 rounded-full border-4 border-surface-container-low shadow-xl overflow-hidden">
                       <Avatar user={account} size={160} className="!rounded-full w-full h-full" />
@@ -179,7 +179,7 @@ export default function Profile() {
                   </div>
 
                   <div className="text-center md:text-left">
-                    <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-on-surface mb-2">
+                    <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-on-surface mb-2">
                       {account?.name}
                     </h1>
                     <p className="text-lg font-medium text-stone-500 mb-4">
@@ -459,7 +459,7 @@ export default function Profile() {
                 </SectionCard>
 
                 {/* Completeness */}
-                <section className="md:col-span-12 bg-primary text-white rounded-xl p-8 shadow-[0px_24px_48px_rgba(14,14,14,0.1)] relative overflow-hidden">
+                <section className="md:col-span-12 bg-primary text-white rounded-xl p-6 shadow-[0px_24px_48px_rgba(14,14,14,0.1)] relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-bl-full pointer-events-none" />
                   <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div>

@@ -13,6 +13,8 @@ import SkillTest from './pages/SkillTest.jsx';
 import TestReview from './pages/TestReview.jsx';
 import TestRunner from './pages/TestRunner.jsx';
 import AiInterview from './pages/AiInterview.jsx';
+import InterviewReport from './pages/InterviewReport.jsx';
+import InterviewSession from './pages/InterviewSession.jsx';
 
 import AppLayout from './components/AppLayout.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
@@ -44,7 +46,12 @@ export default function App() {
             <Route path="/pyq-library" element={<PyqLibrary />} />
             <Route path="/resume-builder" element={<ResumeBuilder />} />
             <Route path="/ai-interview" element={<AiInterview />} />
+            <Route path="/ai-interview/report/:sessionId" element={<InterviewReport />} />
           </Route>
+
+          {/* Like the test runner, the live interview is full screen so there
+              is no navigation to drift into mid-answer. */}
+          <Route path="/ai-interview/session/:sessionId" element={<InterviewSession />} />
 
           {/* The test runner is deliberately full screen: no navigation to
               wander off into while the clock is running. */}

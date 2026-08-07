@@ -125,7 +125,7 @@ export default function TestRunner() {
 
   if (error && !session) {
     return (
-      <div className="min-h-screen bg-surface p-8 flex items-center justify-center">
+      <div className="min-h-screen bg-surface p-6 flex items-center justify-center">
         <div className="max-w-lg w-full">
           <ErrorBlock error={error} onRetry={() => navigate('/skill-test')} />
         </div>
@@ -139,7 +139,7 @@ export default function TestRunner() {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center p-6">
         <div className="bg-surface-container-lowest max-w-2xl w-full rounded-xl shadow-2xl overflow-hidden">
-          <div className="bg-white p-10 text-center border-b border-outline-variant/10">
+          <div className="bg-white p-6 text-center border-b border-outline-variant/10">
             <div
               className={`w-24 h-24 rounded-full mx-auto flex items-center justify-center mb-6 shadow-xl ${
                 result.passed
@@ -178,7 +178,7 @@ export default function TestRunner() {
             ))}
           </div>
 
-          <div className="p-8 flex flex-col sm:flex-row gap-4">
+          <div className="p-6 flex flex-col sm:flex-row gap-4">
             <button
               type="button"
               onClick={() => navigate(`/skill-test/review/${result.attemptId}`)}
@@ -205,7 +205,7 @@ export default function TestRunner() {
   return (
     <div className="min-h-screen bg-surface flex flex-col">
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-outline-variant/10">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+        <div className="max-w-4xl mx-auto px-5 py-3 flex items-center justify-between gap-4">
           <div className="min-w-0">
             <p className="text-xs font-bold uppercase tracking-widest text-primary">
               {session.test.title}
@@ -251,7 +251,7 @@ export default function TestRunner() {
               </span>
             </div>
 
-            <h2 className="font-headline text-2xl md:text-3xl font-black tracking-tight mb-8 whitespace-pre-line">
+            <h2 className="font-headline text-2xl md:text-3xl font-black tracking-tight mb-6 whitespace-pre-line">
               {question.prompt}
             </h2>
 
@@ -307,7 +307,7 @@ export default function TestRunner() {
       </main>
 
       <footer className="sticky bottom-0 bg-white/90 backdrop-blur-xl border-t border-outline-variant/10">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-4">
+        <div className="max-w-4xl mx-auto px-5 py-3 flex items-center justify-between gap-4">
           <button
             type="button"
             disabled={index === 0}

@@ -98,12 +98,12 @@ export default function CodingPractice() {
           </div>
         </header>
 
-        <div className="p-8 space-y-8">
+        <div className="p-6 space-y-6">
           {stats && (
-            <section className="bg-inverse-surface text-white p-8 rounded-xl shadow-2xl relative overflow-hidden">
-              <div className="relative z-10 flex flex-col lg:flex-row gap-8 lg:items-center justify-between">
+            <section className="bg-inverse-surface text-white p-6 rounded-xl shadow-2xl relative overflow-hidden">
+              <div className="relative z-10 flex flex-col lg:flex-row gap-5 lg:items-center justify-between">
                 <div>
-                  <h2 className="text-2xl font-bold font-headline mb-1">Your proficiency</h2>
+                  <h2 className="text-lg font-bold font-headline mb-1">Your proficiency</h2>
                   <p className="text-neutral-400">
                     {stats.totalSolved} of {stats.totalAvailable} problems solved
                     {stats.streak.longest > 0 && ` • longest streak ${stats.streak.longest} days`}

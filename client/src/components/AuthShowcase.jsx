@@ -5,9 +5,11 @@ import React from 'react';
  */
 export default function AuthShowcase() {
   return (
-    <section className="hidden lg:flex lg:w-1/2 p-12 bg-inverse-surface relative overflow-hidden flex-col justify-between">
+    // Pinned to the viewport so the collage can never push the page taller
+    // than one screen — it previously sized itself from its own content.
+    <section className="hidden lg:flex lg:w-1/2 lg:h-dvh lg:sticky lg:top-0 p-6 xl:p-8 bg-inverse-surface relative overflow-hidden flex-col justify-between">
       <div className="z-10">
-        <div className="flex items-center gap-2 mb-12">
+        <div className="flex items-center gap-2 mb-6">
           <span className="w-10 h-10 bg-primary-container rounded-full flex items-center justify-center text-on-primary-container">
             <span className="material-symbols-outlined" style={{ fontVariationSettings: '"FILL" 1' }}>
               rocket_launch
@@ -16,17 +18,17 @@ export default function AuthShowcase() {
           <span className="text-2xl font-black tracking-tighter text-white font-headline">Student OS</span>
         </div>
         <div className="max-w-md">
-          <h1 className="text-5xl font-extrabold text-white leading-tight tracking-tight mb-6">
+          <h1 className="text-3xl font-extrabold text-white leading-tight tracking-tight mb-6">
             The Structured <span className="text-primary-container">Playground</span> for Careers.
           </h1>
-          <p className="text-inverse-on-surface text-lg leading-relaxed">
+          <p className="text-inverse-on-surface text-sm leading-relaxed">
             Master technical skills, build an editorial-grade resume, and ace AI-powered interviews in
             one unified ecosystem.
           </p>
         </div>
       </div>
 
-      <div className="bento-grid h-1/2 mt-12 relative z-10">
+      <div className="bento-grid flex-1 min-h-0 max-h-[22rem] mt-8 relative z-10">
         <div className="col-span-2 row-span-2 bg-tertiary-fixed rounded-xl p-6 flex flex-col justify-between transform rotate-2">
           <div className="flex justify-between items-start">
             <span className="material-symbols-outlined text-on-tertiary-fixed text-4xl">psychology</span>

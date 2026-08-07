@@ -33,7 +33,7 @@ export default function FormField({
           type={resolvedType}
           aria-invalid={Boolean(error)}
           aria-describedby={error ? `${id}-error` : undefined}
-          className={`w-full px-6 py-4 pr-14 rounded-lg bg-surface-container-low border-2 text-on-surface font-medium placeholder:text-outline/50 transition-all focus:outline-none focus:ring-2 ${
+          className={`w-full px-5 py-3 pr-14 rounded-lg bg-surface-container-low border-2 text-on-surface font-medium placeholder:text-outline/50 transition-all focus:outline-none focus:ring-2 ${
             error
               ? 'border-error/40 focus:ring-error/30'
               : 'border-transparent focus:ring-primary-container'

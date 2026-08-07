@@ -69,7 +69,7 @@ export default function SkillTest() {
           <div className="flex flex-col gap-5 px-8 py-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Readiness lab</p>
-              <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight mt-2">
+              <h1 className="font-headline text-2xl md:text-3xl font-black tracking-tight mt-2">
                 Skill Test
               </h1>
             </div>
@@ -83,7 +83,7 @@ export default function SkillTest() {
           </div>
         </header>
 
-        <section className="p-6 md:p-10 space-y-8 pb-28">
+        <section className="p-6 space-y-6 pb-28">
           {data?.activeAttempt && (
             <div className="rounded-xl bg-secondary-container/40 border border-secondary-fixed p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
@@ -105,17 +105,17 @@ export default function SkillTest() {
           )}
 
           <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-            <article className="xl:col-span-8 rounded-xl bg-inverse-surface text-white p-8 md:p-10 overflow-hidden relative">
+            <article className="xl:col-span-8 rounded-xl bg-inverse-surface text-white p-6 overflow-hidden relative">
               <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/30 blur-[90px]" />
               <div className="relative z-10 max-w-2xl">
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-primary-container">
                   <span className="material-symbols-outlined text-base">bolt</span>
                   Timed and auto-scored
                 </span>
-                <h2 className="font-headline text-3xl md:text-5xl font-black tracking-tight mt-6">
+                <h2 className="font-headline text-2xl md:text-3xl font-black tracking-tight mt-6">
                   Know exactly where your placement prep stands.
                 </h2>
-                <p className="text-inverse-on-surface text-lg leading-8 mt-5">
+                <p className="text-inverse-on-surface text-sm leading-relaxed mt-4">
                   Each test is timed on the server and scored the moment you submit. Passing a test
                   marks the related skills as verified on your profile.
                 </p>
@@ -219,7 +219,7 @@ export default function SkillTest() {
                     <button
                       type="button"
                       onClick={() => navigate(`/skill-test/${test.slug}`)}
-                      className="mt-6 w-full py-3.5 rounded-full bg-primary-container text-on-primary-container font-bold shadow-[0px_12px_24px_rgba(255,120,78,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      className="mt-6 w-full py-3 rounded-full bg-primary-container text-on-primary-container font-bold shadow-[0px_12px_24px_rgba(255,120,78,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all"
                     >
                       {test.lastAttempt ? 'Retake test' : 'Start test'}
                     </button>

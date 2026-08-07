@@ -12,8 +12,8 @@ export default function TestReview() {
   return (
     <div className="bg-background min-h-dvh text-on-surface">
 
-      <main className="min-h-dvh p-8">
-        <div className="max-w-3xl mx-auto space-y-8">
+      <main className="min-h-dvh p-6">
+        <div className="max-w-3xl mx-auto space-y-6">
           <Link
             to="/skill-test"
             className="inline-flex items-center gap-1 text-sm font-bold text-on-surface-variant hover:text-primary"
@@ -27,12 +27,12 @@ export default function TestReview() {
 
           {attempt && (
             <>
-              <header className="bg-surface-container-lowest rounded-xl p-8 shadow-sm">
+              <header className="bg-surface-container-lowest rounded-xl p-6 shadow-sm">
                 <p className="text-xs font-bold uppercase tracking-widest text-primary">
                   {attempt.test?.title}
                 </p>
                 <div className="flex flex-wrap items-baseline gap-4 mt-3">
-                  <h1 className="font-headline text-5xl font-black tracking-tight">
+                  <h1 className="font-headline text-4xl font-black tracking-tight">
                     {attempt.percentage}%
                   </h1>
                   <span

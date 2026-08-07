@@ -49,10 +49,10 @@ export default function Login() {
       <div className="flex w-full min-h-dvh overflow-hidden">
         <AuthShowcase />
 
-        <main className="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-16 bg-surface-container-lowest">
+        <main className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-surface-container-lowest">
           <div className="w-full max-w-md">
-            <header className="mb-10 lg:hidden">
-              <div className="flex items-center gap-2 mb-8">
+            <header className="mb-6 lg:hidden">
+              <div className="flex items-center gap-2 mb-6">
                 <span className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-on-primary">
                   <span
                     className="material-symbols-outlined text-sm"
@@ -67,14 +67,14 @@ export default function Login() {
               </div>
             </header>
 
-            <div className="mb-10">
-              <h2 className="text-4xl font-extrabold text-on-surface tracking-tight mb-2">Welcome Back</h2>
+            <div className="mb-6">
+              <h2 className="text-2xl font-extrabold text-on-surface tracking-tight mb-1.5">Welcome Back</h2>
               <p className="text-on-surface-variant font-medium">
                 Enter your credentials to access your workspace.
               </p>
             </div>
 
-            <form className="space-y-6" onSubmit={handleSubmit} noValidate>
+            <form className="space-y-4" onSubmit={handleSubmit} noValidate>
               {formError && (
                 <div
                   role="alert"
@@ -110,11 +110,11 @@ export default function Login() {
                 error={fieldErrors.password}
               />
 
-              <div className="pt-4 space-y-6">
+              <div className="pt-1 space-y-4">
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-primary-container text-on-primary-container font-bold py-4 px-6 rounded-full text-lg shadow-[0px_12px_24px_rgba(255,120,78,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="w-full bg-primary-container text-on-primary-container font-bold py-3 px-5 rounded-full text-base shadow-[0px_12px_24px_rgba(255,120,78,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   {submitting ? 'Signing in…' : 'Enter Workspace'}
                   <span className="material-symbols-outlined">
@@ -132,7 +132,7 @@ export default function Login() {
 
                 <Link
                   to="/register"
-                  className="w-full flex items-center justify-center py-4 px-6 rounded-full border-2 border-outline-variant/30 text-on-surface font-bold hover:bg-surface-container transition-colors group"
+                  className="w-full flex items-center justify-center py-3 px-5 rounded-full border-2 border-outline-variant/30 text-on-surface font-bold hover:bg-surface-container transition-colors group"
                 >
                   Create Account
                   <span className="material-symbols-outlined ml-2 group-hover:translate-x-1 transition-transform">
@@ -142,7 +142,7 @@ export default function Login() {
               </div>
             </form>
 
-            <footer className="mt-12 text-center">
+            <footer className="mt-8 text-center">
               <p className="text-on-surface-variant text-sm font-medium">
                 By continuing, you agree to our{' '}
                 <a className="underline text-on-surface hover:text-primary transition-colors" href="#terms">

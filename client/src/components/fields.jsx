@@ -1,7 +1,7 @@
 import React, { useId, useState } from 'react';
 
 const baseInput =
-  'w-full bg-surface-container-low border-2 border-transparent rounded-lg px-4 py-3 text-sm text-on-surface font-medium placeholder:text-outline/60 focus:outline-none focus:ring-2 focus:ring-primary-container transition-all';
+  'w-full bg-surface-container-low border-2 border-transparent rounded-lg px-4 py-2.5 text-sm text-on-surface font-medium placeholder:text-outline/60 focus:outline-none focus:ring-2 focus:ring-primary-container transition-all';
 
 function Shell({ label, hint, error, id, children, className = '' }) {
   return (

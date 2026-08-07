@@ -210,7 +210,7 @@ export default function PyqLibrary() {
         </header>
 
         <div className="px-8 py-8">
-          <div className="grid grid-cols-12 gap-8">
+          <div className="grid grid-cols-12 gap-5">
             {/* Filters */}
             <aside className="col-span-12 lg:col-span-3 space-y-6">
               <div className="bg-surface-container-lowest p-6 rounded-xl shadow-[0px_24px_48px_rgba(14,14,14,0.06)]">

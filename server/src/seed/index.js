@@ -1,0 +1,154 @@
+/**
+ * Seeds the reference data every screen reads from: coding problems, the PYQ
+ * library, skill tests and the interview question bank. Optionally creates a
+ * demo student to sign in with.
+ *
+ *   npm run seed            # upsert reference data
+ *   npm run seed -- --fresh # delete reference data first
+ *   npm run seed -- --demo  # also create the demo account
+ *
+ * Reference collections are upserted by their natural key, so re-running is
+ * safe and never duplicates. User-generated data (submissions, attempts,
+ * profiles) is never touched unless --fresh is passed.
+ */
+import mongoose from 'mongoose';
+
+import { env } from '../config/env.js';
+import { logger } from '../utils/logger.js';
+
+import { Problem } from '../models/Problem.js';
+import { Question } from '../models/Question.js';
+import { Test, TestQuestion } from '../models/Test.js';
+import { InterviewQuestion } from '../models/InterviewQuestion.js';
+import { User } from '../models/User.js';
+import { Profile } from '../models/Profile.js';
+
+import { problems } from './data/problems.js';
+import { pyqs } from './data/pyqs.js';
+import { tests } from './data/tests.js';
+import { interviewQuestions } from './data/interviewQuestions.js';
+
+const flags = new Set(process.argv.slice(2));
+const FRESH = flags.has('--fresh');
+const DEMO = flags.has('--demo');
+
+async function seedProblems() {
+  for (const problem of problems) {
+    await Problem.findOneAndUpdate({ slug: problem.slug }, problem, {
+      upsert: true,
+      setDefaultsOnInsert: true,
+    });
+  }
+  logger.info(`Seeded ${problems.length} coding problems`);
+}
+
+async function seedPyqs() {
+  // Resolve the optional link from a PYQ to its practisable problem.
+  const bySlug = new Map(
+    (await Problem.find().select('slug').lean()).map((item) => [item.slug, item._id]),
+  );
+
+  for (const { problemSlug, ...pyq } of pyqs) {
+    const linked = problemSlug ? bySlug.get(problemSlug) ?? null : null;
+    if (problemSlug && !linked) {
+      logger.warn(`PYQ "${pyq.title}" references unknown problem "${problemSlug}"`);
+    }
+
+    await Question.findOneAndUpdate(
+      { title: pyq.title, company: pyq.company, year: pyq.year },
+      { ...pyq, problem: linked },
+      { upsert: true, setDefaultsOnInsert: true },
+    );
+  }
+  logger.info(`Seeded ${pyqs.length} previous-year questions`);
+}
+
+async function seedTests() {
+  for (const { questions, ...test } of tests) {
+    const saved = await Test.findOneAndUpdate(
+      { slug: test.slug },
+      { ...test, questionCount: questions.length },
+      { upsert: true, new: true, setDefaultsOnInsert: true },
+    );
+
+    // Questions are replaced wholesale: they have no natural key, and an
+    // upsert-by-prompt would strand edits to any prompt that changed.
+    await TestQuestion.deleteMany({ test: saved._id });
+    await TestQuestion.insertMany(questions.map((question) => ({ ...question, test: saved._id })));
+  }
+
+  const total = tests.reduce((sum, test) => sum + test.questions.length, 0);
+  logger.info(`Seeded ${tests.length} skill tests (${total} questions)`);
+}
+
+async function seedInterviewQuestions() {
+  for (const question of interviewQuestions) {
+    await InterviewQuestion.findOneAndUpdate({ prompt: question.prompt }, question, {
+      upsert: true,
+      setDefaultsOnInsert: true,
+    });
+  }
+  logger.info(`Seeded ${interviewQuestions.length} interview questions`);
+}
+
+async function seedDemoUser() {
+  const email = 'demo@studentos.com';
+  const existing = await User.findOne({ email });
+
+  if (existing) {
+    logger.info(`Demo account already exists (${email})`);
+    return;
+  }
+
+  // Goes through the model so the password is hashed by the same hook the
+  // real registration path uses.
+  const user = await User.create({
+    name: 'Demo Student',
+    email,
+    password: 'demo1234',
+    role: 'student',
+  });
+
+  await Profile.create({
+    user: user._id,
+    headline: 'Computer Science • Final year',
+    bio: 'Demo account seeded for local development. Edit or delete freely.',
+    branch: 'Computer Science',
+    graduationYear: new Date().getFullYear() + 1,
+    track: 'technical',
+  });
+
+  logger.info(`Created demo account — ${email} / demo1234`);
+}
+
+async function run() {
+  await mongoose.connect(env.MONGODB_URI);
+  logger.info('Connected for seeding');
+
+  if (FRESH) {
+    await Promise.all([
+      Problem.deleteMany({}),
+      Question.deleteMany({}),
+      Test.deleteMany({}),
+      TestQuestion.deleteMany({}),
+      InterviewQuestion.deleteMany({}),
+    ]);
+    logger.warn('Cleared existing reference data (--fresh)');
+  }
+
+  // Problems first: the PYQ seed links to them by slug.
+  await seedProblems();
+  await seedPyqs();
+  await seedTests();
+  await seedInterviewQuestions();
+  if (DEMO) await seedDemoUser();
+
+  await mongoose.disconnect();
+  logger.info('Seeding complete');
+}
+
+run().catch(async (error) => {
+  logger.error({ err: error }, 'Seeding failed');
+  await mongoose.disconnect().catch(() => {});
+  process.exit(1);
+});

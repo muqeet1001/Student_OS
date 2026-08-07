@@ -165,7 +165,7 @@ export default function ProblemWorkspace() {
   if (error || !problem) {
     return (
       <div className="bg-background min-h-dvh">
-        <main className="p-8">
+        <main className="p-6">
           <ErrorBlock error={error} onRetry={refetch} />
         </main>
       </div>

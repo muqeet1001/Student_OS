@@ -2,7 +2,7 @@ import React from 'react';
 
 export function LoadingBlock({ label = 'Loading', className = '' }) {
   return (
-    <div className={`flex items-center justify-center gap-3 py-16 text-on-surface-variant ${className}`}>
+    <div className={`flex items-center justify-center gap-3 py-10 text-on-surface-variant ${className}`}>
       <span className="w-5 h-5 rounded-full border-2 border-primary border-t-transparent animate-spin" />
       <span className="text-sm font-bold uppercase tracking-widest">{label}</span>
     </div>
@@ -13,7 +13,7 @@ export function ErrorBlock({ error, onRetry, className = '' }) {
   return (
     <div
       role="alert"
-      className={`flex flex-col items-center gap-4 py-16 px-6 text-center rounded-xl bg-error-container/10 border border-error/20 ${className}`}
+      className={`flex flex-col items-center gap-4 py-10 px-6 text-center rounded-xl bg-error-container/10 border border-error/20 ${className}`}
     >
       <span className="material-symbols-outlined text-error text-4xl">cloud_off</span>
       <div>
