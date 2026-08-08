@@ -133,8 +133,13 @@ async function seedDemoUser() {
   logger.info(`Created demo account — ${email} / demo1234`);
 }
 
-export async function run() {
-  await connectDatabase();
+/**
+ * @param {object} [options]
+ * @param {boolean} [options.connect=true] Set false when the caller already
+ *   holds a connection — the integration tests seed into their own database.
+ */
+export async function run({ connect = true } = {}) {
+  if (connect) await connectDatabase();
 
   if (FRESH) {
     await Promise.all([
@@ -156,7 +161,7 @@ export async function run() {
   await seedCompanies();
   if (DEMO) await seedDemoUser();
 
-  await disconnectDatabase();
+  if (connect) await disconnectDatabase();
   logger.success('Seeding complete');
 }
 
