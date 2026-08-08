@@ -9,6 +9,7 @@ import Insights from '../features/admin/Insights.jsx';
 import Drives from '../features/admin/Drives.jsx';
 import Placements from '../features/admin/Placements.jsx';
 import Calendar from '../features/admin/Calendar.jsx';
+import Companies from '../features/admin/Companies.jsx';
 
 const BAND_STYLES = {
   ready: 'bg-green-100 text-green-800',
@@ -96,17 +97,28 @@ export default function AdminDashboard() {
                     ? 'Offers and placement report'
                     : tab === 'calendar'
                       ? 'Placement calendar'
-                      : 'Student progress'}
+                      : tab === 'companies'
+                        ? 'Company relationships'
+                        : 'Student progress'}
           </h1>
         </header>
 
-        <div className="flex gap-2" role="tablist">
+        {/*
+          Seven tabs do not fit a phone. The strip scrolls inside itself —
+          bled to the page edges so a half-visible tab signals there is more —
+          rather than wrapping to a second row or overflowing the document.
+        */}
+        <div
+          className="flex gap-2 overflow-x-auto -mx-5 px-5 md:-mx-8 md:px-8 lg:mx-0 lg:px-0 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="tablist"
+        >
           {[
             { key: 'match', label: 'Match to a job' },
             { key: 'cohort', label: 'Browse cohort' },
             { key: 'drives', label: 'Drives' },
             { key: 'placements', label: 'Placements' },
             { key: 'calendar', label: 'Calendar' },
+            { key: 'companies', label: 'Companies' },
             { key: 'insights', label: 'Insights' },
           ].map((item) => (
             <button
@@ -115,7 +127,7 @@ export default function AdminDashboard() {
               role="tab"
               aria-selected={tab === item.key}
               onClick={() => setTab(item.key)}
-              className={`px-5 py-2 rounded-full text-sm font-bold transition-colors ${
+              className={`px-5 py-2 rounded-full text-sm font-bold transition-colors whitespace-nowrap shrink-0 ${
                 tab === item.key
                   ? 'bg-inverse-surface text-white'
                   : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
@@ -130,6 +142,7 @@ export default function AdminDashboard() {
         {tab === 'drives' && <Drives />}
         {tab === 'placements' && <Placements />}
         {tab === 'calendar' && <Calendar />}
+        {tab === 'companies' && <Companies />}
         {tab === 'insights' && <Insights />}
 
         {/* Cohort summary */}
