@@ -12,6 +12,7 @@ dashboardRoutes.use(requireAuth);
 dashboardRoutes.get('/', dashboard.getDashboard);
 dashboardRoutes.get('/history', dashboard.getHistory);
 dashboardRoutes.get('/roadmap', dashboard.getRoadmap);
+dashboardRoutes.get('/achievements', dashboard.getAchievements);
 
 const targetRoleSchema = z.object({
   targetRole: z.enum(['frontend', 'backend', 'fullstack', 'data-analyst', 'software-engineer']),

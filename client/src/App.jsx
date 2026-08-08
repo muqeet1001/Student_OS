@@ -1,6 +1,7 @@
 import React, { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
+import Achievements from './pages/Achievements.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import CodingPractice from './pages/CodingPractice.jsx';
 import CompanyHub from './pages/CompanyHub.jsx';
@@ -56,6 +57,7 @@ export default function App() {
             <Route path="/pyq-library" element={<PyqLibrary />} />
             <Route path="/resume-builder" element={<ResumeBuilder />} />
             <Route path="/roadmap" element={<Roadmap />} />
+            <Route path="/achievements" element={<Achievements />} />
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/jobs/:jobId" element={<JobDetail />} />
             <Route path="/tracker" element={<Tracker />} />

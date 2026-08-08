@@ -13,6 +13,7 @@ import { canonicalise } from '../services/skillTaxonomy.js';
 import { buildRecommendations, buildTodayPlan } from '../services/todayPlan.js';
 import { readHistory, recordSnapshot } from '../services/snapshot.service.js';
 import { buildRoadmap } from '../services/roadmap.service.js';
+import { buildAchievements } from '../services/achievements.js';
 import { Application } from '../models/JobPosting.js';
 
 /**
@@ -237,6 +238,55 @@ export const setTargetRole = asyncHandler(async (req, res) => {
   res.json({ success: true, data: { targetRole: matchRole(profile, targetRole) } });
 });
 
+
+/**
+ * Badges and level.
+ *
+ * Derived on read from the same evidence the dashboard uses, so a badge can
+ * never disagree with the number it claims to be counting.
+ */
+export const getAchievements = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const [profile, account, solvedByDifficulty, attempts, interviews, applications, streak] =
+    await Promise.all([
+      Profile.findOne({ user: userId }).lean(),
+      User.findById(userId).select('name email').lean(),
+      SolvedProblem.aggregate([
+        { $match: { user: userId } },
+        { $group: { _id: '$difficulty', count: { $sum: 1 } } },
+      ]),
+      TestAttempt.find({ user: userId, status: { $in: ['submitted', 'expired'] } })
+        .select('passed')
+        .lean(),
+      InterviewSession.find({ user: userId, status: 'completed' }).select('overallScore').lean(),
+      Application.countDocuments({ user: userId, stage: { $ne: 'saved' } }),
+      computeStreak(userId),
+    ]);
+
+  const solved = solvedByDifficulty.reduce((acc, row) => ({ ...acc, [row._id]: row.count }), {
+    easy: 0,
+    medium: 0,
+    hard: 0,
+  });
+
+  const atsReport = profile ? scoreResume({ profile, user: account }) : { score: 0 };
+
+  const achievements = buildAchievements({
+    solved: { ...solved, total: solved.easy + solved.medium + solved.hard },
+    streak,
+    verifiedSkills: (profile?.skills ?? []).filter((skill) => skill.verified).length,
+    testsPassed: attempts.filter((attempt) => attempt.passed).length,
+    interviewsCompleted: interviews.length,
+    bestInterviewScore: interviews.reduce((best, s) => Math.max(best, s.overallScore ?? 0), 0),
+    projects: (profile?.projects ?? []).length,
+    certifications: (profile?.certifications ?? []).length,
+    atsScore: atsReport.score,
+    applications,
+  });
+
+  res.json({ success: true, data: achievements });
+});
 
 /**
  * The four-week plan.

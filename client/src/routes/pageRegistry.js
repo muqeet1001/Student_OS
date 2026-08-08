@@ -6,6 +6,7 @@ export const navLinks = [
   { label: 'Skill Test', path: '/skill-test', icon: 'quiz', short: 'Tests' },
   { label: 'PYQ Library', path: '/pyq-library', icon: 'history_edu', short: 'PYQs' },
   { label: 'My Roadmap', path: '/roadmap', icon: 'map', short: 'Roadmap' },
+  { label: 'Achievements', path: '/achievements', icon: 'military_tech', short: 'Badges' },
   { label: 'Jobs', path: '/jobs', icon: 'work', short: 'Jobs' },
   { label: 'Tracker', path: '/tracker', icon: 'view_kanban', short: 'Tracker' },
   { label: 'Company Prep', path: '/company-prep', icon: 'apartment', short: 'Company' },
