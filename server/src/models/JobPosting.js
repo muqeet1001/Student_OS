@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+import { withVirtuals } from './plugins.js';
+
 /**
  * An opportunity a student can see and apply to.
  *
@@ -57,8 +59,7 @@ jobPostingSchema.virtual('isOpen').get(function isOpen() {
   return this.active && (!this.deadline || this.deadline.getTime() > Date.now());
 });
 
-jobPostingSchema.set('toJSON', { virtuals: true });
-jobPostingSchema.set('toObject', { virtuals: true });
+withVirtuals(jobPostingSchema);
 
 export const JobPosting = mongoose.model('JobPosting', jobPostingSchema);
 

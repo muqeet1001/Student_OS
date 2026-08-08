@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+import { withVirtuals } from './plugins.js';
+
 /**
  * The fixed vocabulary recruiters grade a cohort against.
  *
@@ -133,7 +135,6 @@ recruiterSchema.virtual('primaryContact').get(function primaryContact() {
   return this.contacts.find((contact) => contact.primary) ?? this.contacts[0] ?? null;
 });
 
-recruiterSchema.set('toJSON', { virtuals: true });
-recruiterSchema.set('toObject', { virtuals: true });
+withVirtuals(recruiterSchema);
 
 export const Recruiter = mongoose.model('Recruiter', recruiterSchema);

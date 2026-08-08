@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+import { withVirtuals } from './plugins.js';
+
 const answerSchema = new mongoose.Schema(
   {
     question: { type: mongoose.Schema.Types.ObjectId, ref: 'InterviewQuestion', required: true },
@@ -71,7 +73,6 @@ interviewSessionSchema.virtual('questionCount').get(function questionCount() {
   return this.questions.length;
 });
 
-interviewSessionSchema.set('toJSON', { virtuals: true });
-interviewSessionSchema.set('toObject', { virtuals: true });
+withVirtuals(interviewSessionSchema);
 
 export const InterviewSession = mongoose.model('InterviewSession', interviewSessionSchema);

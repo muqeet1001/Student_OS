@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+import { withVirtuals } from './plugins.js';
+
 /**
  * A company visit: the requirement, the eligible pool and who was shortlisted.
  *
@@ -67,7 +69,6 @@ driveSchema.virtual('selectedCount').get(function selectedCount() {
   return this.shortlist.filter((entry) => entry.stage === 'selected').length;
 });
 
-driveSchema.set('toJSON', { virtuals: true });
-driveSchema.set('toObject', { virtuals: true });
+withVirtuals(driveSchema);
 
 export const Drive = mongoose.model('Drive', driveSchema);

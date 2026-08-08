@@ -6,6 +6,7 @@ import Calendar from './pages/Calendar.jsx';
 import Settings from './pages/Settings.jsx';
 import CheckIn from './pages/CheckIn.jsx';
 import Documents from './pages/Documents.jsx';
+import Inbox from './pages/Inbox.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import CodingPractice from './pages/CodingPractice.jsx';
 import CompanyHub from './pages/CompanyHub.jsx';
@@ -65,6 +66,7 @@ export default function App() {
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/documents" element={<Documents />} />
+            <Route path="/inbox" element={<Inbox />} />
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/jobs/:jobId" element={<JobDetail />} />
             <Route path="/tracker" element={<Tracker />} />

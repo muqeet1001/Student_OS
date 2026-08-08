@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+import { withVirtuals } from './plugins.js';
+
 /**
  * A per-student interview slot within an event.
  *
@@ -99,7 +101,6 @@ placementEventSchema.virtual('attendedCount').get(function attendedCount() {
   return this.slots.filter((slot) => slot.status === 'attended').length;
 });
 
-placementEventSchema.set('toJSON', { virtuals: true });
-placementEventSchema.set('toObject', { virtuals: true });
+withVirtuals(placementEventSchema);
 
 export const PlacementEvent = mongoose.model('PlacementEvent', placementEventSchema);

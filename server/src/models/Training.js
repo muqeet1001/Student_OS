@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+import { withVirtuals } from './plugins.js';
+
 /** The readiness components a session can claim to move. */
 export const TARGET_COMPONENTS = ['skills', 'coding', 'resume', 'interview', 'projects'];
 
@@ -78,7 +80,6 @@ trainingSchema.virtual('attendedCount').get(function attendedCount() {
   return this.attendance.filter((entry) => entry.status === 'attended').length;
 });
 
-trainingSchema.set('toJSON', { virtuals: true });
-trainingSchema.set('toObject', { virtuals: true });
+withVirtuals(trainingSchema);
 
 export const Training = mongoose.model('Training', trainingSchema);

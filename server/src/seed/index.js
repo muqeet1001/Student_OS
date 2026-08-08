@@ -33,6 +33,7 @@ import { PlacementEvent } from '../models/PlacementEvent.js';
 import { Recruiter } from '../models/Recruiter.js';
 import { Training } from '../models/Training.js';
 import { StudentDocument } from '../models/Document.js';
+import { Announcement } from '../models/Announcement.js';
 import { User } from '../models/User.js';
 import { Profile } from '../models/Profile.js';
 import { Bookmark, SolvedProblem, Submission } from '../models/Submission.js';
@@ -169,7 +170,7 @@ async function syncIndexes() {
     InterviewQuestion, InterviewSession,
     Resume, Company, JobPosting, Application,
     SkillAssessment, SkillAttempt, ReadinessSnapshot, Drive, Offer, PlacementEvent, Recruiter, Training,
-    StudentDocument,
+    StudentDocument, Announcement,
   ];
 
   for (const model of models) {

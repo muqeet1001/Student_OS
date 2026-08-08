@@ -46,6 +46,18 @@ export const config = {
    */
   checkinSecret: required('CHECKIN_SECRET'),
 
+  /*
+   * Optional. Without it there is no email, and the announcements feature
+   * says so rather than claiming messages were sent.
+   */
+  smtp: {
+    host: process.env.SMTP_HOST || '',
+    port: Number(process.env.SMTP_PORT) || 587,
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.SMTP_FROM || 'Student OS <no-reply@studentos.local>',
+  },
+
   ai: {
     baseUrl: (process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, ''),
     apiKey: process.env.AI_API_KEY || '',

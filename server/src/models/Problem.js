@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+import { withVirtuals } from './plugins.js';
+
 const testCaseSchema = new mongoose.Schema(
   {
     name: { type: String, default: '' },
@@ -67,6 +69,6 @@ problemSchema.virtual('acceptanceRate').get(function acceptanceRate() {
   return Math.round((this.stats.accepted / this.stats.submissions) * 100);
 });
 
-problemSchema.set('toJSON', { virtuals: true });
+withVirtuals(problemSchema);
 
 export const Problem = mongoose.model('Problem', problemSchema);

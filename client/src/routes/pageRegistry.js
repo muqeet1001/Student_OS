@@ -13,6 +13,7 @@ export const navLinks = [
   { label: 'Company Prep', path: '/company-prep', icon: 'apartment', short: 'Company' },
   { label: 'Resume Builder', path: '/resume-builder', icon: 'description', short: 'Resume' },
   { label: 'AI Interview', path: '/ai-interview', icon: 'psychology', short: 'Interview' },
+  { label: 'Inbox', path: '/inbox', icon: 'mail', short: 'Inbox' },
   { label: 'Documents', path: '/documents', icon: 'folder', short: 'Docs' },
   { label: 'Profile', path: '/profile', icon: 'person', short: 'Profile' },
   { label: 'Settings', path: '/settings', icon: 'settings', short: 'Settings' },
