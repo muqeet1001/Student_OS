@@ -4,6 +4,7 @@ import { useApiResource } from '../hooks/useApiResource.js';
 import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import StudentDetail from '../features/admin/StudentDetail.jsx';
+import JobMatch from '../features/admin/JobMatch.jsx';
 
 const BAND_STYLES = {
   ready: 'bg-green-100 text-green-800',
@@ -29,6 +30,7 @@ function ReadinessCell({ value, band }) {
 
 export default function AdminDashboard() {
   const { user } = useAuth();
+  const [tab, setTab] = useState('match');
 
   const [search, setSearch] = useState('');
   const [branch, setBranch] = useState('');
@@ -80,12 +82,36 @@ export default function AdminDashboard() {
         <header>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Placement office</p>
           <h1 className="font-headline text-2xl md:text-3xl font-black tracking-tight mt-1">
-            Student progress
+            {tab === 'match' ? 'Shortlist candidates' : 'Student progress'}
           </h1>
         </header>
 
+        <div className="flex gap-2" role="tablist">
+          {[
+            { key: 'match', label: 'Match to a job' },
+            { key: 'cohort', label: 'Browse cohort' },
+          ].map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              role="tab"
+              aria-selected={tab === item.key}
+              onClick={() => setTab(item.key)}
+              className={`px-5 py-2 rounded-full text-sm font-bold transition-colors ${
+                tab === item.key
+                  ? 'bg-inverse-surface text-white'
+                  : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
+              }`}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        {tab === 'match' && <JobMatch />}
+
         {/* Cohort summary */}
-        {summary && (
+        {tab === 'cohort' && summary && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/15">
               <p className="text-2xl font-black font-headline">{summary.total}</p>
@@ -120,6 +146,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Filters */}
+        {tab === 'cohort' && (
         <div className="flex flex-wrap items-center gap-2.5">
           <div className="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-full focus-within:ring-2 focus-within:ring-primary/20 flex-1 min-w-[14rem]">
             <span className="material-symbols-outlined text-outline text-lg">search</span>
@@ -204,10 +231,12 @@ export default function AdminDashboard() {
           )}
         </div>
 
-        {loading && !data && <LoadingBlock label="Loading cohort" />}
-        {error && <ErrorBlock error={error} onRetry={refetch} />}
+        )}
 
-        {!loading && !error && students.length === 0 && (
+        {tab === 'cohort' && loading && !data && <LoadingBlock label="Loading cohort" />}
+        {tab === 'cohort' && error && <ErrorBlock error={error} onRetry={refetch} />}
+
+        {tab === 'cohort' && !loading && !error && students.length === 0 && (
           <EmptyBlock
             icon="group_off"
             title="No students match"
@@ -216,7 +245,7 @@ export default function AdminDashboard() {
         )}
 
         {/* Cohort table */}
-        {students.length > 0 && (
+        {tab === 'cohort' && students.length > 0 && (
           <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[52rem]">

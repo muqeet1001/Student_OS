@@ -141,7 +141,7 @@ async function main() {
     // The rail is off-canvas until the menu button opens it.
     await page.click('button[aria-label="Open navigation"]');
     await page.waitForTimeout(400);
-    const drawerLink = page.locator('aside a[href="/profile"]');
+    const drawerLink = page.locator('aside nav a[href="/profile"]');
     if (!(await drawerLink.isVisible())) throw new Error('the drawer should open');
 
     await mobile.close();
@@ -152,8 +152,12 @@ async function main() {
     const page = await mobile.newPage();
     await page.goto(BASE + '/dashboard', { waitUntil: 'networkidle' });
 
-    const railLink = page.locator('aside a[href="/profile"]');
-    if (await railLink.isVisible()) throw new Error('the rail should start off-canvas');
+    // isVisible() ignores transforms, and the rail is moved off-screen rather
+    // than hidden — so assert its actual position instead.
+    const box = await page.locator('aside').first().boundingBox();
+    if (box && box.x + box.width > 1) {
+      throw new Error(`the rail should start off-canvas, found x=${Math.round(box.x)}`);
+    }
 
     await mobile.close();
   });
@@ -171,7 +175,8 @@ async function main() {
         [...document.querySelectorAll('button, a')]
           .filter((el) => {
             const text = (el.textContent || '').replace(/\s/g, '');
-            const iconOnly = el.querySelector('.material-symbols-outlined') && text.length <= 24;
+            const label = text.replace(/[\u{F0000}-\u{FFFFD}]/gu, '');
+            const iconOnly = el.querySelector('.material-symbols-outlined') && label.length === 0;
             return iconOnly && !el.getAttribute('aria-label') && !el.getAttribute('title');
           })
           .map((el) => el.outerHTML.slice(0, 70)),

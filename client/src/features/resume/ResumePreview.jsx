@@ -45,9 +45,9 @@ export default function ResumePreview({ profile, user, accent = '#a83206' }) {
         style={{ borderColor: `${accent}33` }}
       >
         <div className="min-w-0">
-          <h1 className="font-headline text-4xl font-black text-neutral-900 leading-tight uppercase">
+          <h2 className="font-headline text-4xl font-black text-neutral-900 leading-tight uppercase">
             {user?.name || 'Your Name'}
-          </h1>
+          </h2>
           {profile.headline && (
             <p
               className="font-bold tracking-widest text-sm uppercase mt-1"
