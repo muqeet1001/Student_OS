@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
-import { scoreResume } from '../features/resume/atsScore.js';
+import { api } from '../lib/api.js';
 import ResumePreview from '../features/resume/ResumePreview.jsx';
+import SavedVersions from '../features/resume/SavedVersions.jsx';
 
 const SCORE_TONES = [
   { min: 80, label: 'Strong', className: 'text-green-700 bg-green-100' },
@@ -13,24 +13,51 @@ const SCORE_TONES = [
 ];
 
 export default function ResumeBuilder() {
-  const { user } = useAuth();
-  const { data, loading, error, refetch } = useApiResource('/profile/me');
+  // The score is computed server-side so a saved version and the live
+  // preview can never disagree about the same profile.
+  const { data, setData, loading, error, refetch } = useApiResource('/resumes/builder');
   const [accent, setAccent] = useState('#a83206');
+  const [saving, setSaving] = useState(false);
 
   const profile = data?.profile;
-  const account = data?.user ?? user;
-
-  const report = useMemo(
-    () => (profile ? scoreResume({ profile, user: account }) : null),
-    [profile, account],
-  );
+  const account = data?.user;
+  const report = data?.report;
+  const versions = data?.versions ?? [];
 
   const tone = report ? SCORE_TONES.find((item) => report.score >= item.min) : null;
+
+  async function saveVersion() {
+    const title = window.prompt('Name this version', `Resume ${versions.length + 1}`);
+    if (!title?.trim()) return;
+
+    setSaving(true);
+    try {
+      const { resume } = await api.post('/resumes', { title: title.trim(), accent });
+      setData((current) => ({ ...current, versions: [resume, ...current.versions] }));
+    } catch (caught) {
+      window.alert(caught.message || 'Could not save that version.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function deleteVersion(id) {
+    if (!window.confirm('Delete this saved version?')) return;
+    try {
+      await api.delete(`/resumes/${id}`);
+      setData((current) => ({
+        ...current,
+        versions: current.versions.filter((item) => item._id !== id),
+      }));
+    } catch (caught) {
+      window.alert(caught.message || 'Could not delete that version.');
+    }
+  }
 
   if (loading && !profile) return <LoadingBlock label="Loading your resume" className="min-h-dvh" />;
   if (error && !profile) {
     return (
-      <div className="p-8 pt-20 lg:pt-8">
+      <div className="p-6 pt-16 lg:pt-6">
         <ErrorBlock error={error} onRetry={refetch} />
       </div>
     );
@@ -39,7 +66,7 @@ export default function ResumeBuilder() {
   return (
     <div className="bg-surface font-body text-on-surface">
       {/* Screen-only toolbar; print output is the resume alone. */}
-      <div className="print:hidden px-5 pt-20 lg:pt-8 md:px-8 pb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-4 max-w-[110rem] mx-auto">
+      <div className="print:hidden px-5 pt-16 lg:pt-6 md:px-8 pb-6 flex flex-col lg:flex-row lg:items-center justify-between gap-3 max-w-[110rem] mx-auto">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Editorial resume</p>
           <h1 className="font-headline text-3xl font-black tracking-tight mt-1">Resume Builder</h1>
@@ -70,13 +97,13 @@ export default function ResumeBuilder() {
         </div>
       </div>
 
-      <div className="max-w-[110rem] mx-auto px-5 md:px-8 pb-12 grid grid-cols-12 gap-8">
+      <div className="max-w-[110rem] mx-auto px-5 md:px-8 pb-12 grid grid-cols-12 gap-3">
         {/* ATS panel */}
-        <aside className="print:hidden col-span-12 xl:col-span-4 space-y-6">
+        <aside className="print:hidden col-span-12 xl:col-span-4 space-y-4">
           {report && (
             <>
-              <div className="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10">
-                <div className="flex items-center justify-between gap-4 mb-5">
+              <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/10">
+                <div className="flex items-center justify-between gap-3 mb-3">
                   <h2 className="font-headline text-lg font-bold">ATS score</h2>
                   <span className={`px-3 py-1 rounded-full text-xs font-black uppercase ${tone.className}`}>
                     {tone.label}
@@ -84,7 +111,7 @@ export default function ResumeBuilder() {
                 </div>
 
                 <div className="flex items-baseline gap-2 mb-3">
-                  <span className="text-5xl font-black font-headline">{report.score}</span>
+                  <span className="text-4xl font-black font-headline">{report.score}</span>
                   <span className="text-xl font-bold text-on-surface-variant">/ 100</span>
                 </div>
 
@@ -96,7 +123,7 @@ export default function ResumeBuilder() {
                 </div>
               </div>
 
-              <div className="bg-surface-container-lowest rounded-xl p-6 shadow-sm border border-outline-variant/10">
+              <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/10">
                 <h3 className="font-headline text-base font-bold mb-4 flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">checklist</span>
                   Checks
@@ -132,7 +159,7 @@ export default function ResumeBuilder() {
                 </ul>
               </div>
 
-              <div className="bg-tertiary-container/20 rounded-xl p-6 border border-tertiary-container/30">
+              <div className="bg-tertiary-container/20 rounded-xl p-4 border border-tertiary-container/30">
                 <p className="text-sm text-on-tertiary-container leading-relaxed">
                   Your resume is generated from your profile, so it never falls out of sync.{' '}
                   <Link to="/profile" className="font-bold underline">
@@ -143,6 +170,13 @@ export default function ResumeBuilder() {
               </div>
             </>
           )}
+
+          <SavedVersions
+            versions={versions}
+            saving={saving}
+            onSave={saveVersion}
+            onDelete={deleteVersion}
+          />
         </aside>
 
         {/* Live preview */}

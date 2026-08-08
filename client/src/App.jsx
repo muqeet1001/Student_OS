@@ -1,7 +1,10 @@
 import React, { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
+import AdminDashboard from './pages/AdminDashboard.jsx';
 import CodingPractice from './pages/CodingPractice.jsx';
+import CompanyHub from './pages/CompanyHub.jsx';
+import CompanyPrep from './pages/CompanyPrep.jsx';
 import Dashboard from './pages/Dashboard.jsx';
 import Login from './pages/Login.jsx';
 import NotFound from './pages/NotFound.jsx';
@@ -13,6 +16,8 @@ import SkillTest from './pages/SkillTest.jsx';
 import TestReview from './pages/TestReview.jsx';
 import TestRunner from './pages/TestRunner.jsx';
 import AiInterview from './pages/AiInterview.jsx';
+import InterviewReport from './pages/InterviewReport.jsx';
+import InterviewSession from './pages/InterviewSession.jsx';
 
 import AppLayout from './components/AppLayout.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
@@ -43,8 +48,16 @@ export default function App() {
             <Route path="/coding-practice/:slug" element={<ProblemWorkspace />} />
             <Route path="/pyq-library" element={<PyqLibrary />} />
             <Route path="/resume-builder" element={<ResumeBuilder />} />
+            <Route path="/company-prep" element={<CompanyPrep />} />
+            <Route path="/company-prep/:slug" element={<CompanyHub />} />
+            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/ai-interview" element={<AiInterview />} />
+            <Route path="/ai-interview/report/:sessionId" element={<InterviewReport />} />
           </Route>
+
+          {/* Like the test runner, the live interview is full screen so there
+              is no navigation to drift into mid-answer. */}
+          <Route path="/ai-interview/session/:sessionId" element={<InterviewSession />} />
 
           {/* The test runner is deliberately full screen: no navigation to
               wander off into while the clock is running. */}

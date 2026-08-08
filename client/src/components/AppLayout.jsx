@@ -27,7 +27,7 @@ export default function AppLayout({ bottomNav = true }) {
         <span className="material-symbols-outlined">menu</span>
       </button>
 
-      <div className={`lg:pl-72 ${bottomNav ? 'pb-24 lg:pb-0' : ''}`}>
+      <div className={`lg:pl-60 ${bottomNav ? 'pb-24 lg:pb-0' : ''}`}>
         <Outlet />
       </div>
 

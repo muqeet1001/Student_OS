@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import Avatar from './Avatar.jsx';
-import { navLinks } from '../routes/pageRegistry.js';
+import { adminLinks, navLinks } from '../routes/pageRegistry.js';
 
 /**
  * Fixed navigation rail. Below `lg` it becomes an off-canvas drawer driven by
@@ -29,14 +29,14 @@ export default function SideNavBar({ open = false, onClose }) {
       />
 
       <aside
-        className={`fixed left-0 top-0 z-50 h-dvh w-72 flex flex-col justify-between py-8 bg-[#0e0e0e] rounded-r-xl overflow-hidden shadow-[0px_24px_48px_rgba(14,14,14,0.06)] font-headline text-sm font-medium tracking-wide transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed left-0 top-0 z-50 h-dvh w-60 flex flex-col justify-between py-5 bg-[#0e0e0e] rounded-r-xl overflow-hidden shadow-[0px_24px_48px_rgba(14,14,14,0.06)] font-headline text-sm font-medium tracking-wide transition-transform duration-300 lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <div className="flex flex-col gap-6 overflow-y-auto custom-scrollbar flex-1 pb-4">
+        <div className="flex flex-col gap-3 overflow-y-auto custom-scrollbar flex-1 pb-4">
           <div className="px-8 flex items-center justify-between gap-3">
             <NavLink to="/dashboard" className="flex items-center gap-3" onClick={onClose}>
-              <div className="w-10 h-10 bg-primary-container rounded-2xl flex items-center justify-center shadow-lg shadow-primary-container/20">
+              <div className="w-9 h-9 bg-primary-container rounded-xl flex items-center justify-center shadow-lg shadow-primary-container/20">
                 <span
                   className="material-symbols-outlined text-white"
                   style={{ fontVariationSettings: '"FILL" 1' }}
@@ -44,12 +44,9 @@ export default function SideNavBar({ open = false, onClose }) {
                   school
                 </span>
               </div>
-              <div className="flex flex-col">
-                <span className="text-2xl font-black text-white tracking-tighter">Student OS</span>
-                <span className="text-[10px] text-gray-500 uppercase tracking-[0.2em] mt-0.5">
-                  Structured Playground
-                </span>
-              </div>
+              <span className="text-lg font-black text-white tracking-tight whitespace-nowrap">
+                Student OS
+              </span>
             </NavLink>
 
             <button
@@ -63,13 +60,14 @@ export default function SideNavBar({ open = false, onClose }) {
           </div>
 
           <nav className="flex flex-col" aria-label="Main navigation">
-            {navLinks.map((link) => (
+            {/* Staff-only destinations are appended, never mixed in. */}
+            {[...navLinks, ...(user?.role === 'admin' ? adminLinks : [])].map((link) => (
               <NavLink
                 key={link.path}
                 to={link.path}
                 onClick={onClose}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-6 py-4 rounded-full mx-4 mb-1 transition-all duration-200 active:scale-95 ${
+                  `flex items-center gap-3 px-5 py-2.5 rounded-full mx-3 mb-0.5 transition-all duration-200 active:scale-95 ${
                     isActive
                       ? 'bg-primary-container text-white shadow-lg shadow-primary-container/20'
                       : 'text-gray-400 hover:text-white hover:bg-white/10'

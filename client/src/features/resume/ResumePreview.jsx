@@ -33,7 +33,7 @@ export default function ResumePreview({ profile, user, accent = '#a83206' }) {
   return (
     <div
       id="resume-sheet"
-      className="w-full max-w-[820px] bg-white shadow-2xl rounded-sm p-10 md:p-12 flex flex-col gap-7 relative overflow-hidden print:shadow-none print:rounded-none print:p-0"
+      className="w-full max-w-[820px] bg-white shadow-2xl rounded-sm p-6 flex flex-col gap-7 relative overflow-hidden print:shadow-none print:rounded-none print:p-0"
     >
       <div
         className="absolute top-0 right-0 w-32 h-32 rounded-bl-full print:hidden"
@@ -41,7 +41,7 @@ export default function ResumePreview({ profile, user, accent = '#a83206' }) {
       />
 
       <header
-        className="flex flex-wrap justify-between items-end gap-4 pb-6 border-b-2"
+        className="flex flex-wrap justify-between items-end gap-3 pb-6 border-b-2"
         style={{ borderColor: `${accent}33` }}
       >
         <div className="min-w-0">

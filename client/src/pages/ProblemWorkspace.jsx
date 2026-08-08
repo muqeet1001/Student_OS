@@ -165,7 +165,7 @@ export default function ProblemWorkspace() {
   if (error || !problem) {
     return (
       <div className="bg-background min-h-dvh">
-        <main className="p-8">
+        <main className="p-6">
           <ErrorBlock error={error} onRetry={refetch} />
         </main>
       </div>
@@ -178,9 +178,9 @@ export default function ProblemWorkspace() {
     <div className="bg-background font-body text-on-surface">
 
       <main className="min-h-dvh flex flex-col">
-        <div className="flex-1 p-6 flex flex-col gap-6">
+        <div className="flex-1 p-6 flex flex-col gap-3">
           {/* Problem header */}
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-3">
             <div className="space-y-2 min-w-0">
               <div className="flex items-center gap-3 flex-wrap">
                 <Link
@@ -249,7 +249,7 @@ export default function ProblemWorkspace() {
             </div>
           </div>
 
-          <div className="flex-1 grid grid-cols-12 gap-6 min-h-0">
+          <div className="flex-1 grid grid-cols-12 gap-3 min-h-0">
             {/* Description panel */}
             <div className="col-span-12 lg:col-span-4 bg-surface-container-lowest rounded-xl shadow-sm flex flex-col overflow-hidden max-h-[calc(100vh-13rem)]">
               <div className="p-1 flex border-b border-surface-container">
@@ -272,7 +272,7 @@ export default function ProblemWorkspace() {
                 ))}
               </div>
 
-              <div className="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-6">
+              <div className="flex-1 p-6 overflow-y-auto custom-scrollbar space-y-4">
                 {tab === 'description' && (
                   <>
                     <p className="text-on-surface leading-relaxed font-medium whitespace-pre-line">
@@ -346,9 +346,9 @@ export default function ProblemWorkspace() {
 
                 {tab === 'submissions' && (
                   <div className="space-y-3">
-                    {submissions === null && <LoadingBlock label="Loading" className="py-8" />}
+                    {submissions === null && <LoadingBlock label="Loading" className="py-5" />}
                     {submissions?.length === 0 && (
-                      <p className="text-sm text-on-surface-variant text-center py-8">
+                      <p className="text-sm text-on-surface-variant text-center py-5">
                         No submissions yet.
                       </p>
                     )}
@@ -389,7 +389,7 @@ export default function ProblemWorkspace() {
             </div>
 
             {/* Editor panel */}
-            <div className="col-span-12 lg:col-span-8 flex flex-col gap-4 min-h-0">
+            <div className="col-span-12 lg:col-span-8 flex flex-col gap-3 min-h-0">
               <div className="flex-1 code-editor-gradient rounded-xl shadow-2xl overflow-hidden flex flex-col border border-white/5 min-h-[24rem]">
                 <div className="h-12 bg-white/5 border-b border-white/10 flex items-center justify-between px-4 shrink-0">
                   <div className="flex items-center gap-3">
@@ -420,7 +420,7 @@ export default function ProblemWorkspace() {
                 </div>
 
                 <div className="bg-black/50 border-t border-white/10 shrink-0">
-                  <div className="flex items-center justify-between px-6 py-3 gap-4">
+                  <div className="flex items-center justify-between px-6 py-3 gap-3">
                     <div className="flex items-center gap-3 min-w-0">
                       {tone && (
                         <span className={`flex items-center gap-2 text-xs font-bold ${tone.color}`}>
@@ -463,7 +463,7 @@ export default function ProblemWorkspace() {
               </div>
 
               {/* Console / results */}
-              <div className="bg-[#0e0e0e] rounded-xl p-5 max-h-72 overflow-y-auto custom-scrollbar">
+              <div className="bg-[#0e0e0e] rounded-xl p-4 max-h-72 overflow-y-auto custom-scrollbar">
                 {!report && (
                   <p className="text-white/30 text-xs font-mono">
                     Run your code to see results against the sample cases.

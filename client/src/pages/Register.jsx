@@ -64,10 +64,10 @@ export default function Register() {
       <div className="flex w-full min-h-dvh overflow-hidden">
         <AuthShowcase />
 
-        <main className="w-full lg:w-1/2 flex items-center justify-center p-8 md:p-16 bg-surface-container-lowest">
+        <main className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-surface-container-lowest">
           <div className="w-full max-w-md">
-            <div className="mb-10">
-              <h2 className="text-4xl font-extrabold text-on-surface tracking-tight mb-2">
+            <div className="mb-4">
+              <h2 className="text-2xl font-extrabold text-on-surface tracking-tight mb-1.5">
                 Create your account
               </h2>
               <p className="text-on-surface-variant font-medium">
@@ -75,7 +75,7 @@ export default function Register() {
               </p>
             </div>
 
-            <form className="space-y-6" onSubmit={handleSubmit} noValidate>
+            <form className="space-y-4" onSubmit={handleSubmit} noValidate>
               {formError && (
                 <div
                   role="alert"
@@ -155,11 +155,11 @@ export default function Register() {
                 error={fieldErrors.confirmPassword}
               />
 
-              <div className="pt-4 space-y-6">
+              <div className="pt-1 space-y-4">
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="w-full bg-primary-container text-on-primary-container font-bold py-4 px-6 rounded-full text-lg shadow-[0px_12px_24px_rgba(255,120,78,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  className="w-full bg-primary-container text-on-primary-container font-bold py-3 px-5 rounded-full text-base shadow-[0px_12px_24px_rgba(255,120,78,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                   {submitting ? 'Creating account…' : 'Create Account'}
                   <span className="material-symbols-outlined">

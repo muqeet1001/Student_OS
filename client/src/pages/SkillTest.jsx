@@ -27,7 +27,7 @@ function AttemptHistory() {
       {attempts.map((attempt) => (
         <div
           key={attempt._id}
-          className="flex items-center justify-between gap-4 p-4 bg-surface-container-low rounded-lg"
+          className="flex items-center justify-between gap-3 p-4 bg-surface-container-low rounded-lg"
         >
           <div className="min-w-0">
             <p className="font-bold text-sm truncate">{attempt.test?.title ?? 'Test'}</p>
@@ -66,10 +66,10 @@ export default function SkillTest() {
 
       <main className="min-h-dvh">
         <header className="sticky top-0 z-20 bg-background/85 backdrop-blur-md border-b border-outline-variant/20">
-          <div className="flex flex-col gap-5 px-8 py-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3 px-8 py-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Readiness lab</p>
-              <h1 className="font-headline text-4xl md:text-5xl font-black tracking-tight mt-2">
+              <h1 className="font-headline text-2xl md:text-3xl font-black tracking-tight mt-2">
                 Skill Test
               </h1>
             </div>
@@ -83,9 +83,9 @@ export default function SkillTest() {
           </div>
         </header>
 
-        <section className="p-6 md:p-10 space-y-8 pb-28">
+        <section className="p-6 space-y-4 pb-28">
           {data?.activeAttempt && (
-            <div className="rounded-xl bg-secondary-container/40 border border-secondary-fixed p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="rounded-xl bg-secondary-container/40 border border-secondary-fixed p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <p className="font-bold text-on-secondary-container">
                   {data.activeAttempt.title} is still in progress
@@ -104,18 +104,18 @@ export default function SkillTest() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-            <article className="xl:col-span-8 rounded-xl bg-inverse-surface text-white p-8 md:p-10 overflow-hidden relative">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-3">
+            <article className="xl:col-span-8 rounded-xl bg-inverse-surface text-white p-6 overflow-hidden relative">
               <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-primary/30 blur-[90px]" />
               <div className="relative z-10 max-w-2xl">
                 <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-bold text-primary-container">
                   <span className="material-symbols-outlined text-base">bolt</span>
                   Timed and auto-scored
                 </span>
-                <h2 className="font-headline text-3xl md:text-5xl font-black tracking-tight mt-6">
+                <h2 className="font-headline text-2xl md:text-3xl font-black tracking-tight mt-4">
                   Know exactly where your placement prep stands.
                 </h2>
-                <p className="text-inverse-on-surface text-lg leading-8 mt-5">
+                <p className="text-inverse-on-surface text-sm leading-relaxed mt-4">
                   Each test is timed on the server and scored the moment you submit. Passing a test
                   marks the related skills as verified on your profile.
                 </p>
@@ -126,7 +126,7 @@ export default function SkillTest() {
               <p className="text-sm font-bold text-on-surface-variant uppercase tracking-[0.16em]">
                 Your results
               </p>
-              <div className="mt-6 grid grid-cols-2 gap-4">
+              <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="rounded-lg bg-primary-container p-5">
                   <p className="text-3xl font-black font-headline text-on-primary-container">
                     {summary?.averagePercentage ?? 0}%
@@ -140,7 +140,7 @@ export default function SkillTest() {
                   <p className="text-sm font-bold text-on-secondary-fixed-variant mt-1">Tests done</p>
                 </div>
               </div>
-              <div className="mt-6 rounded-lg bg-surface-container p-5">
+              <div className="mt-4 rounded-lg bg-surface-container p-5">
                 <div className="flex items-center justify-between text-sm font-bold">
                   <span>Tests passed</span>
                   <span className="text-primary">
@@ -171,7 +171,7 @@ export default function SkillTest() {
           )}
 
           {tests.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
               {tests.map((test) => {
                 const meta = CATEGORY_META[test.category] ?? CATEGORY_META.technical;
 
@@ -180,7 +180,7 @@ export default function SkillTest() {
                     key={test._id}
                     className="rounded-xl bg-surface-container-lowest border border-outline-variant/20 p-6 shadow-[0px_16px_32px_rgba(14,14,14,0.04)] flex flex-col"
                   >
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-start justify-between gap-3">
                       <div className="h-12 w-12 rounded-lg bg-surface-container flex items-center justify-center text-primary">
                         <span className="material-symbols-outlined">{meta.icon}</span>
                       </div>
@@ -201,10 +201,10 @@ export default function SkillTest() {
                       )}
                     </div>
 
-                    <h2 className="font-headline text-2xl font-black mt-6">{test.title}</h2>
+                    <h2 className="font-headline text-2xl font-black mt-4">{test.title}</h2>
                     <p className="text-on-surface-variant leading-7 mt-3 flex-1">{test.description}</p>
 
-                    <div className="flex flex-wrap gap-3 mt-6 text-sm font-bold text-on-surface-variant">
+                    <div className="flex flex-wrap gap-3 mt-4 text-sm font-bold text-on-surface-variant">
                       <span className="rounded-full bg-surface-container px-3 py-2">
                         {test.questionCount} questions
                       </span>
@@ -219,7 +219,7 @@ export default function SkillTest() {
                     <button
                       type="button"
                       onClick={() => navigate(`/skill-test/${test.slug}`)}
-                      className="mt-6 w-full py-3.5 rounded-full bg-primary-container text-on-primary-container font-bold shadow-[0px_12px_24px_rgba(255,120,78,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      className="mt-4 w-full py-3 rounded-full bg-primary-container text-on-primary-container font-bold shadow-[0px_12px_24px_rgba(255,120,78,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all"
                     >
                       {test.lastAttempt ? 'Retake test' : 'Start test'}
                     </button>

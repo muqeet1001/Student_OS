@@ -75,13 +75,17 @@
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 
   /*
-   * The prototype's rounding scale is deliberately much softer than
-   * Tailwind's default — these three carry the visual identity.
+   * Rounding stays softer than Tailwind's default because it carries the
+   * visual identity, but well short of the prototype's 32–48px corners,
+   * which read as oversized at real viewport widths.
    */
-  --radius-sm: 0.125rem;
-  --radius-2xl: 1rem;
-  --radius-lg: 2rem;
-  --radius-xl: 3rem;
+  --radius-sm: 0.375rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 0.75rem;
+
+  /* Page gutters, shared by every screen's outer container. */
+  --spacing-gutter: 1.25rem;
 }
 
 /* --------------------------------------------------------------------------
@@ -89,8 +93,25 @@
    -------------------------------------------------------------------------- */
 
 @layer base {
+  /*
+   * Every Tailwind spacing and type step is rem-based, so the root size is
+   * the one lever that rescales the whole interface proportionally. The
+   * prototype was drawn for a very large display; at 16px a laptop showed
+   * only a fraction of each screen.
+   *
+   * Media-query breakpoints are unaffected — rem inside a media query
+   * resolves against the initial 16px, not this value — so the responsive
+   * behaviour is unchanged.
+   */
   html {
+    font-size: 75%; /* 12px */
     scroll-behavior: smooth;
+  }
+
+  @media (min-width: 1536px) {
+    html {
+      font-size: 81.25%; /* 13px — a little more room on large displays */
+    }
   }
 
   body {

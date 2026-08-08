@@ -4,6 +4,9 @@
  * Deliberately transparent: every point is attributable to a named check, so
  * the panel can tell a student exactly what to change rather than showing an
  * opaque number.
+ *
+ * Lives on the server so the score stored against a saved resume and the
+ * score shown in the live preview can never diverge.
  */
 
 const ACTION_VERBS = [

@@ -71,7 +71,7 @@ export function DetailsForm({ profile, user, onSubmit, onCancel }) {
 
   return (
     <form
-      className="space-y-5"
+      className="space-y-3"
       onSubmit={(event) =>
         handleSubmit(event, {
           ...form,
@@ -98,7 +98,7 @@ export function DetailsForm({ profile, user, onSubmit, onCancel }) {
         placeholder="A short summary recruiters will read first."
       />
 
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-2 gap-3">
         <Input label="Branch" value={form.branch} onChange={set('branch')} error={errors.branch} />
         <Input
           label="Graduation year"
@@ -133,7 +133,7 @@ export function DetailsForm({ profile, user, onSubmit, onCancel }) {
         max={10}
       />
 
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-2 gap-3">
         <Input label="GitHub" value={form.links.github} onChange={setLink('github')} error={errors['links.github']} placeholder="https://github.com/…" />
         <Input label="LinkedIn" value={form.links.linkedin} onChange={setLink('linkedin')} error={errors['links.linkedin']} placeholder="https://linkedin.com/in/…" />
         <Input label="Portfolio" value={form.links.portfolio} onChange={setLink('portfolio')} error={errors['links.portfolio']} placeholder="https://…" />
@@ -155,10 +155,10 @@ export function SkillForm({ initial, onSubmit, onCancel }) {
   const set = (field) => (event) => setForm((c) => ({ ...c, [field]: event.target.value }));
 
   return (
-    <form className="space-y-5" onSubmit={(event) => handleSubmit(event, form)}>
+    <form className="space-y-3" onSubmit={(event) => handleSubmit(event, form)}>
       <FormError message={formError} />
       <Input label="Skill" value={form.name} onChange={set('name')} error={errors.name} required placeholder="React.js" />
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-2 gap-3">
         <Select
           label="Category"
           value={form.category}
@@ -203,7 +203,7 @@ export function ProjectForm({ initial, onSubmit, onCancel }) {
   const set = (field) => (event) => setForm((c) => ({ ...c, [field]: event.target.value }));
 
   return (
-    <form className="space-y-5" onSubmit={(event) => handleSubmit(event, form)}>
+    <form className="space-y-3" onSubmit={(event) => handleSubmit(event, form)}>
       <FormError message={formError} />
       <Input label="Title" value={form.title} onChange={set('title')} error={errors.title} required />
       <Textarea label="Description" value={form.description} onChange={set('description')} error={errors.description} rows={3} />
@@ -214,7 +214,7 @@ export function ProjectForm({ initial, onSubmit, onCancel }) {
         placeholder="React, then press Enter"
         max={15}
       />
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-2 gap-3">
         <Input label="Repository URL" value={form.repoUrl} onChange={set('repoUrl')} error={errors.repoUrl} placeholder="https://github.com/…" />
         <Input label="Live URL" value={form.liveUrl} onChange={set('liveUrl')} error={errors.liveUrl} placeholder="https://…" />
       </div>
@@ -241,12 +241,12 @@ export function CertificationForm({ initial, onSubmit, onCancel }) {
 
   return (
     <form
-      className="space-y-5"
+      className="space-y-3"
       onSubmit={(event) => handleSubmit(event, { ...form, issuedAt: form.issuedAt || undefined })}
     >
       <FormError message={formError} />
       <Input label="Certification" value={form.title} onChange={set('title')} error={errors.title} required placeholder="AWS Cloud Practitioner" />
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-2 gap-3">
         <Input label="Issuer" value={form.issuer} onChange={set('issuer')} error={errors.issuer} placeholder="Amazon Web Services" />
         <Input label="Issued on" type="date" value={form.issuedAt} onChange={set('issuedAt')} error={errors.issuedAt} />
         <Input label="Credential ID" value={form.credentialId} onChange={set('credentialId')} error={errors.credentialId} />
@@ -271,7 +271,7 @@ export function EducationForm({ initial, onSubmit, onCancel }) {
 
   return (
     <form
-      className="space-y-5"
+      className="space-y-3"
       onSubmit={(event) =>
         handleSubmit(event, {
           ...form,
@@ -282,7 +282,7 @@ export function EducationForm({ initial, onSubmit, onCancel }) {
     >
       <FormError message={formError} />
       <Input label="Institution" value={form.institution} onChange={set('institution')} error={errors.institution} required />
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-2 gap-3">
         <Input label="Degree" value={form.degree} onChange={set('degree')} error={errors.degree} placeholder="B.Tech" />
         <Input label="Field of study" value={form.fieldOfStudy} onChange={set('fieldOfStudy')} error={errors.fieldOfStudy} placeholder="Computer Science" />
         <Input label="Start year" type="number" min="1950" max="2100" value={form.startYear} onChange={set('startYear')} error={errors.startYear} />

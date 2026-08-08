@@ -1,0 +1,143 @@
+# Student OS
+
+A placement-readiness platform for engineering students. Practice, verification,
+presentation and institutional oversight share one data model, so every activity
+feeds a single readiness score that means something.
+
+**MERN** — MongoDB · Express · React 19 · Node 20+
+
+---
+
+## Quick start
+
+```bash
+git clone https://github.com/muqeet1001/Student_OS.git
+cd Student_OS
+npm install
+
+cp server/.env.example server/.env    # then fill it in — see below
+npm run seed:demo                     # reference data + demo@studentos.com / demo1234
+npm run dev                           # client :5173, API :5000
+```
+
+With `MONGO_URI` left blank in development, the API boots an ephemeral
+in-memory MongoDB so a fresh clone runs with zero setup. Data is lost on
+restart — set a real URI to persist anything.
+
+## What you need to provide
+
+Only three values are required. Everything else has a working default.
+
+| Variable | Required | How to get it |
+|---|---|---|
+| `MONGO_URI` | production | Atlas connection string, **including the database name**: `…mongodb.net/student_os?retryWrites=true&w=majority`. Allow your server's IP under Atlas → Network Access. |
+| `JWT_ACCESS_SECRET` | production | `openssl rand -hex 48` |
+| `JWT_REFRESH_SECRET` | production | `openssl rand -hex 48` — must differ from the access secret |
+| `AI_API_KEY` | optional | Only for model-based interview feedback. Scoring works fully without it. |
+
+`server/.env.example` documents every variable. `.env` is gitignored — keep
+real credentials out of the repository, and rotate any secret that has been
+pasted into a chat, issue or PR.
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `npm run dev` | Client and API together, both with hot reload |
+| `npm run build` | Production client build into `client/dist` |
+| `npm start` | Production API, which also serves the built client |
+| `npm test` | 37 tests — judge sandbox, interview scoring, seed integrity, production serving |
+| `npm run seed` | Upsert reference data (safe to re-run) |
+| `npm run seed:demo` | Also create the demo account |
+| `npm run seed:fresh` | Wipe reference data first (leaves student data alone) |
+
+## Features
+
+**For students**
+
+- **Coding practice** — sandboxed judge with real test cases, per-problem drafts, streaks
+- **Skill tests** — server-timed, auto-scored; passing verifies a skill on the profile
+- **PYQ library** — previous-year questions filterable by company, year, round and topic
+- **Company prep** — real round structures, strategy notes, most-asked questions
+- **AI mock interview** — scored on relevance, structure, specificity and delivery, with feedback that names what to fix
+- **Resume builder** — generated from the profile, transparent ATS score, print to PDF, saved versions frozen at save time
+- **Dashboard** — one weighted readiness score and what to do next
+
+**For placement staff**
+
+- **Cohort view** — every student's readiness, filterable by branch, graduation year and risk band, with a per-student drill-down
+
+## Architecture
+
+```
+client/                 React 19 + Vite + Tailwind v4
+  src/pages/            One file per route
+  src/features/         Feature-scoped components
+  src/components/       Shared UI (layout, modal, form fields, state blocks)
+  src/hooks/            useApiResource, useDebouncedValue, useSpeechInput
+  src/context/          AuthContext — access token in memory, refresh in cookie
+
+server/                 Express + Mongoose
+  src/models/           15 collections — see docs/database.md
+  src/controllers/      Route handlers
+  src/services/         codeRunner (VM sandbox), answerAnalyzer, atsScore,
+                        streak, notifications, token
+  src/middleware/       auth, validate (zod), upload, error
+  src/seed/             Reference data and the seed runner
+```
+
+**One service in production.** `npm start` serves the API and the built client
+from the same origin, so the refresh cookie is same-site and there is no CORS
+preflight. Deploy with `npm install && npm run build`, start with `npm start`.
+
+### Design decisions worth knowing
+
+- **Access tokens live in memory, never `localStorage`** — an XSS bug cannot
+  read them. The refresh token is an httpOnly cookie, rotated on every use and
+  stored server-side so it can be revoked.
+- **Submitted code runs in a `node:vm` sandbox** with a timeout, output cap and
+  no module access. Tests cover constructor-chain escape attempts.
+- **Test timers are server-side.** `expiresAt` is set at start, so the clock
+  cannot be extended from the client.
+- **Interview scoring is deterministic**, not a model call. Every point is
+  attributable to a named check, which is what makes the feedback actionable.
+  An LLM can be layered on via `AI_API_KEY`.
+- **`solvedproblems` is the single source of truth for "solved"**, read by the
+  student dashboard, the practice screen and the admin cohort view alike, so
+  they cannot disagree.
+- **Saved resumes freeze a profile snapshot** — a resume already sent to an
+  employer must not change when the profile is edited later.
+
+## Documentation
+
+- [`docs/database.md`](docs/database.md) — all 15 collections, relationships,
+  indexes and the readiness weighting
+
+## Deployment
+
+Any Node host (Render, Railway, Fly, a VM):
+
+| Setting | Value |
+|---|---|
+| Build command | `npm install && npm run build` |
+| Start command | `npm start` |
+| Node version | 20 or newer |
+| Health check | `GET /api/health` |
+
+Set `NODE_ENV=production`, `MONGO_URI` and both JWT secrets in the host's
+environment. The server refuses to boot in production without them rather than
+falling back to insecure defaults.
+
+Uploaded avatars and certificates are written to `server/uploads`. On a host
+with an ephemeral filesystem, mount a persistent volume there or move uploads
+to object storage before going live.
+
+## Status
+
+Working and tested: authentication, profiles, coding practice, PYQ library,
+skill tests, mock interviews, resume builder, company prep, admin cohort view,
+dashboard.
+
+Not built yet: email verification and password reset, an admin UI for
+authoring content (the seed script covers it for now), and object storage for
+uploads.
