@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { adminRoutes } from './admin.routes.js';
 import { authRoutes } from './auth.routes.js';
+import { calendarRoutes } from './calendar.routes.js';
 import { companyRoutes } from './company.routes.js';
 import { driveRoutes } from './drive.routes.js';
 import { jobRoutes } from './job.routes.js';
@@ -30,5 +31,6 @@ routes.use('/match', matchRoutes);
 routes.use('/jobs', jobRoutes);
 routes.use('/drives', driveRoutes);
 routes.use('/offers', offerRoutes);
+routes.use('/calendar', calendarRoutes);
 routes.use('/skills', skillAssessmentRoutes);
 routes.use('/admin', adminRoutes);

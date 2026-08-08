@@ -8,6 +8,7 @@ import JobMatch from '../features/admin/JobMatch.jsx';
 import Insights from '../features/admin/Insights.jsx';
 import Drives from '../features/admin/Drives.jsx';
 import Placements from '../features/admin/Placements.jsx';
+import Calendar from '../features/admin/Calendar.jsx';
 
 const BAND_STYLES = {
   ready: 'bg-green-100 text-green-800',
@@ -93,7 +94,9 @@ export default function AdminDashboard() {
                   ? 'Placement drives'
                   : tab === 'placements'
                     ? 'Offers and placement report'
-                    : 'Student progress'}
+                    : tab === 'calendar'
+                      ? 'Placement calendar'
+                      : 'Student progress'}
           </h1>
         </header>
 
@@ -103,6 +106,7 @@ export default function AdminDashboard() {
             { key: 'cohort', label: 'Browse cohort' },
             { key: 'drives', label: 'Drives' },
             { key: 'placements', label: 'Placements' },
+            { key: 'calendar', label: 'Calendar' },
             { key: 'insights', label: 'Insights' },
           ].map((item) => (
             <button
@@ -125,6 +129,7 @@ export default function AdminDashboard() {
         {tab === 'match' && <JobMatch />}
         {tab === 'drives' && <Drives />}
         {tab === 'placements' && <Placements />}
+        {tab === 'calendar' && <Calendar />}
         {tab === 'insights' && <Insights />}
 
         {/* Cohort summary */}
