@@ -10,6 +10,7 @@ import Drives from '../features/admin/Drives.jsx';
 import Placements from '../features/admin/Placements.jsx';
 import Calendar from '../features/admin/Calendar.jsx';
 import Companies from '../features/admin/Companies.jsx';
+import Training from '../features/admin/Training.jsx';
 
 const BAND_STYLES = {
   ready: 'bg-green-100 text-green-800',
@@ -99,7 +100,9 @@ export default function AdminDashboard() {
                       ? 'Placement calendar'
                       : tab === 'companies'
                         ? 'Company relationships'
-                        : 'Student progress'}
+                        : tab === 'training'
+                          ? 'Training and its effect'
+                          : 'Student progress'}
           </h1>
         </header>
 
@@ -119,6 +122,7 @@ export default function AdminDashboard() {
             { key: 'placements', label: 'Placements' },
             { key: 'calendar', label: 'Calendar' },
             { key: 'companies', label: 'Companies' },
+            { key: 'training', label: 'Training' },
             { key: 'insights', label: 'Insights' },
           ].map((item) => (
             <button
@@ -143,6 +147,7 @@ export default function AdminDashboard() {
         {tab === 'placements' && <Placements />}
         {tab === 'calendar' && <Calendar />}
         {tab === 'companies' && <Companies />}
+        {tab === 'training' && <Training />}
         {tab === 'insights' && <Insights />}
 
         {/* Cohort summary */}
