@@ -23,6 +23,11 @@ import { InterviewQuestion } from '../models/InterviewQuestion.js';
 import { Company } from '../models/Company.js';
 import { User } from '../models/User.js';
 import { Profile } from '../models/Profile.js';
+import { Bookmark, SolvedProblem, Submission } from '../models/Submission.js';
+import { QuestionProgress } from '../models/Question.js';
+import { TestAttempt } from '../models/Test.js';
+import { InterviewSession } from '../models/InterviewSession.js';
+import { Resume } from '../models/Resume.js';
 
 import { problems } from './data/problems.js';
 import { pyqs } from './data/pyqs.js';
@@ -103,6 +108,31 @@ async function seedCompanies() {
   logger.info(`Seeded ${companies.length} company prep hubs`);
 }
 
+/**
+ * Creates every declared index.
+ *
+ * Mongoose's autoIndex is disabled in production — you do not want each boot
+ * rebuilding indexes — so without this step a production database would have
+ * none. That is not only a performance problem: the unique indexes are what
+ * stop duplicate accounts and stop a re-solve inflating a student's count.
+ */
+async function syncIndexes() {
+  const models = [
+    User, Profile,
+    Problem, Submission, SolvedProblem, Bookmark,
+    Question, QuestionProgress,
+    Test, TestQuestion, TestAttempt,
+    InterviewQuestion, InterviewSession,
+    Resume, Company,
+  ];
+
+  for (const model of models) {
+    await model.syncIndexes();
+  }
+
+  logger.info(`Synced indexes across ${models.length} collections`);
+}
+
 async function seedDemoUser() {
   const email = 'demo@studentos.com';
   const existing = await User.findOne({ email });
@@ -159,6 +189,7 @@ export async function run({ connect = true } = {}) {
   await seedTests();
   await seedInterviewQuestions();
   await seedCompanies();
+  await syncIndexes();
   if (DEMO) await seedDemoUser();
 
   if (connect) await disconnectDatabase();
