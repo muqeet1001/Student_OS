@@ -6,6 +6,8 @@ import CodingPractice from './pages/CodingPractice.jsx';
 import CompanyHub from './pages/CompanyHub.jsx';
 import CompanyPrep from './pages/CompanyPrep.jsx';
 import Dashboard from './pages/Dashboard.jsx';
+import JobDetail from './pages/JobDetail.jsx';
+import Jobs from './pages/Jobs.jsx';
 import Login from './pages/Login.jsx';
 import NotFound from './pages/NotFound.jsx';
 import Profile from './pages/Profile.jsx';
@@ -48,6 +50,8 @@ export default function App() {
             <Route path="/coding-practice/:slug" element={<ProblemWorkspace />} />
             <Route path="/pyq-library" element={<PyqLibrary />} />
             <Route path="/resume-builder" element={<ResumeBuilder />} />
+            <Route path="/jobs" element={<Jobs />} />
+            <Route path="/jobs/:jobId" element={<JobDetail />} />
             <Route path="/company-prep" element={<CompanyPrep />} />
             <Route path="/company-prep/:slug" element={<CompanyHub />} />
             <Route path="/admin" element={<AdminDashboard />} />

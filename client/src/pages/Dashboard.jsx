@@ -6,6 +6,7 @@ import ReadinessCard from '../features/dashboard/ReadinessCard.jsx';
 import TodayPlan from '../features/dashboard/TodayPlan.jsx';
 import TargetRole from '../features/dashboard/TargetRole.jsx';
 import NotificationList from '../features/dashboard/NotificationList.jsx';
+import JobsForYou from '../features/dashboard/JobsForYou.jsx';
 
 function greeting() {
   const hour = new Date().getHours();
@@ -275,6 +276,8 @@ export default function Dashboard() {
             </div>
           )}
         </Panel>
+
+        <JobsForYou />
 
         <Panel title="Needs your attention">
           <NotificationList notifications={data.notifications} />

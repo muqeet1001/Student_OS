@@ -13,6 +13,8 @@
  */
 import { basename } from 'node:path';
 
+import { parseJobDescription } from '../services/jobMatch.js';
+
 import { connectDatabase, disconnectDatabase } from '../config/db.js';
 import { logger } from '../utils/logger.js';
 
@@ -21,6 +23,7 @@ import { Question } from '../models/Question.js';
 import { Test, TestQuestion } from '../models/Test.js';
 import { InterviewQuestion } from '../models/InterviewQuestion.js';
 import { Company } from '../models/Company.js';
+import { Application, JobPosting } from '../models/JobPosting.js';
 import { User } from '../models/User.js';
 import { Profile } from '../models/Profile.js';
 import { Bookmark, SolvedProblem, Submission } from '../models/Submission.js';
@@ -34,6 +37,7 @@ import { pyqs } from './data/pyqs.js';
 import { tests } from './data/tests.js';
 import { interviewQuestions } from './data/interviewQuestions.js';
 import { companies } from './data/companies.js';
+import { jobs } from './data/jobs.js';
 
 const flags = new Set(process.argv.slice(2));
 const FRESH = flags.has('--fresh');
@@ -116,6 +120,22 @@ async function seedCompanies() {
  * none. That is not only a performance problem: the unique indexes are what
  * stop duplicate accounts and stop a re-solve inflating a student's count.
  */
+async function seedJobs() {
+  for (const { daysUntilDeadline, ...job } of jobs) {
+    await JobPosting.findOneAndUpdate(
+      { title: job.title, company: job.company },
+      {
+        ...job,
+        // Deadlines are relative so seeded jobs are never already closed.
+        deadline: new Date(Date.now() + daysUntilDeadline * 24 * 60 * 60 * 1000),
+        requirements: parseJobDescription(job.description),
+      },
+      { upsert: true, setDefaultsOnInsert: true },
+    );
+  }
+  logger.info(`Seeded ${jobs.length} job postings`);
+}
+
 async function syncIndexes() {
   const models = [
     User, Profile,
@@ -123,7 +143,7 @@ async function syncIndexes() {
     Question, QuestionProgress,
     Test, TestQuestion, TestAttempt,
     InterviewQuestion, InterviewSession,
-    Resume, Company,
+    Resume, Company, JobPosting, Application,
   ];
 
   for (const model of models) {
@@ -179,6 +199,7 @@ export async function run({ connect = true } = {}) {
       TestQuestion.deleteMany({}),
       InterviewQuestion.deleteMany({}),
       Company.deleteMany({}),
+      JobPosting.deleteMany({}),
     ]);
     logger.warn('Cleared existing reference data (--fresh)');
   }
@@ -189,6 +210,7 @@ export async function run({ connect = true } = {}) {
   await seedTests();
   await seedInterviewQuestions();
   await seedCompanies();
+  await seedJobs();
   await syncIndexes();
   if (DEMO) await seedDemoUser();
 
