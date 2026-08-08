@@ -7,6 +7,7 @@ import StudentDetail from '../features/admin/StudentDetail.jsx';
 import JobMatch from '../features/admin/JobMatch.jsx';
 import Insights from '../features/admin/Insights.jsx';
 import Drives from '../features/admin/Drives.jsx';
+import Placements from '../features/admin/Placements.jsx';
 
 const BAND_STYLES = {
   ready: 'bg-green-100 text-green-800',
@@ -90,7 +91,9 @@ export default function AdminDashboard() {
                 ? 'Cohort insights'
                 : tab === 'drives'
                   ? 'Placement drives'
-                  : 'Student progress'}
+                  : tab === 'placements'
+                    ? 'Offers and placement report'
+                    : 'Student progress'}
           </h1>
         </header>
 
@@ -99,6 +102,7 @@ export default function AdminDashboard() {
             { key: 'match', label: 'Match to a job' },
             { key: 'cohort', label: 'Browse cohort' },
             { key: 'drives', label: 'Drives' },
+            { key: 'placements', label: 'Placements' },
             { key: 'insights', label: 'Insights' },
           ].map((item) => (
             <button
@@ -120,6 +124,7 @@ export default function AdminDashboard() {
 
         {tab === 'match' && <JobMatch />}
         {tab === 'drives' && <Drives />}
+        {tab === 'placements' && <Placements />}
         {tab === 'insights' && <Insights />}
 
         {/* Cohort summary */}
