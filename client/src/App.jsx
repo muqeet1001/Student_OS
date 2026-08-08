@@ -16,6 +16,7 @@ import Register from './pages/Register.jsx';
 import ResumeBuilder from './pages/ResumeBuilder.jsx';
 import SkillTest from './pages/SkillTest.jsx';
 import TestReview from './pages/TestReview.jsx';
+import Tracker from './pages/Tracker.jsx';
 import TestRunner from './pages/TestRunner.jsx';
 import AiInterview from './pages/AiInterview.jsx';
 import InterviewReport from './pages/InterviewReport.jsx';
@@ -52,6 +53,7 @@ export default function App() {
             <Route path="/resume-builder" element={<ResumeBuilder />} />
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/jobs/:jobId" element={<JobDetail />} />
+            <Route path="/tracker" element={<Tracker />} />
             <Route path="/company-prep" element={<CompanyPrep />} />
             <Route path="/company-prep/:slug" element={<CompanyHub />} />
             <Route path="/admin" element={<AdminDashboard />} />
