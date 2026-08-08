@@ -7,6 +7,7 @@ import TodayPlan from '../features/dashboard/TodayPlan.jsx';
 import TargetRole from '../features/dashboard/TargetRole.jsx';
 import NotificationList from '../features/dashboard/NotificationList.jsx';
 import JobsForYou from '../features/dashboard/JobsForYou.jsx';
+import ProgressChart from '../features/dashboard/ProgressChart.jsx';
 
 function greeting() {
   const hour = new Date().getHours();
@@ -276,6 +277,8 @@ export default function Dashboard() {
             </div>
           )}
         </Panel>
+
+        <ProgressChart />
 
         <JobsForYou />
 

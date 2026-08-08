@@ -11,6 +11,8 @@ import { scoreResume } from '../services/atsScore.js';
 import { ROLE_PROFILES, roleByKey } from '../services/roleProfiles.js';
 import { canonicalise } from '../services/skillTaxonomy.js';
 import { buildRecommendations, buildTodayPlan } from '../services/todayPlan.js';
+import { readHistory, recordSnapshot } from '../services/snapshot.service.js';
+import { Application } from '../models/JobPosting.js';
 
 /**
  * Readiness is the product's core number, so it is composed of the five
@@ -171,6 +173,23 @@ export const getDashboard = asyncHandler(async (req, res) => {
     availableRoles: ROLE_PROFILES.map(({ key, label, icon }) => ({ key, label, icon })),
   };
 
+  /*
+   * Growth cannot be reconstructed later — the inputs only ever expose their
+   * current value — so today's number is recorded on the way past. Awaited
+   * but non-throwing: a failed write must never break the dashboard.
+   */
+  const applicationCount = await Application.countDocuments({ user: userId });
+  await recordSnapshot(userId, {
+    score: readiness,
+    components,
+    totals: {
+      solved: totalSolved,
+      verifiedSkills: verifiedCount,
+      interviews: interviews.length,
+      applications: applicationCount,
+    },
+  });
+
   res.json({
     success: true,
     data: {
@@ -178,6 +197,28 @@ export const getDashboard = asyncHandler(async (req, res) => {
       plan: buildTodayPlan({ ...payload, components, profile }),
       recommendations: buildRecommendations({ ...payload, components, atsReport, roleMatch }),
       notifications: buildNotifications({ ...payload, profile }),
+    },
+  });
+});
+
+/** Readiness over time, for the progress chart. */
+export const getHistory = asyncHandler(async (req, res) => {
+  const days = Math.min(365, Math.max(7, Number(req.query.days) || 90));
+  const snapshots = await readHistory(req.user._id, days);
+
+  const first = snapshots[0];
+  const last = snapshots.at(-1);
+
+  res.json({
+    success: true,
+    data: {
+      snapshots,
+      // A single data point is a reading, not a trend — say so rather than
+      // drawing a flat line and implying no progress.
+      trend:
+        snapshots.length >= 2
+          ? { change: last.score - first.score, from: first.day, to: last.day }
+          : null,
     },
   });
 });
