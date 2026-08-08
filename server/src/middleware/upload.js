@@ -57,3 +57,14 @@ export function removeUpload(publicUrl) {
   if (!target.startsWith(config.uploadsDir)) return;
   fs.rm(target, { force: true }, () => {});
 }
+
+/**
+ * Documents go to MongoDB via GridFS, so they are held in memory only long
+ * enough to be written — never to the container's filesystem, which is
+ * ephemeral on every platform this is likely to be deployed to.
+ */
+export const uploadDocumentFile = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024, files: 1 },
+  fileFilter: filterFor(DOCUMENT_TYPES),
+}).single('file');
