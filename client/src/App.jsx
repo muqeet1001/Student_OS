@@ -11,6 +11,7 @@ import Jobs from './pages/Jobs.jsx';
 import Login from './pages/Login.jsx';
 import NotFound from './pages/NotFound.jsx';
 import Profile from './pages/Profile.jsx';
+import Roadmap from './pages/Roadmap.jsx';
 import PyqLibrary from './pages/PyqLibrary.jsx';
 import Register from './pages/Register.jsx';
 import ResumeBuilder from './pages/ResumeBuilder.jsx';
@@ -54,6 +55,7 @@ export default function App() {
             <Route path="/coding-practice/:slug" element={<ProblemWorkspace />} />
             <Route path="/pyq-library" element={<PyqLibrary />} />
             <Route path="/resume-builder" element={<ResumeBuilder />} />
+            <Route path="/roadmap" element={<Roadmap />} />
             <Route path="/jobs" element={<Jobs />} />
             <Route path="/jobs/:jobId" element={<JobDetail />} />
             <Route path="/tracker" element={<Tracker />} />

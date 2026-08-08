@@ -12,6 +12,7 @@ import { ROLE_PROFILES, roleByKey } from '../services/roleProfiles.js';
 import { canonicalise } from '../services/skillTaxonomy.js';
 import { buildRecommendations, buildTodayPlan } from '../services/todayPlan.js';
 import { readHistory, recordSnapshot } from '../services/snapshot.service.js';
+import { buildRoadmap } from '../services/roadmap.service.js';
 import { Application } from '../models/JobPosting.js';
 
 /**
@@ -234,4 +235,78 @@ export const setTargetRole = asyncHandler(async (req, res) => {
   ).lean();
 
   res.json({ success: true, data: { targetRole: matchRole(profile, targetRole) } });
+});
+
+
+/**
+ * The four-week plan.
+ *
+ * Rebuilt from live state on every request rather than stored: a stored
+ * roadmap goes stale the moment a student verifies a skill, and would then
+ * be telling them to do something they have already done.
+ */
+export const getRoadmap = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+
+  const [profile, account, solvedByDifficulty, attempts, interviews, applications] =
+    await Promise.all([
+      Profile.findOne({ user: userId }).lean(),
+      User.findById(userId).select('name email').lean(),
+      SolvedProblem.aggregate([
+        { $match: { user: userId } },
+        { $group: { _id: '$difficulty', count: { $sum: 1 } } },
+      ]),
+      TestAttempt.countDocuments({ user: userId, status: { $in: ['submitted', 'expired'] } }),
+      InterviewSession.find({ user: userId, status: 'completed' }).select('overallScore').lean(),
+      Application.countDocuments({ user: userId, stage: { $ne: 'saved' } }),
+    ]);
+
+  const empty = { easy: 0, medium: 0, hard: 0 };
+  const solved = solvedByDifficulty.reduce(
+    (acc, row) => ({ ...acc, [row._id]: row.count }),
+    { ...empty },
+  );
+  const totalSolved = Object.values(solved).reduce((sum, n) => sum + n, 0);
+
+  const interviewAverage = interviews.length
+    ? Math.round(interviews.reduce((sum, s) => sum + s.overallScore, 0) / interviews.length)
+    : 0;
+
+  const atsReport = profile ? scoreResume({ profile, user: account }) : { score: 0, checks: [] };
+  const roleMatch = matchRole(profile, profile?.targetRole);
+
+  const components = [
+    { key: 'interview', label: 'Interview', value: interviewAverage },
+  ];
+
+  const roadmap = buildRoadmap({
+    components,
+    coding: { solved, totalSolved },
+    tests: { taken: attempts },
+    interviews: { completed: interviews.length },
+    resume: { atsScore: atsReport.score, checks: atsReport.checks },
+    profile,
+    roleMatch,
+  });
+
+  // The applying task is the one signal the dashboard payload cannot supply.
+  for (const week of roadmap.weeks) {
+    for (const task of week.tasks) {
+      if (task.derivedFrom === 'applications') {
+        task.done = applications > 0;
+        task.progress = `${applications} applied`;
+      }
+    }
+    week.done = week.tasks.filter((task) => task.done).length;
+    week.complete = week.tasks.every((task) => task.done);
+  }
+
+  const all = roadmap.weeks.flatMap((week) => week.tasks);
+  roadmap.progress = {
+    done: all.filter((task) => task.done).length,
+    total: all.length,
+    percentage: Math.round((all.filter((task) => task.done).length / all.length) * 100),
+  };
+
+  res.json({ success: true, data: { ...roadmap, targetRole: roleMatch } });
 });
