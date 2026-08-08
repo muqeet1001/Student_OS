@@ -9,6 +9,12 @@ import {
   signRefreshToken,
   verifyRefreshToken,
 } from '../services/token.service.js';
+import { describeUserAgent } from '../services/userAgent.js';
+import {
+  NOTIFICATION_CATEGORIES,
+  defaultPreferences,
+  sanitisePreferences,
+} from '../services/notificationPreferences.js';
 
 const MAX_SESSIONS = 5;
 
@@ -120,6 +126,98 @@ export const logout = asyncHandler(async (req, res) => {
 
 export const me = asyncHandler(async (req, res) => {
   res.json({ success: true, data: { user: req.user.toJSON() } });
+});
+
+/**
+ * Signed-in devices.
+ *
+ * The user agent has been recorded against every refresh token since the
+ * first release and never shown to anyone. Surfacing it is the difference
+ * between a student being able to notice a session they do not recognise and
+ * having no way to find out.
+ */
+export const listSessions = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).select('+refreshTokens').lean();
+
+  const presented = req.cookies?.[REFRESH_COOKIE]
+    ? hashToken(req.cookies[REFRESH_COOKIE])
+    : null;
+
+  const now = new Date();
+
+  const sessions = (user.refreshTokens ?? [])
+    .filter((entry) => entry.expiresAt > now)
+    .map((entry) => ({
+      // The hash never leaves the server; the client only needs to tell
+      // sessions apart, and an opaque prefix is enough for that.
+      id: entry.tokenHash.slice(0, 12),
+      device: describeUserAgent(entry.userAgent),
+      signedInAt: entry.createdAt ?? null,
+      expiresAt: entry.expiresAt,
+      current: presented === entry.tokenHash,
+    }))
+    .sort((a, b) => Number(b.current) - Number(a.current) || new Date(b.signedInAt) - new Date(a.signedInAt));
+
+  res.json({ success: true, data: { sessions } });
+});
+
+/**
+ * Signs out everywhere except here.
+ *
+ * Deliberately all-or-nothing rather than per-session revocation: someone
+ * worried enough to open this page wants every other device gone, and
+ * picking through a list invites leaving the wrong one behind.
+ */
+export const revokeOtherSessions = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).select('+refreshTokens');
+
+  const presented = req.cookies?.[REFRESH_COOKIE]
+    ? hashToken(req.cookies[REFRESH_COOKIE])
+    : null;
+
+  const before = user.refreshTokens.length;
+  user.refreshTokens = user.refreshTokens.filter((entry) => entry.tokenHash === presented);
+  await user.save({ validateBeforeSave: false });
+
+  res.json({
+    success: true,
+    data: { revoked: before - user.refreshTokens.length, message: 'Other sessions signed out.' },
+  });
+});
+
+/** Reads the notification categories and the student's choices. */
+export const getSettings = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id).lean();
+
+  res.json({
+    success: true,
+    data: {
+      categories: NOTIFICATION_CATEGORIES,
+      // Merged over the defaults so a category the student has never touched
+      // reads as on rather than missing.
+      notifications: { ...defaultPreferences(), ...(user.settings?.notifications ?? {}) },
+    },
+  });
+});
+
+export const updateSettings = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.user._id);
+
+  const clean = sanitisePreferences(req.body.notifications);
+  for (const [key, value] of Object.entries(clean)) {
+    user.settings.notifications.set(key, value);
+  }
+  await user.save({ validateBeforeSave: false });
+
+  res.json({
+    success: true,
+    data: {
+      notifications: {
+        ...defaultPreferences(),
+        ...Object.fromEntries(user.settings.notifications),
+      },
+    },
+  });
 });
 
 export const updatePassword = asyncHandler(async (req, res) => {

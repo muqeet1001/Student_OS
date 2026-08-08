@@ -7,6 +7,7 @@ import { User } from '../models/User.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { computeStreak } from '../services/streak.service.js';
 import { buildNotifications } from '../services/notifications.service.js';
+import { filterNotifications } from '../services/notificationPreferences.js';
 import { scoreResume } from '../services/atsScore.js';
 import { ROLE_PROFILES, roleByKey } from '../services/roleProfiles.js';
 import { canonicalise } from '../services/skillTaxonomy.js';
@@ -198,7 +199,12 @@ export const getDashboard = asyncHandler(async (req, res) => {
       ...payload,
       plan: buildTodayPlan({ ...payload, components, profile }),
       recommendations: buildRecommendations({ ...payload, components, atsReport, roleMatch }),
-      notifications: buildNotifications({ ...payload, profile }),
+      // Filtered at derivation, in one place, so the badge count can never
+      // disagree with the list under it.
+      notifications: filterNotifications(
+        buildNotifications({ ...payload, profile }),
+        Object.fromEntries(req.user.settings?.notifications ?? []),
+      ),
     },
   });
 });

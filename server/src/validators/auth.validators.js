@@ -23,3 +23,9 @@ export const updatePasswordSchema = z.object({
   currentPassword: z.string().min(1, 'Current password is required'),
   newPassword: password,
 });
+
+export const updateSettingsSchema = z.object({
+  // Keys are validated against the known categories in the service, so an
+  // unrecognised one is dropped rather than written to the document.
+  notifications: z.record(z.string(), z.boolean()).default({}),
+});

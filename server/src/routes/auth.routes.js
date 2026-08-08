@@ -8,6 +8,7 @@ import {
   loginSchema,
   registerSchema,
   updatePasswordSchema,
+  updateSettingsSchema,
 } from '../validators/auth.validators.js';
 
 export const authRoutes = Router();
@@ -28,6 +29,17 @@ authRoutes.post('/refresh', authController.refresh);
 authRoutes.post('/logout', authController.logout);
 
 authRoutes.get('/me', requireAuth, authController.me);
+
+authRoutes.get('/sessions', requireAuth, authController.listSessions);
+authRoutes.delete('/sessions', requireAuth, authController.revokeOtherSessions);
+
+authRoutes.get('/settings', requireAuth, authController.getSettings);
+authRoutes.patch(
+  '/settings',
+  requireAuth,
+  validate(updateSettingsSchema),
+  authController.updateSettings,
+);
 authRoutes.patch(
   '/password',
   requireAuth,

@@ -14,6 +14,7 @@ export const navLinks = [
   { label: 'Resume Builder', path: '/resume-builder', icon: 'description', short: 'Resume' },
   { label: 'AI Interview', path: '/ai-interview', icon: 'psychology', short: 'Interview' },
   { label: 'Profile', path: '/profile', icon: 'person', short: 'Profile' },
+  { label: 'Settings', path: '/settings', icon: 'settings', short: 'Settings' },
 ];
 
 /** Shown only to admins, appended after the student links. */

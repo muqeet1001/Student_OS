@@ -48,6 +48,22 @@ const userSchema = new mongoose.Schema(
     isActive: { type: Boolean, default: true },
     lastLoginAt: { type: Date },
     refreshTokens: { type: [refreshTokenSchema], default: [], select: false },
+
+    /*
+     * Notification categories the student wants. Stored sparsely: a category
+     * absent here is treated as on, so adding a new one does not require
+     * backfilling every existing user.
+     *
+     * There are no email preferences because there is no email — offering a
+     * toggle that does nothing is worse than not offering it.
+     */
+    settings: {
+      notifications: {
+        type: Map,
+        of: Boolean,
+        default: () => new Map(),
+      },
+    },
   },
   {
     timestamps: true,
