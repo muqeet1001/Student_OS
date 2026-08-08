@@ -2,7 +2,7 @@
   "name": "student-os",
   "private": true,
   "version": "1.0.0",
-  "description": "Student OS — a placement readiness platform for students (MERN)",
+  "description": "Student OS \u2014 a placement readiness platform for students (MERN)",
   "type": "module",
   "workspaces": [
     "client",
@@ -16,7 +16,9 @@
     "start": "npm run start --workspace server",
     "seed": "npm run seed --workspace server",
     "lint": "npm run lint --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "seed:demo": "npm run seed --workspace server -- --demo",
+    "seed:fresh": "npm run seed --workspace server -- --fresh"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"
