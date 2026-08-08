@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext.jsx';
 import StudentDetail from '../features/admin/StudentDetail.jsx';
 import JobMatch from '../features/admin/JobMatch.jsx';
 import Insights from '../features/admin/Insights.jsx';
+import Drives from '../features/admin/Drives.jsx';
 
 const BAND_STYLES = {
   ready: 'bg-green-100 text-green-800',
@@ -87,7 +88,9 @@ export default function AdminDashboard() {
               ? 'Shortlist candidates'
               : tab === 'insights'
                 ? 'Cohort insights'
-                : 'Student progress'}
+                : tab === 'drives'
+                  ? 'Placement drives'
+                  : 'Student progress'}
           </h1>
         </header>
 
@@ -95,6 +98,7 @@ export default function AdminDashboard() {
           {[
             { key: 'match', label: 'Match to a job' },
             { key: 'cohort', label: 'Browse cohort' },
+            { key: 'drives', label: 'Drives' },
             { key: 'insights', label: 'Insights' },
           ].map((item) => (
             <button
@@ -115,6 +119,7 @@ export default function AdminDashboard() {
         </div>
 
         {tab === 'match' && <JobMatch />}
+        {tab === 'drives' && <Drives />}
         {tab === 'insights' && <Insights />}
 
         {/* Cohort summary */}
