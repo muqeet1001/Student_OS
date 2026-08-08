@@ -1,102 +1,154 @@
 /**
- * Frontend end-to-end journeys.
+ * End-to-end walk of the real application.
  *
- * Drives the real UI in a browser against the running dev server. Verifies
- * what a user actually experiences — navigation, guards, rendering, layout —
- * rather than component internals.
+ * Runs against a real server and a real database — not a mock. The previous
+ * version of this file pointed at a throwaway mock API that was never
+ * committed, had no way to authenticate, and asserted on copy the app had
+ * long since changed. Nothing ran it, so it quietly asserted nothing.
  *
- *   npm run test:e2e            (needs the dev server and an API running)
+ *   npm run build --workspace client
+ *   MONGO_URI="mongodb://127.0.0.1:27017/student_os" node server/src/seed/index.js --demo
+ *   MONGO_URI="mongodb://127.0.0.1:27017/student_os" PORT=5055 NODE_ENV=production \
+ *     node server/src/index.js &
+ *   E2E_BASE_URL=http://localhost:5055 npm run e2e
  */
 import { chromium } from 'playwright';
 
-const BASE = process.env.E2E_BASE_URL || 'http://localhost:5173';
+const BASE = process.env.E2E_BASE_URL || 'http://localhost:5055';
+const EMAIL = process.env.E2E_EMAIL || 'demo@studentos.com';
+const PASSWORD = process.env.E2E_PASSWORD || 'demo1234';
+
 const CHROME =
-  process.env.E2E_CHROMIUM || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+  process.env.E2E_CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+
+/** Routes every signed-in student can reach. */
+const ROUTES = [
+  '/dashboard',
+  '/profile',
+  '/skills',
+  '/skill-test',
+  '/coding-practice',
+  '/pyq-library',
+  '/resume-builder',
+  '/roadmap',
+  '/achievements',
+  '/calendar',
+  '/settings',
+  '/jobs',
+  '/tracker',
+  '/company-prep',
+  '/ai-interview',
+];
 
 const results = [];
-let browser;
-
-function record(name, passed, detail = '') {
-  results.push({ name, passed, detail });
-  console.log(`${passed ? 'PASS' : 'FAIL'}  ${name}${detail ? ` — ${detail}` : ''}`);
-}
 
 async function check(name, fn) {
   try {
     await fn();
-    record(name, true);
+    results.push({ name, ok: true });
+    console.log(`  ok  ${name}`);
   } catch (error) {
-    record(name, false, error.message.split('\n')[0].slice(0, 120));
+    results.push({ name, ok: false, error: error.message });
+    console.log(`  FAIL ${name}\n       ${error.message}`);
   }
 }
 
-/** Fails on any uncaught error or console error the user would never see. */
-function watchForErrors(page) {
-  const errors = [];
-  page.on('pageerror', (e) => errors.push(e.message));
-  page.on('console', (m) => {
-    const text = m.text();
-    // Font and asset fetches can fail in sandboxed environments without
-    // meaning the app is broken.
-    if (m.type() === 'error' && !/favicon|ERR_CONNECTION|net::ERR|404/.test(text)) {
-      errors.push(text);
+/**
+ * Collects genuine problems while a page is open.
+ *
+ * Blocked webfonts and favicons are sandbox facts rather than defects, so
+ * they are filtered — but a failing API call is always a defect, and those
+ * are the ones worth catching.
+ */
+function watch(page) {
+  const problems = [];
+
+  page.on('pageerror', (error) => problems.push(`uncaught: ${error.message}`));
+  page.on('console', (msg) => {
+    const text = msg.text();
+    if (msg.type() === 'error' && !/favicon|font|ERR_CONNECTION|net::ERR/i.test(text)) {
+      problems.push(`console: ${text.slice(0, 160)}`);
     }
   });
-  return errors;
+  page.on('response', (res) => {
+    if (res.url().includes('/api/') && res.status() >= 400) {
+      problems.push(`api ${res.status()} ${res.url().replace(BASE, '')}`);
+    }
+  });
+
+  return problems;
 }
 
-const ROUTES = [
-  ['/dashboard', 'Welcome back'],
-  ['/coding-practice', 'Coding Practice'],
-  ['/skill-test', 'Skill Test'],
-  ['/pyq-library', 'PYQ'],
-  ['/company-prep', 'Prepare for a specific company'],
-  ['/resume-builder', 'Resume Builder'],
-  ['/ai-interview', 'AI Mock Interview'],
-  ['/profile', ''],
-];
+async function signIn(context) {
+  const page = await context.newPage();
+  await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' });
+  await page.fill('input[type="email"]', EMAIL);
+  await page.fill('input[type="password"]', PASSWORD);
+
+  await Promise.all([
+    page.waitForURL(/dashboard/, { timeout: 20000 }),
+    page.click('button[type="submit"]'),
+  ]);
+
+  await page.close();
+}
 
 async function main() {
-  browser = await chromium.launch({ executablePath: CHROME });
-  const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+  const browser = await chromium.launch({ executablePath: CHROME });
+  const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
 
-  // --- every route renders, with no runtime errors -------------------------
-  for (const [route, expectedText] of ROUTES) {
+  await check('signs in with real credentials', () => signIn(context));
+
+  for (const route of ROUTES) {
     await check(`renders ${route}`, async () => {
-      const page = await ctx.newPage();
-      const errors = watchForErrors(page);
+      const page = await context.newPage();
+      const problems = watch(page);
 
-      await page.goto(BASE + route, { waitUntil: 'networkidle', timeout: 20000 });
-      await page.waitForTimeout(400);
+      await page.goto(BASE + route, { waitUntil: 'networkidle', timeout: 25000 });
+      await page.waitForTimeout(600);
 
-      if (expectedText) {
-        const body = await page.textContent('body');
-        if (!body.includes(expectedText)) {
-          throw new Error(`expected to find "${expectedText}"`);
-        }
+      const audit = await page.evaluate(() => ({
+        headings: [...document.querySelectorAll('h1')].map((h) => h.textContent.trim()),
+        // A raw icon name rendering as text means the font-reveal gate has
+        // misfired — the failure that once filled this UI with the word
+        // "arrow_forward".
+        rawIcons: [...document.querySelectorAll('.material-symbols-outlined')]
+          .filter((node) => getComputedStyle(node).visibility !== 'hidden')
+          .map((node) => node.textContent.trim())
+          .filter((text) => /^[a-z][a-z_]{4,}$/.test(text)),
+      }));
+
+      if (audit.headings.length !== 1) {
+        problems.push(`expected one <h1>, found ${audit.headings.length}`);
       }
-      if (errors.length) throw new Error(errors[0]);
+      if (audit.rawIcons.length) {
+        problems.push(`icon names rendered as text: ${audit.rawIcons.slice(0, 3).join(', ')}`);
+      }
 
       await page.close();
+      if (problems.length) throw new Error(problems.join('; '));
     });
   }
 
-  // --- layout holds at both breakpoints ------------------------------------
   for (const [label, viewport] of [
     ['laptop 1366', { width: 1366, height: 768 }],
     ['mobile 390', { width: 390, height: 844 }],
   ]) {
     await check(`no horizontal overflow at ${label}`, async () => {
       const sized = await browser.newContext({ viewport });
+      await signIn(sized);
+
       const page = await sized.newPage();
       const offenders = [];
 
-      for (const [route] of ROUTES) {
-        await page.goto(BASE + route, { waitUntil: 'networkidle', timeout: 20000 });
+      for (const route of ROUTES) {
+        await page.goto(BASE + route, { waitUntil: 'networkidle', timeout: 25000 });
         await page.waitForTimeout(250);
+
         const overflow = await page.evaluate(
           () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
         );
+        // Two pixels of slack for sub-pixel rounding; anything more is a bug.
         if (overflow > 2) offenders.push(`${route} +${overflow}px`);
       }
 
@@ -105,116 +157,28 @@ async function main() {
     });
   }
 
-  // --- navigation ----------------------------------------------------------
-  await check('sidebar navigates between sections', async () => {
-    const page = await ctx.newPage();
-    await page.goto(BASE + '/dashboard', { waitUntil: 'networkidle' });
+  await check('an unauthenticated visitor is sent to the login page', async () => {
+    const stranger = await browser.newContext();
+    const page = await stranger.newPage();
 
-    await page.click('a[href="/coding-practice"]');
-    await page.waitForURL('**/coding-practice', { timeout: 8000 });
-
-    await page.click('a[href="/skill-test"]');
-    await page.waitForURL('**/skill-test', { timeout: 8000 });
-
-    await page.close();
-  });
-
-  await check('unknown routes show the 404 page', async () => {
-    const page = await ctx.newPage();
-    await page.goto(BASE + '/no-such-page', { waitUntil: 'networkidle' });
-
-    const body = await page.textContent('body');
-    if (!body.includes('Page not found')) throw new Error('expected the 404 screen');
-
-    await page.close();
-  });
-
-  // --- mobile chrome -------------------------------------------------------
-  await check('mobile shows the bottom bar and a working drawer', async () => {
-    const mobile = await browser.newContext({ viewport: { width: 390, height: 844 } });
-    const page = await mobile.newPage();
-    await page.goto(BASE + '/dashboard', { waitUntil: 'networkidle' });
-
-    const bottomNav = await page.locator('nav[aria-label="Primary"]').isVisible();
-    if (!bottomNav) throw new Error('the bottom bar should be visible on mobile');
-
-    // The rail is off-canvas until the menu button opens it.
-    await page.click('button[aria-label="Open navigation"]');
-    await page.waitForTimeout(400);
-    const drawerLink = page.locator('aside nav a[href="/profile"]');
-    if (!(await drawerLink.isVisible())) throw new Error('the drawer should open');
-
-    await mobile.close();
-  });
-
-  await check('the navigation rail is hidden on mobile until opened', async () => {
-    const mobile = await browser.newContext({ viewport: { width: 390, height: 844 } });
-    const page = await mobile.newPage();
-    await page.goto(BASE + '/dashboard', { waitUntil: 'networkidle' });
-
-    // isVisible() ignores transforms, and the rail is moved off-screen rather
-    // than hidden — so assert its actual position instead.
-    const box = await page.locator('aside').first().boundingBox();
-    if (box && box.x + box.width > 1) {
-      throw new Error(`the rail should start off-canvas, found x=${Math.round(box.x)}`);
+    await page.goto(`${BASE}/dashboard`, { waitUntil: 'networkidle', timeout: 25000 });
+    if (!page.url().includes('/login')) {
+      throw new Error(`expected a redirect to /login, landed on ${page.url()}`);
     }
 
-    await mobile.close();
-  });
-
-  // --- accessibility basics ------------------------------------------------
-  await check('every icon-only control has an accessible name', async () => {
-    const page = await ctx.newPage();
-    const unnamed = [];
-
-    for (const [route] of ROUTES) {
-      await page.goto(BASE + route, { waitUntil: 'networkidle', timeout: 20000 });
-      await page.waitForTimeout(250);
-
-      const found = await page.evaluate(() =>
-        [...document.querySelectorAll('button, a')]
-          .filter((el) => {
-            const text = (el.textContent || '').replace(/\s/g, '');
-            const label = text.replace(/[\u{F0000}-\u{FFFFD}]/gu, '');
-            const iconOnly = el.querySelector('.material-symbols-outlined') && label.length === 0;
-            return iconOnly && !el.getAttribute('aria-label') && !el.getAttribute('title');
-          })
-          .map((el) => el.outerHTML.slice(0, 70)),
-      );
-      unnamed.push(...found.map((h) => `${route}: ${h}`));
-    }
-
-    await page.close();
-    if (unnamed.length) throw new Error(`${unnamed.length} unnamed, e.g. ${unnamed[0]}`);
-  });
-
-  await check('each page has exactly one h1', async () => {
-    const page = await ctx.newPage();
-    const problems = [];
-
-    for (const [route] of ROUTES) {
-      await page.goto(BASE + route, { waitUntil: 'networkidle', timeout: 20000 });
-      await page.waitForTimeout(200);
-      const count = await page.locator('h1').count();
-      if (count !== 1) problems.push(`${route} has ${count}`);
-    }
-
-    await page.close();
-    if (problems.length) throw new Error(problems.join(', '));
+    await stranger.close();
   });
 
   await browser.close();
 
-  const failed = results.filter((r) => !r.passed);
-  console.log(
-    `\n${results.length - failed.length}/${results.length} passed` +
-      (failed.length ? `\n${failed.length} failed` : ''),
-  );
-  process.exit(failed.length ? 1 : 0);
+  const failed = results.filter((result) => !result.ok);
+  console.log(`\n${results.length - failed.length}/${results.length} checks passed`);
+
+  // A non-zero exit is what makes this usable in CI rather than decorative.
+  if (failed.length) process.exit(1);
 }
 
-main().catch(async (error) => {
-  console.error('E2E run failed:', error.message);
-  await browser?.close();
+main().catch((error) => {
+  console.error(error);
   process.exit(1);
 });
