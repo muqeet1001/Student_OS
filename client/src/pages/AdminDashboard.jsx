@@ -5,6 +5,7 @@ import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import StudentDetail from '../features/admin/StudentDetail.jsx';
 import JobMatch from '../features/admin/JobMatch.jsx';
+import Insights from '../features/admin/Insights.jsx';
 
 const BAND_STYLES = {
   ready: 'bg-green-100 text-green-800',
@@ -82,7 +83,11 @@ export default function AdminDashboard() {
         <header>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Placement office</p>
           <h1 className="font-headline text-2xl md:text-3xl font-black tracking-tight mt-1">
-            {tab === 'match' ? 'Shortlist candidates' : 'Student progress'}
+            {tab === 'match'
+              ? 'Shortlist candidates'
+              : tab === 'insights'
+                ? 'Cohort insights'
+                : 'Student progress'}
           </h1>
         </header>
 
@@ -90,6 +95,7 @@ export default function AdminDashboard() {
           {[
             { key: 'match', label: 'Match to a job' },
             { key: 'cohort', label: 'Browse cohort' },
+            { key: 'insights', label: 'Insights' },
           ].map((item) => (
             <button
               key={item.key}
@@ -109,6 +115,7 @@ export default function AdminDashboard() {
         </div>
 
         {tab === 'match' && <JobMatch />}
+        {tab === 'insights' && <Insights />}
 
         {/* Cohort summary */}
         {tab === 'cohort' && summary && (
@@ -213,6 +220,18 @@ export default function AdminDashboard() {
             <option value="solved">Most solved</option>
             <option value="name">Name</option>
           </select>
+
+          <a
+            href={`/api/admin/students/export?${new URLSearchParams({
+              ...(branch && { branch }),
+              ...(year && { graduationYear: year }),
+              ...(band && { band }),
+              ...(search && { search }),
+            })}`}
+            className="px-4 py-2 rounded-full bg-surface-container text-sm font-bold hover:bg-surface-container-high transition-colors"
+          >
+            Export CSV
+          </a>
 
           {(search || branch || year || band) && (
             <button

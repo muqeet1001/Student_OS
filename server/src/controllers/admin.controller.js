@@ -6,6 +6,8 @@ import { TestAttempt } from '../models/Test.js';
 import { InterviewSession } from '../models/InterviewSession.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { loadCohort } from '../services/cohort.service.js';
+import { analyseCohort } from '../services/cohortAnalytics.js';
 
 const WEIGHTS = { profile: 0.2, coding: 0.35, tests: 0.25, interview: 0.2 };
 
@@ -223,4 +225,71 @@ export const getStudent = asyncHandler(async (req, res) => {
     success: true,
     data: { student, profile, attempts, interviews, recentSolves },
   });
+});
+
+
+/**
+ * College-wide analytics and the training programmes they justify.
+ *
+ * Accepts the same filters as the student list so an officer can ask the
+ * question of one department or graduating year rather than the whole
+ * college.
+ */
+export const getAnalytics = asyncHandler(async (req, res) => {
+  const { branch = '', graduationYear = '' } = req.query;
+
+  const cohort = await loadCohort({ branch, graduationYear });
+
+  res.json({ success: true, data: analyseCohort(cohort) });
+});
+
+/**
+ * Cohort export.
+ *
+ * Placement offices live in spreadsheets, and a shortlist that cannot leave
+ * the tool does not get used. CSV rather than XLSX so it opens anywhere.
+ */
+export const exportStudents = asyncHandler(async (req, res) => {
+  const { branch = '', graduationYear = '', band = '', search = '' } = req.query;
+
+  let rows = await loadCohort({ branch, graduationYear, search });
+  if (band) rows = rows.filter((row) => row.band === band);
+
+  const COLUMNS = [
+    ['Name', (row) => row.name],
+    ['Email', (row) => row.email],
+    ['Branch', (row) => row.branch],
+    ['Graduation', (row) => row.graduationYear ?? ''],
+    ['Readiness', (row) => row.readiness],
+    ['Band', (row) => row.band],
+    ['Problems solved', (row) => row.solved],
+    ['Tests taken', (row) => row.testsTaken],
+    ['Test average', (row) => row.testAverage],
+    ['Interviews', (row) => row.interviewsCompleted],
+    ['Interview average', (row) => row.interviewAverage],
+    ['Skills', (row) => row.skillCount],
+    ['Verified skills', (row) => row.verifiedSkills],
+    ['Verified skill names', (row) =>
+      (row.profile?.skills ?? [])
+        .filter((skill) => skill.verified)
+        .map((skill) => skill.name)
+        .join('; ')],
+  ];
+
+  // A field containing a comma, quote or newline has to be quoted, and inner
+  // quotes doubled, or the spreadsheet silently mis-parses the row.
+  const escape = (value) => {
+    const text = String(value ?? '');
+    return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  };
+
+  const csv = [
+    COLUMNS.map(([header]) => header).join(','),
+    ...rows.map((row) => COLUMNS.map(([, pick]) => escape(pick(row))).join(',')),
+  ].join('\n');
+
+  const stamp = new Date().toISOString().slice(0, 10);
+  res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+  res.setHeader('Content-Disposition', `attachment; filename="students-${stamp}.csv"`);
+  res.send(csv);
 });

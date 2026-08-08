@@ -12,6 +12,8 @@ export const adminRoutes = Router();
 // the whole router rather than each handler.
 adminRoutes.use(requireAuth, requireRole('admin'));
 
+adminRoutes.get('/analytics', admin.getAnalytics);
+adminRoutes.get('/students/export', admin.exportStudents);
 adminRoutes.get('/students', admin.listStudents);
 adminRoutes.post('/match', validate(matchSchema), match.matchStudents);
 adminRoutes.get('/students/filters', admin.getFilters);
