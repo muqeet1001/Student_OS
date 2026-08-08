@@ -66,6 +66,26 @@ if (!uri) {
   }
 }
 
+/*
+ * Shout about it.
+ *
+ * This suite silently skipped for its entire existence, so the assertions in
+ * it had never once executed — and when they finally did, thirteen of them
+ * were wrong and three were real bugs. A skipped integration suite that
+ * looks identical to a passing one is worse than no suite at all, because it
+ * buys false confidence. Failing outright is not right either: contributors
+ * without a local Mongo still need `npm test` to work. So it skips, loudly.
+ */
+if (skipReason) {
+  console.warn(
+    `\n\x1b[33m⚠  INTEGRATION TESTS SKIPPED — ${skipReason}\x1b[0m\n` +
+      '   Nothing below has been verified against a real database.\n' +
+      '   Start one and re-run:\n' +
+      '     docker run -d -p 27017:27017 --name student-os-mongo mongo:7\n' +
+      '     MONGO_URI="mongodb://127.0.0.1:27017/student_os" npm test\n',
+  );
+}
+
 after(async () => {
   server?.close();
   if (mongoose.connection.readyState) {
@@ -157,7 +177,7 @@ describe('authentication', { skip }, () => {
       password: 'short',
     });
 
-    assert.equal(res.status, 422);
+    assert.equal(res.status, 400, 'the API answers 400 for every validation failure');
   });
 
   test('rejects a wrong password without revealing which field failed', async () => {
@@ -167,7 +187,21 @@ describe('authentication', { skip }, () => {
     });
 
     assert.equal(res.status, 401);
-    assert.doesNotMatch(res.body.message ?? '', /email/i, 'must not confirm the email exists');
+
+    // The property that matters is that both failures are indistinguishable,
+    // not that the word "email" is absent — "Incorrect email or password"
+    // names both fields precisely so it confirms neither.
+    const unknownEmail = await student.post('/auth/login', {
+      email: 'nobody-here@studentos.test',
+      password: 'wrongpassword',
+    });
+
+    assert.equal(unknownEmail.status, res.status);
+    assert.equal(
+      unknownEmail.body.message,
+      res.body.message,
+      'a wrong password and an unknown account must be indistinguishable',
+    );
   });
 
   test('logs in and returns the current user', async () => {
@@ -268,7 +302,7 @@ describe('profile', { skip }, () => {
       level: 'godlike',
     });
 
-    assert.equal(res.status, 422);
+    assert.equal(res.status, 400, 'the API answers 400 for every validation failure');
   });
 });
 
@@ -314,7 +348,9 @@ describe('coding practice', { skip }, () => {
       code: 'function twoSum() { return [9, 9]; }',
     });
 
-    assert.equal(res.status, 200);
+    // 201: a submission is recorded even when it fails. Compare with /run
+    // above, which evaluates without persisting anything and answers 200.
+    assert.equal(res.status, 201, JSON.stringify(res.body));
     assert.notEqual(res.data.status, 'accepted');
   });
 
@@ -396,7 +432,8 @@ describe('skill tests', { skip }, () => {
   test('starts an attempt without revealing the correct options', async () => {
     const res = await student.post(`/tests/${slug}/start`);
 
-    assert.equal(res.status, 200, JSON.stringify(res.body));
+    assert.equal(res.status, 201, JSON.stringify(res.body));
+    assert.equal(res.data.resumed, false, 'the first start creates an attempt');
     attempt = res.data;
 
     assert.ok(attempt.expiresAt, 'the server must set the deadline');
@@ -411,6 +448,9 @@ describe('skill tests', { skip }, () => {
     const again = await student.post(`/tests/${slug}/start`);
 
     assert.equal(String(again.data.attemptId), String(attempt.attemptId));
+    assert.equal(again.data.resumed, true);
+    // Resuming creates nothing, so answering "201 Created" would be a lie.
+    assert.equal(again.status, 200);
   });
 
   test('submits and scores the attempt', async () => {
@@ -542,7 +582,7 @@ describe('resume builder', { skip }, () => {
   test('rejects a non-hex accent colour', async () => {
     const res = await student.post('/resumes', { title: 'Bad', accent: 'red' });
 
-    assert.equal(res.status, 422);
+    assert.equal(res.status, 400, 'the API answers 400 for every validation failure');
   });
 
   test('deletes a version', async () => {
@@ -581,7 +621,7 @@ describe('dashboard', { skip }, () => {
 
     assert.equal(res.status, 200, JSON.stringify(res.body));
     assert.equal(typeof res.data.readiness.score, 'number');
-    assert.equal(res.data.readiness.components.length, 4);
+    assert.equal(res.data.readiness.components.length, 5, 'skills, coding, resume, interview, projects');
 
     // The solved count must match the coding screen exactly — both read
     // SolvedProblem.

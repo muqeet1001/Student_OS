@@ -47,6 +47,26 @@ Four values are required in production. Everything else has a working default.
 > (`git rm --cached server/.env`). Committed credentials stay in git history
 > even after deletion, so rotating is the only real fix.
 
+## Running the tests
+
+Unit tests need nothing. The integration suites need a real MongoDB, and
+**say so loudly when they cannot find one** rather than skipping quietly —
+a skipped suite that looks like a passing suite is how three real bugs
+survived to production-adjacent code here.
+
+```bash
+docker run -d -p 27017:27017 --name student-os-mongo mongo:7
+MONGO_URI="mongodb://127.0.0.1:27017/student_os" npm test
+```
+
+Each suite writes to its own `student_os_<suffix>` database and drops it on
+the way in and out, so your development data is never touched.
+
+If MongoDB dies with a WiredTiger `directory-sync` panic, its data directory
+is on a filesystem that cannot `fsync()` a directory — overlayfs and tmpfs
+both fail this. Bind-mount a real one:
+`-v /var/lib/mongo-data:/data/db`.
+
 ## Commands
 
 | Command | What it does |

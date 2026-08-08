@@ -77,7 +77,13 @@ const interactionSchema = new mongoose.Schema(
  */
 const recruiterSchema = new mongoose.Schema(
   {
-    name: { type: String, required: true, trim: true, maxlength: 160, index: true },
+    /*
+     * No `index: true` here. The explicit case-insensitive unique index
+     * below covers this field, and declaring both makes Mongoose ask for two
+     * different indexes under the same auto-generated name `name_1` — which
+     * the server rejects outright, taking the whole seed down with it.
+     */
+    name: { type: String, required: true, trim: true, maxlength: 160 },
     /** Links to the prep hub when one exists, so the two can be shown together. */
     companySlug: { type: String, default: '', trim: true, lowercase: true },
 

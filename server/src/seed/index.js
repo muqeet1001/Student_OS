@@ -11,7 +11,8 @@
  * safe and never duplicates. User-generated data (submissions, attempts,
  * profiles) is never touched unless --fresh is passed.
  */
-import { basename } from 'node:path';
+import { realpathSync } from 'node:fs';
+import { pathToFileURL } from 'node:url';
 
 import { parseJobDescription } from '../services/jobMatch.js';
 
@@ -245,7 +246,26 @@ export async function run({ connect = true } = {}) {
 
 // Only self-executes when invoked directly (`npm run seed`), so tests can
 // import this module to verify its wiring without opening a connection.
-if (process.argv[1] && import.meta.url.endsWith(basename(process.argv[1]))) {
+/*
+ * Compared as fully resolved URLs, not by filename.
+ *
+ * The previous check compared basenames, which meant this module considered
+ * itself "invoked directly" for ANY entry point named index.js — including
+ * `npm start`, whose entry is src/index.js. The seeder is not currently in
+ * the server's import graph so it never fired, but the moment anything at
+ * runtime imported this file, every server boot would have re-seeded the
+ * database and then closed the connection out from under itself.
+ */
+function invokedDirectly() {
+  if (!process.argv[1]) return false;
+  try {
+    return import.meta.url === pathToFileURL(realpathSync(process.argv[1])).href;
+  } catch {
+    return false;
+  }
+}
+
+if (invokedDirectly()) {
   run().catch(async (error) => {
     logger.error('Seeding failed:', error.message);
     await disconnectDatabase().catch(() => {});

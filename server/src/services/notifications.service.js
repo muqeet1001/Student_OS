@@ -93,16 +93,27 @@ export function buildNotifications({ profile, coding, tests, interviews, readine
   // --- Weakest area ---------------------------------------------------
   const weakest = readiness.components.find((part) => part.key === readiness.weakest);
   if (weakest && weakest.value < 50) {
+    /*
+     * Keyed by readiness component. These keys drifted once already: the map
+     * still said `profile` and `tests` after the components were renamed to
+     * `skills`/`resume` and `projects` was added, so the commonest weakest
+     * areas produced a notice whose button pointed at `undefined`.
+     */
     const routes = {
-      profile: '/profile',
+      skills: '/skills',
       coding: '/coding-practice',
-      tests: '/skill-test',
+      resume: '/resume-builder',
       interview: '/ai-interview',
+      projects: '/profile',
     };
 
+    const destination = routes[weakest.key];
+
     // Only worth saying when it is not already covered by a notice above.
-    const covered = notices.some((notice) => notice.action.to === routes[weakest.key]);
-    if (!covered) {
+    // An unknown component is skipped rather than emitted with a broken
+    // link — a nudge that goes nowhere is worse than no nudge.
+    const covered = notices.some((notice) => notice.action.to === destination);
+    if (destination && !covered) {
       notices.push({
         id: `weakest-${weakest.key}`,
         tone: 'info',

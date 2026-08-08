@@ -86,6 +86,29 @@ export const startSession = asyncHandler(async (req, res) => {
     { $project: { _id: 1 } },
   ]);
 
+  /*
+   * Top up from the same round at any difficulty when the exact filter
+   * cannot fill the request. A student who asks for five questions and
+   * silently gets two has been short-changed without being told, and the
+   * round they are practising matters far more than hitting one difficulty
+   * band exactly.
+   */
+  if (pool.length < questionCount) {
+    const topUp = await InterviewQuestion.aggregate([
+      {
+        $match: {
+          round,
+          active: true,
+          _id: { $nin: pool.map((question) => question._id) },
+        },
+      },
+      { $sample: { size: questionCount - pool.length } },
+      { $project: { _id: 1 } },
+    ]);
+
+    pool.push(...topUp);
+  }
+
   if (pool.length === 0) {
     throw new ApiError(404, 'No questions are available for that round yet.');
   }
