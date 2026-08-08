@@ -2,6 +2,7 @@ import { Offer } from '../models/Offer.js';
 import { User } from '../models/User.js';
 import { Profile } from '../models/Profile.js';
 import { buildPlacementReport } from '../services/placementReport.js';
+import { buildAlumniStats } from '../services/alumniStats.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 
@@ -72,4 +73,22 @@ export const placementReport = asyncHandler(async (req, res) => {
     success: true,
     data: buildPlacementReport({ totalStudents, offers, profiles, graduationYear: year }),
   });
+});
+
+/**
+ * Placement history by graduating batch.
+ *
+ * Drawn from the offers already recorded rather than kept as a separate
+ * table, so last year's published figure and this year's live one are
+ * computed the same way and cannot drift apart.
+ */
+export const alumniHistory = asyncHandler(async (req, res) => {
+  const [profiles, offers] = await Promise.all([
+    Profile.find({ graduationYear: { $ne: null } })
+      .select('user graduationYear branch')
+      .lean(),
+    Offer.find({}).select('student company status ctc').lean(),
+  ]);
+
+  res.json({ success: true, data: buildAlumniStats({ profiles, offers }) });
 });

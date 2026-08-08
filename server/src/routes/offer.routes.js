@@ -11,6 +11,8 @@ export const offerRoutes = Router();
 offerRoutes.use(requireAuth, requireRole('admin'));
 
 offerRoutes.get('/report', offers.placementReport);
+// Registered before '/:offerId' so the literal path is not swallowed by it.
+offerRoutes.get('/alumni', offers.alumniHistory);
 offerRoutes.get('/', offers.listOffers);
 offerRoutes.post('/', validate(createOfferSchema), offers.createOffer);
 offerRoutes.patch('/:offerId', validate(updateOfferSchema), offers.updateOffer);
