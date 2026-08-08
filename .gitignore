@@ -8,11 +8,16 @@ dist/
 build/
 *.tsbuildinfo
 
-# environment — never commit real secrets
+# environment
+# server/.env is committed deliberately so collaborators can run the project
+# without setting up their own credentials. Anything in it is readable by
+# anyone with repository access — rotate the Atlas password and JWT secrets
+# if that ever stops being acceptable.
 .env
 .env.local
 .env.*.local
 !.env.example
+!server/.env
 
 # logs
 *.log
