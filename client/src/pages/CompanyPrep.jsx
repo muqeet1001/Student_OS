@@ -69,7 +69,7 @@ export default function CompanyPrep() {
             <Link
               key={company.slug}
               to={`/company-prep/${company.slug}`}
-              className="group bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/15 hover:border-primary/40 transition-all hover:shadow-lg flex flex-col"
+              className="group bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60 hover:border-primary/40 transition-all hover:shadow-[0_1px_2px_rgba(0,0,0,0.06)] flex flex-col"
             >
               <div className="flex items-start justify-between gap-3 mb-4">
                 <CompanyLogo company={company} />
@@ -96,7 +96,7 @@ export default function CompanyPrep() {
                 ))}
               </div>
 
-              <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-outline-variant/10 text-xs text-on-surface-variant font-medium">
+              <div className="flex items-center justify-between gap-3 mt-4 pt-3 border-t border-outline-variant/60 text-xs text-on-surface-variant font-medium">
                 <span>{company.roundCount} rounds</span>
                 <span>{company.questionCount} questions</span>
                 <span className="material-symbols-outlined text-primary text-base group-hover:translate-x-0.5 transition-transform">

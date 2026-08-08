@@ -138,10 +138,10 @@ export default function TestRunner() {
   if (result) {
     return (
       <div className="min-h-screen bg-surface flex items-center justify-center p-6">
-        <div className="bg-surface-container-lowest max-w-2xl w-full rounded-xl shadow-2xl overflow-hidden">
-          <div className="bg-white p-6 text-center border-b border-outline-variant/10">
+        <div className="bg-surface-container-lowest max-w-2xl w-full rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden">
+          <div className="bg-white p-6 text-center border-b border-outline-variant/60">
             <div
-              className={`w-24 h-24 rounded-full mx-auto flex items-center justify-center mb-4 shadow-xl ${
+              className={`w-24 h-24 rounded-full mx-auto flex items-center justify-center mb-4 shadow-[0_1px_3px_rgba(0,0,0,0.06)] ${
                 result.passed
                   ? 'bg-primary-container text-on-primary-container shadow-primary-container/20'
                   : 'bg-surface-container text-on-surface-variant'
@@ -204,7 +204,7 @@ export default function TestRunner() {
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
-      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-outline-variant/10">
+      <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-outline-variant/60">
         <div className="max-w-4xl mx-auto px-5 py-3 flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-xs font-bold uppercase tracking-widest text-primary">
@@ -306,7 +306,7 @@ export default function TestRunner() {
         )}
       </main>
 
-      <footer className="sticky bottom-0 bg-white/90 backdrop-blur-xl border-t border-outline-variant/10">
+      <footer className="sticky bottom-0 bg-white/90 backdrop-blur-xl border-t border-outline-variant/60">
         <div className="max-w-4xl mx-auto px-5 py-3 flex items-center justify-between gap-3">
           <button
             type="button"
@@ -348,7 +348,7 @@ export default function TestRunner() {
                   : 'Submit your test?';
                 if (window.confirm(message)) submit(false);
               }}
-              className="px-8 py-3 rounded-full bg-primary text-on-primary font-bold text-sm shadow-lg shadow-primary/20 disabled:opacity-60"
+              className="px-8 py-3 rounded-full bg-primary text-on-primary font-bold text-sm shadow-[0_1px_2px_rgba(0,0,0,0.06)] disabled:opacity-60"
             >
               {submitting ? 'Submitting…' : 'Submit test'}
             </button>

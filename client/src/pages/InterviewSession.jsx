@@ -171,7 +171,7 @@ export default function InterviewSession() {
           <div className="w-11 h-11 shrink-0 rounded-2xl bg-inverse-surface text-white flex items-center justify-center">
             <span className="material-symbols-outlined">smart_toy</span>
           </div>
-          <div className="flex-1 min-w-0 bg-surface-container-lowest rounded-xl rounded-tl-sm p-6 border border-outline-variant/10">
+          <div className="flex-1 min-w-0 bg-surface-container-lowest rounded-xl rounded-tl-sm p-6 border border-outline-variant/60">
             <h1 className="font-headline text-xl md:text-2xl font-bold leading-snug">
               {question.prompt}
             </h1>
@@ -247,7 +247,7 @@ export default function InterviewSession() {
             type="button"
             onClick={() => submitAnswer(false)}
             disabled={submitting || !answer.trim()}
-            className="flex-1 px-8 py-3 rounded-full bg-primary text-on-primary font-bold shadow-lg shadow-primary/20 hover:scale-[1.01] active:scale-95 transition-transform disabled:opacity-60 disabled:hover:scale-100"
+            className="flex-1 px-8 py-3 rounded-full bg-primary text-on-primary font-bold shadow-[0_1px_2px_rgba(0,0,0,0.06)] hover:scale-[1.01] active:scale-95 transition-transform disabled:opacity-60 disabled:hover:scale-100"
           >
             {submitting
               ? 'Scoring…'

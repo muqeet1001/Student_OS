@@ -8,65 +8,73 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* Material-style role palette */
-  --color-background: #f9f6f5;
-  --color-on-background: #2f2f2e;
+  /*
+   * Neutral surfaces with a single restrained accent — the language modern
+   * developer tools use. The previous palette was warm beige throughout,
+   * which is what made the product read as institutional software rather
+   * than a premium tool. Token names are unchanged, so no component needed
+   * editing to adopt this.
+   */
+  --color-background: #fafafa;
+  --color-on-background: #171717;
 
-  --color-surface: #f9f6f5;
-  --color-on-surface: #2f2f2e;
-  --color-surface-variant: #dfdcdc;
-  --color-on-surface-variant: #5c5b5b;
-  --color-surface-dim: #d6d4d3;
-  --color-surface-bright: #f9f6f5;
-  --color-surface-tint: #a83206;
+  --color-surface: #fafafa;
+  --color-on-surface: #171717;
+  --color-surface-variant: #f0f0f0;
+  --color-on-surface-variant: #5f5f5f;
+  --color-surface-dim: #f0f0f0;
+  --color-surface-bright: #ffffff;
+  --color-surface-tint: #ea580c;
   --color-surface-container-lowest: #ffffff;
-  --color-surface-container-low: #f3f0ef;
-  --color-surface-container: #eae7e7;
-  --color-surface-container-high: #e4e2e1;
-  --color-surface-container-highest: #dfdcdc;
+  --color-surface-container-low: #f6f6f6;
+  --color-surface-container: #f0f0f0;
+  --color-surface-container-high: #e8e8e8;
+  --color-surface-container-highest: #e0e0e0;
 
-  --color-primary: #a83206;
-  --color-on-primary: #ffefeb;
-  --color-primary-dim: #952800;
-  --color-primary-container: #ff784e;
-  --color-on-primary-container: #470e00;
-  --color-primary-fixed: #ff784e;
-  --color-primary-fixed-dim: #f3683b;
-  --color-on-primary-fixed: #000000;
-  --color-on-primary-fixed-variant: #571400;
+  /* One accent, used sparingly: primary actions and current state. */
+  --color-primary: #d94a12;
+  --color-on-primary: #ffffff;
+  --color-primary-dim: #b53c0d;
+  --color-primary-container: #ea580c;
+  --color-on-primary-container: #ffffff;
+  --color-primary-fixed: #fb923c;
+  --color-primary-fixed-dim: #f97316;
+  --color-on-primary-fixed: #431407;
+  --color-on-primary-fixed-variant: #7c2d12;
 
-  --color-secondary: #755700;
-  --color-on-secondary: #fff1db;
-  --color-secondary-dim: #664b00;
-  --color-secondary-container: #ffca4d;
-  --color-on-secondary-container: #5c4400;
-  --color-secondary-fixed: #ffca4d;
-  --color-secondary-fixed-dim: #f7ba00;
-  --color-on-secondary-fixed: #443100;
-  --color-on-secondary-fixed-variant: #674c00;
+  --color-secondary: #a16207;
+  --color-on-secondary: #ffffff;
+  --color-secondary-dim: #854d0e;
+  --color-secondary-container: #fef3c7;
+  --color-on-secondary-container: #78350f;
+  --color-secondary-fixed: #fcd34d;
+  --color-secondary-fixed-dim: #fbbf24;
+  --color-on-secondary-fixed: #451a03;
+  --color-on-secondary-fixed-variant: #92400e;
 
-  --color-tertiary: #65518a;
-  --color-on-tertiary: #f8efff;
-  --color-tertiary-dim: #59467d;
-  --color-tertiary-container: #d6beff;
-  --color-on-tertiary-container: #4b386e;
-  --color-tertiary-fixed: #d6beff;
-  --color-tertiary-fixed-dim: #c8b1f0;
-  --color-on-tertiary-fixed: #362459;
-  --color-on-tertiary-fixed-variant: #544178;
+  --color-tertiary: #6d28d9;
+  --color-on-tertiary: #ffffff;
+  --color-tertiary-dim: #5b21b6;
+  --color-tertiary-container: #ede9fe;
+  --color-on-tertiary-container: #4c1d95;
+  --color-tertiary-fixed: #c4b5fd;
+  --color-tertiary-fixed-dim: #a78bfa;
+  --color-on-tertiary-fixed: #2e1065;
+  --color-on-tertiary-fixed-variant: #5b21b6;
 
-  --color-error: #b31b25;
-  --color-on-error: #ffefee;
-  --color-error-dim: #9f0519;
-  --color-error-container: #fb5151;
-  --color-on-error-container: #570008;
+  --color-error: #dc2626;
+  --color-on-error: #ffffff;
+  --color-error-dim: #b91c1c;
+  --color-error-container: #fecaca;
+  --color-on-error-container: #7f1d1d;
 
-  --color-outline: #787676;
-  --color-outline-variant: #afadac;
+  /* Hairline borders carry structure here, not shadows. */
+  --color-outline: #8a8a8a;
+  --color-outline-variant: #d4d4d4;
 
-  --color-inverse-surface: #0e0e0e;
-  --color-inverse-on-surface: #9e9c9c;
-  --color-inverse-primary: #fe6f42;
+  --color-inverse-surface: #0a0a0a;
+  --color-inverse-on-surface: #a3a3a3;
+  --color-inverse-primary: #fb923c;
 
   /* Typography */
   --font-headline: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
@@ -232,13 +240,13 @@
 
 .custom-scrollbar::-webkit-scrollbar-thumb,
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 120, 78, 0.22);
+  background: rgba(0, 0, 0, 0.16);
   border-radius: 9999px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb:hover,
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(168, 50, 6, 0.38);
+  background: rgba(0, 0, 0, 0.28);
 }
 
 /* The decorative bento collage on the auth screens. */

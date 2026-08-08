@@ -110,7 +110,7 @@ export default function AiInterview() {
 
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-3">
           {/* Setup */}
-          <section className="xl:col-span-8 bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/10 space-y-4">
+          <section className="xl:col-span-8 bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60 space-y-4">
             <div>
               <h2 className="font-headline text-xl font-bold mb-1">Set up your round</h2>
               <p className="text-sm text-on-surface-variant">
@@ -229,7 +229,7 @@ export default function AiInterview() {
               type="button"
               onClick={start}
               disabled={starting || Boolean(active)}
-              className="w-full sm:w-auto px-8 py-3 rounded-full bg-primary text-on-primary font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-transform disabled:opacity-60 disabled:hover:scale-100"
+              className="w-full sm:w-auto px-8 py-3 rounded-full bg-primary text-on-primary font-bold shadow-[0_1px_2px_rgba(0,0,0,0.06)] hover:scale-[1.02] active:scale-95 transition-transform disabled:opacity-60 disabled:hover:scale-100"
             >
               {starting ? 'Preparing questions…' : 'Start interview'}
             </button>
@@ -237,7 +237,7 @@ export default function AiInterview() {
 
           {/* Results */}
           <aside className="xl:col-span-4 space-y-4">
-            <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/10">
+            <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60">
               <p className="text-sm font-bold text-on-surface-variant uppercase tracking-[0.16em] mb-3">
                 Your results
               </p>
@@ -257,7 +257,7 @@ export default function AiInterview() {
               </div>
             </div>
 
-            <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/10">
+            <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60">
               <h3 className="font-headline font-bold mb-4">Recent sessions</h3>
 
               {loading && <LoadingBlock label="Loading" />}

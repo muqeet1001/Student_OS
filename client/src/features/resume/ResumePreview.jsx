@@ -33,7 +33,7 @@ export default function ResumePreview({ profile, user, accent = '#a83206' }) {
   return (
     <div
       id="resume-sheet"
-      className="w-full max-w-[820px] bg-white shadow-2xl rounded-sm p-6 flex flex-col gap-7 relative overflow-hidden print:shadow-none print:rounded-none print:p-0"
+      className="w-full max-w-[820px] bg-white shadow-[0_1px_3px_rgba(0,0,0,0.08)] rounded-sm p-6 flex flex-col gap-7 relative overflow-hidden print:shadow-none print:rounded-none print:p-0"
     >
       <div
         className="absolute top-0 right-0 w-32 h-32 rounded-bl-full print:hidden"

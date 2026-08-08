@@ -33,7 +33,7 @@ const LEVEL_STYLES = {
 function SectionCard({ icon, title, action, children, className = '' }) {
   return (
     <section
-      className={`bg-surface-container-lowest rounded-xl p-4 shadow-[0px_24px_48px_rgba(14,14,14,0.04)] ${className}`}
+      className={`bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60 ${className}`}
     >
       <div className="flex items-center justify-between gap-3 mb-4 min-w-0">
         <h3 className="text-base font-bold font-headline flex items-center gap-3 min-w-0">
@@ -157,7 +157,7 @@ export default function Profile() {
               <header className="flex flex-col md:flex-row items-start md:items-end justify-between gap-3 mb-4">
                 <div className="flex flex-col md:flex-row items-center md:items-start gap-3">
                   <div className="relative group">
-                    <div className="h-32 w-32 md:h-40 md:w-40 rounded-full border-4 border-surface-container-low shadow-xl overflow-hidden">
+                    <div className="h-32 w-32 md:h-40 md:w-40 rounded-full border-4 border-surface-container-low shadow-[0_1px_3px_rgba(0,0,0,0.06)] overflow-hidden">
                       <Avatar user={account} size={160} className="!rounded-full w-full h-full" />
                     </div>
                     <input
@@ -172,7 +172,7 @@ export default function Profile() {
                       disabled={busy}
                       onClick={() => avatarInputRef.current?.click()}
                       aria-label="Change profile photo"
-                      className="absolute bottom-2 right-2 p-2 bg-primary text-white rounded-full shadow-lg transform transition-transform group-hover:scale-110 disabled:opacity-60"
+                      className="absolute bottom-2 right-2 p-2 bg-primary text-white rounded-full shadow-[0_1px_2px_rgba(0,0,0,0.06)] transform transition-transform group-hover:scale-110 disabled:opacity-60"
                     >
                       <span className="material-symbols-outlined text-sm">photo_camera</span>
                     </button>
@@ -208,7 +208,7 @@ export default function Profile() {
                 <button
                   type="button"
                   onClick={() => setDialog({ type: 'details' })}
-                  className="flex items-center gap-2 px-8 py-3 bg-inverse-surface text-surface rounded-full font-bold hover:scale-105 active:scale-95 transition-all shadow-lg"
+                  className="flex items-center gap-2 px-8 py-3 bg-inverse-surface text-surface rounded-full font-bold hover:scale-105 active:scale-95 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
                 >
                   <span className="material-symbols-outlined text-sm">edit_square</span>
                   Edit Profile
@@ -292,7 +292,7 @@ export default function Profile() {
                       {profile.projects.map((project) => (
                         <article
                           key={project._id}
-                          className="group bg-surface-container-low p-4 rounded-lg transition-all hover:bg-white hover:shadow-xl hover:-translate-y-1"
+                          className="group bg-surface-container-low p-4 rounded-lg transition-all hover:bg-white hover:shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:-translate-y-1"
                         >
                           <div className="flex justify-between items-start mb-4">
                             <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center shadow-sm">

@@ -5,7 +5,7 @@ import { useApiResource } from '../../hooks/useApiResource.js';
 
 function Row({ label, value }) {
   return (
-    <div className="flex justify-between gap-3 text-sm py-1.5 border-b border-outline-variant/10 last:border-0">
+    <div className="flex justify-between gap-3 text-sm py-1.5 border-b border-outline-variant/60 last:border-0">
       <span className="text-on-surface-variant">{label}</span>
       <span className="font-bold text-right">{value}</span>
     </div>

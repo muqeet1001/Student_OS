@@ -22,7 +22,7 @@ export default function AppLayout({ bottomNav = true }) {
         type="button"
         onClick={() => setDrawerOpen(true)}
         aria-label="Open navigation"
-        className="lg:hidden fixed top-4 left-4 z-30 w-11 h-11 flex items-center justify-center rounded-full bg-surface-container-lowest text-on-surface shadow-lg border border-outline-variant/20"
+        className="lg:hidden fixed top-4 left-4 z-30 w-11 h-11 flex items-center justify-center rounded-full bg-surface-container-lowest text-on-surface shadow-[0_1px_2px_rgba(0,0,0,0.06)] border border-outline-variant/20"
       >
         <span className="material-symbols-outlined">menu</span>
       </button>

@@ -122,7 +122,7 @@ export default function SkillTest() {
               </div>
             </article>
 
-            <aside className="xl:col-span-4 rounded-xl bg-surface-container-lowest border border-outline-variant/20 p-6 shadow-[0px_24px_48px_rgba(14,14,14,0.04)]">
+            <aside className="xl:col-span-4 rounded-xl bg-surface-container-lowest border border-outline-variant/20 p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
               <p className="text-sm font-bold text-on-surface-variant uppercase tracking-[0.16em]">
                 Your results
               </p>
@@ -219,7 +219,7 @@ export default function SkillTest() {
                     <button
                       type="button"
                       onClick={() => navigate(`/skill-test/${test.slug}`)}
-                      className="mt-4 w-full py-3 rounded-full bg-primary-container text-on-primary-container font-bold shadow-[0px_12px_24px_rgba(255,120,78,0.2)] hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      className="mt-4 w-full py-3 rounded-full bg-primary-container text-on-primary-container font-bold shadow-[0_1px_2px_rgba(0,0,0,0.06)] hover:scale-[1.02] active:scale-[0.98] transition-all"
                     >
                       {test.lastAttempt ? 'Retake test' : 'Start test'}
                     </button>

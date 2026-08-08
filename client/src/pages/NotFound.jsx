@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 export default function NotFound() {
   return (
     <section className="min-h-dvh grid place-items-center p-6 bg-background">
-      <div className="max-w-xl w-full rounded-xl bg-surface-container-lowest p-6 shadow-[0px_24px_48px_rgba(14,14,14,0.06)]">
+      <div className="max-w-xl w-full rounded-xl bg-surface-container-lowest p-6 shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
         <p className="text-sm font-black uppercase tracking-[0.2em] text-primary">404</p>
         <h1 className="mt-3 font-headline text-2xl font-black tracking-tight text-on-surface">
           Page not found

@@ -6,7 +6,7 @@ import React from 'react';
  */
 export default function SavedVersions({ versions, onSave, onDelete, saving }) {
   return (
-    <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/10">
+    <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60">
       <div className="flex items-center justify-between gap-3 mb-4">
         <h3 className="font-headline text-base font-bold">Saved versions</h3>
         <button

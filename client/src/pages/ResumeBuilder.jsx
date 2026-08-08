@@ -89,7 +89,7 @@ export default function ResumeBuilder() {
           <button
             type="button"
             onClick={() => window.print()}
-            className="px-8 py-3 rounded-full bg-primary text-on-primary font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-transform"
+            className="px-8 py-3 rounded-full bg-primary text-on-primary font-bold text-sm shadow-[0_1px_2px_rgba(0,0,0,0.06)] hover:scale-[1.02] active:scale-95 transition-transform"
           >
             <span className="material-symbols-outlined text-base align-middle mr-1">download</span>
             Download PDF
@@ -102,7 +102,7 @@ export default function ResumeBuilder() {
         <aside className="print:hidden col-span-12 xl:col-span-4 space-y-4">
           {report && (
             <>
-              <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/10">
+              <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/60">
                 <div className="flex items-center justify-between gap-3 mb-3">
                   <h2 className="font-headline text-lg font-bold">ATS score</h2>
                   <span className={`px-3 py-1 rounded-full text-xs font-black uppercase ${tone.className}`}>
@@ -123,7 +123,7 @@ export default function ResumeBuilder() {
                 </div>
               </div>
 
-              <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/10">
+              <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/60">
                 <h3 className="font-headline text-base font-bold mb-4 flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">checklist</span>
                   Checks

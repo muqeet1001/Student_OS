@@ -153,7 +153,7 @@ export function SubmitRow({ onCancel, submitting, submitLabel = 'Save', destruct
       <button
         type="submit"
         disabled={submitting}
-        className="px-8 py-3 rounded-full bg-primary text-on-primary font-bold text-sm shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-transform disabled:opacity-60 disabled:hover:scale-100"
+        className="px-8 py-3 rounded-full bg-primary text-on-primary font-bold text-sm shadow-[0_1px_2px_rgba(0,0,0,0.06)] hover:scale-[1.02] active:scale-95 transition-transform disabled:opacity-60 disabled:hover:scale-100"
       >
         {submitting ? 'Saving…' : submitLabel}
       </button>

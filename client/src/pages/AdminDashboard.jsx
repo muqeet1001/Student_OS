@@ -113,13 +113,13 @@ export default function AdminDashboard() {
         {/* Cohort summary */}
         {tab === 'cohort' && summary && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-            <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/15">
+            <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60">
               <p className="text-2xl font-black font-headline">{summary.total}</p>
               <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mt-0.5">
                 Students
               </p>
             </div>
-            <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/15">
+            <div className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60">
               <p className="text-2xl font-black font-headline">{summary.averageReadiness}%</p>
               <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider mt-0.5">
                 Avg readiness
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
                 className={`text-left rounded-xl p-4 border transition-colors ${
                   band === item.key
                     ? 'border-primary bg-primary-container/10'
-                    : 'border-outline-variant/15 bg-surface-container-lowest hover:border-primary/30'
+                    : 'border-outline-variant/60 bg-surface-container-lowest hover:border-primary/30'
                 }`}
               >
                 <p className="text-2xl font-black font-headline">{item.count}</p>
@@ -246,7 +246,7 @@ export default function AdminDashboard() {
 
         {/* Cohort table */}
         {tab === 'cohort' && students.length > 0 && (
-          <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 overflow-hidden">
+          <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse min-w-[52rem]">
                 <thead>
@@ -265,7 +265,7 @@ export default function AdminDashboard() {
                   {students.map((student) => (
                     <tr
                       key={student._id}
-                      className="border-t border-outline-variant/10 hover:bg-surface-container-low/60"
+                      className="border-t border-outline-variant/60 hover:bg-surface-container-low/60"
                     >
                       <td className="px-4 py-2.5">
                         <p className="font-bold text-sm">{student.name}</p>
@@ -328,7 +328,7 @@ export default function AdminDashboard() {
             </div>
 
             {pagination && pagination.pages > 1 && (
-              <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-outline-variant/10">
+              <div className="flex items-center justify-between gap-3 px-4 py-3 border-t border-outline-variant/60">
                 <p className="text-xs text-on-surface-variant font-medium">
                   Page {pagination.page} of {pagination.pages} · {pagination.total} students
                 </p>

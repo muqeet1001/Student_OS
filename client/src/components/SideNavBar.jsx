@@ -29,14 +29,14 @@ export default function SideNavBar({ open = false, onClose }) {
       />
 
       <aside
-        className={`fixed left-0 top-0 z-50 h-dvh w-60 flex flex-col justify-between py-5 bg-[#0e0e0e] rounded-r-xl overflow-hidden shadow-[0px_24px_48px_rgba(14,14,14,0.06)] font-headline text-sm font-medium tracking-wide transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed left-0 top-0 z-50 h-dvh w-60 flex flex-col justify-between py-5 bg-[#0e0e0e] rounded-r-xl overflow-hidden shadow-[0_1px_2px_rgba(0,0,0,0.04)] font-headline text-sm font-medium tracking-wide transition-transform duration-300 lg:translate-x-0 ${
           open ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex flex-col gap-3 overflow-y-auto custom-scrollbar flex-1 pb-4">
           <div className="px-8 flex items-center justify-between gap-3">
             <NavLink to="/dashboard" className="flex items-center gap-3" onClick={onClose}>
-              <div className="w-9 h-9 bg-primary-container rounded-xl flex items-center justify-center shadow-lg shadow-primary-container/20">
+              <div className="w-9 h-9 bg-primary-container rounded-xl flex items-center justify-center shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
                 <span
                   className="material-symbols-outlined text-white"
                   style={{ fontVariationSettings: '"FILL" 1' }}
@@ -69,7 +69,7 @@ export default function SideNavBar({ open = false, onClose }) {
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-5 py-2.5 rounded-full mx-3 mb-0.5 transition-all duration-200 active:scale-95 ${
                     isActive
-                      ? 'bg-primary-container text-white shadow-lg shadow-primary-container/20'
+                      ? 'bg-primary-container text-white shadow-[0_1px_2px_rgba(0,0,0,0.06)]'
                       : 'text-gray-400 hover:text-white hover:bg-white/10'
                   }`
                 }

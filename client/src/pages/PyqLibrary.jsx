@@ -98,7 +98,7 @@ function QuestionDetail({ questionId, onProgressChange }) {
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3 pt-2 border-t border-outline-variant/10">
+      <div className="flex flex-wrap gap-3 pt-2 border-t border-outline-variant/60">
         <button
           type="button"
           disabled={saving}
@@ -192,7 +192,7 @@ export default function PyqLibrary() {
     <div className="page-pyq-library bg-background text-on-background min-h-dvh">
 
       <main className="min-h-dvh">
-        <header className="sticky top-0 z-30 bg-white/85 backdrop-blur-md px-8 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-outline-variant/10">
+        <header className="sticky top-0 z-30 bg-white/85 backdrop-blur-md px-8 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-outline-variant/60">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Question bank</p>
             <h1 className="font-headline text-3xl font-black tracking-tight mt-1">PYQ Library</h1>
@@ -213,7 +213,7 @@ export default function PyqLibrary() {
           <div className="grid grid-cols-12 gap-3">
             {/* Filters */}
             <aside className="col-span-12 lg:col-span-3 space-y-4">
-              <div className="bg-surface-container-lowest p-4 rounded-xl shadow-[0px_24px_48px_rgba(14,14,14,0.06)]">
+              <div className="bg-surface-container-lowest p-4 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)]">
                 <h3 className="font-headline font-bold text-lg mb-3 flex items-center gap-2">
                   <span className="material-symbols-outlined text-primary">filter_list</span>
                   Company Focus
@@ -427,7 +427,7 @@ export default function PyqLibrary() {
                     type="button"
                     disabled={page <= 1}
                     onClick={() => setPage((current) => current - 1)}
-                    className="px-6 py-2.5 rounded-full bg-white border border-outline-variant/10 font-bold text-sm shadow-sm disabled:opacity-40 hover:shadow-md transition-all"
+                    className="px-6 py-2.5 rounded-full bg-white border border-outline-variant/60 font-bold text-sm shadow-sm disabled:opacity-40 hover:shadow-md transition-all"
                   >
                     Previous
                   </button>
@@ -438,7 +438,7 @@ export default function PyqLibrary() {
                     type="button"
                     disabled={page >= pagination.pages}
                     onClick={() => setPage((current) => current + 1)}
-                    className="px-6 py-2.5 rounded-full bg-white border border-outline-variant/10 font-bold text-sm shadow-sm disabled:opacity-40 hover:shadow-md transition-all"
+                    className="px-6 py-2.5 rounded-full bg-white border border-outline-variant/60 font-bold text-sm shadow-sm disabled:opacity-40 hover:shadow-md transition-all"
                   >
                     Next
                   </button>

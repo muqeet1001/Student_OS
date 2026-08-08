@@ -65,7 +65,7 @@ export default function CodingPractice() {
     <div className="page-coding-practice bg-background font-body text-on-surface min-h-dvh">
 
       <main className="min-h-dvh">
-        <header className="w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-8 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-outline-variant/10">
+        <header className="w-full sticky top-0 z-40 bg-white/80 backdrop-blur-xl px-8 py-5 flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-outline-variant/60">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Practice lab</p>
             <h1 className="font-headline text-3xl font-black tracking-tight mt-1">Coding Practice</h1>
@@ -100,7 +100,7 @@ export default function CodingPractice() {
 
         <div className="p-6 space-y-4">
           {stats && (
-            <section className="bg-inverse-surface text-white p-4 rounded-xl shadow-2xl relative overflow-hidden">
+            <section className="bg-inverse-surface text-white p-4 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] relative overflow-hidden">
               <div className="relative z-10 flex flex-col lg:flex-row gap-3 lg:items-center justify-between">
                 <div>
                   <h2 className="text-lg font-bold font-headline mb-1">Your proficiency</h2>
@@ -188,7 +188,7 @@ export default function CodingPractice() {
                 <Link
                   key={problem._id}
                   to={`/coding-practice/${problem.slug}`}
-                  className="group bg-surface-container-lowest p-4 rounded-xl shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all border border-outline-variant/10 flex flex-col"
+                  className="group bg-surface-container-lowest p-4 rounded-xl shadow-sm hover:shadow-[0_1px_3px_rgba(0,0,0,0.06)] hover:-translate-y-1 transition-all border border-outline-variant/60 flex flex-col"
                 >
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <span
@@ -235,7 +235,7 @@ export default function CodingPractice() {
                     ))}
                   </div>
 
-                  <div className="mt-auto pt-4 flex items-center justify-between text-xs font-bold text-on-surface-variant border-t border-outline-variant/10">
+                  <div className="mt-auto pt-4 flex items-center justify-between text-xs font-bold text-on-surface-variant border-t border-outline-variant/60">
                     <span>{problem.acceptanceRate}% acceptance</span>
                     {problem.companies.length > 0 && (
                       <span className="truncate max-w-[10rem]" title={problem.companies.join(', ')}>

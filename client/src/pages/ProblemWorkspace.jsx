@@ -284,7 +284,7 @@ export default function ProblemWorkspace() {
                         <h4 className="font-headline font-extrabold text-sm uppercase tracking-wider">
                           Example {index + 1}
                         </h4>
-                        <div className="bg-surface-container-low p-4 rounded-xl border border-outline-variant/10 font-mono text-sm space-y-2">
+                        <div className="bg-surface-container-low p-4 rounded-xl border border-outline-variant/60 font-mono text-sm space-y-2">
                           <p>
                             <span className="text-outline">Input: </span>
                             {example.input}
@@ -390,7 +390,7 @@ export default function ProblemWorkspace() {
 
             {/* Editor panel */}
             <div className="col-span-12 lg:col-span-8 flex flex-col gap-3 min-h-0">
-              <div className="flex-1 code-editor-gradient rounded-xl shadow-2xl overflow-hidden flex flex-col border border-white/5 min-h-[24rem]">
+              <div className="flex-1 code-editor-gradient rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden flex flex-col border border-white/5 min-h-[24rem]">
                 <div className="h-12 bg-white/5 border-b border-white/10 flex items-center justify-between px-4 shrink-0">
                   <div className="flex items-center gap-3">
                     <span className="px-3 py-1.5 bg-white/10 rounded-lg text-white text-xs font-bold">

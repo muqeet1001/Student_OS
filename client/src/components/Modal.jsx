@@ -70,9 +70,9 @@ export default function Modal({ open, onClose, title, description, children, siz
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`w-full ${widths[size]} max-h-[90vh] overflow-y-auto custom-scrollbar bg-surface-container-lowest rounded-xl shadow-2xl`}
+        className={`w-full ${widths[size]} max-h-[90vh] overflow-y-auto custom-scrollbar bg-surface-container-lowest rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)]`}
       >
-        <div className="sticky top-0 bg-surface-container-lowest px-6 sm:px-8 pt-6 pb-4 border-b border-outline-variant/10 flex items-start justify-between gap-3 z-10">
+        <div className="sticky top-0 bg-surface-container-lowest px-6 sm:px-8 pt-6 pb-4 border-b border-outline-variant/60 flex items-start justify-between gap-3 z-10">
           <div>
             <h2 className="font-headline text-2xl font-black tracking-tight text-on-surface">{title}</h2>
             {description && <p className="text-sm text-on-surface-variant mt-1">{description}</p>}

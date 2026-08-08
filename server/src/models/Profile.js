@@ -95,6 +95,12 @@ const profileSchema = new mongoose.Schema(
       leetcode: { type: String, default: '' },
     },
     targetRoles: { type: [String], default: [] },
+    /** The single role readiness is measured against. */
+    targetRole: {
+      type: String,
+      enum: ['frontend', 'backend', 'fullstack', 'data-analyst', 'software-engineer', null],
+      default: null,
+    },
     targetCompanies: { type: [String], default: [] },
 
     skills: { type: [skillSchema], default: [] },

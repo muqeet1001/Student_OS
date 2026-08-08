@@ -30,7 +30,7 @@ function CandidateRow({ student, rank }) {
     match.score >= 70 ? 'text-green-700' : match.score >= 45 ? 'text-on-secondary-container' : 'text-error';
 
   return (
-    <li className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 overflow-hidden">
+    <li className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
@@ -65,7 +65,7 @@ function CandidateRow({ student, rank }) {
       </button>
 
       {open && (
-        <div className="px-3 pb-3 pt-1 space-y-3 border-t border-outline-variant/10">
+        <div className="px-3 pb-3 pt-1 space-y-3 border-t border-outline-variant/60">
           {match.blockers.length > 0 && (
             <div className="rounded-lg bg-error-container/15 border border-error/20 p-3">
               <p className="text-[10px] font-black uppercase tracking-wider text-on-error-container mb-1">
@@ -148,7 +148,7 @@ export default function JobMatch() {
 
   return (
     <section className="space-y-3">
-      <form onSubmit={run} className="bg-surface-container-lowest rounded-xl border border-outline-variant/15 p-4 space-y-3">
+      <form onSubmit={run} className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-4 space-y-3">
         <div>
           <h2 className="font-headline text-base font-bold">Shortlist for a role</h2>
           <p className="text-xs text-on-surface-variant mt-0.5">
@@ -191,7 +191,7 @@ export default function JobMatch() {
           <button
             type="submit"
             disabled={loading || description.trim().length < 20}
-            className="ml-auto px-6 py-2.5 rounded-full bg-primary text-on-primary font-bold text-sm shadow-lg shadow-primary/20 disabled:opacity-60"
+            className="ml-auto px-6 py-2.5 rounded-full bg-primary text-on-primary font-bold text-sm shadow-[0_1px_2px_rgba(0,0,0,0.06)] disabled:opacity-60"
           >
             {loading ? 'Ranking…' : 'Find candidates'}
           </button>

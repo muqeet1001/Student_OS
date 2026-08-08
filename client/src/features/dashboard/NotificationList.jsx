@@ -11,7 +11,7 @@ const TONES = {
     icon: 'text-green-700',
   },
   info: {
-    wrap: 'bg-surface-container-lowest border-outline-variant/15',
+    wrap: 'bg-surface-container-lowest border-outline-variant/60',
     icon: 'text-primary',
   },
 };
@@ -19,7 +19,7 @@ const TONES = {
 export default function NotificationList({ notifications = [] }) {
   if (notifications.length === 0) {
     return (
-      <div className="rounded-xl border border-outline-variant/15 bg-surface-container-lowest p-5 text-center">
+      <div className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-5 text-center">
         <span className="material-symbols-outlined text-green-600 text-2xl">task_alt</span>
         <p className="text-sm font-bold mt-1">Nothing needs your attention</p>
         <p className="text-xs text-on-surface-variant mt-0.5">

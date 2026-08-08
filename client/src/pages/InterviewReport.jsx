@@ -63,7 +63,7 @@ export default function InterviewReport() {
         </Link>
 
         {/* Headline score */}
-        <header className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/10">
+        <header className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60">
           <p className="text-xs font-bold uppercase tracking-widest text-primary capitalize">
             {session.round.replace('-', ' ')} round
             {session.targetRole && ` • ${session.targetRole}`}
@@ -183,7 +183,7 @@ export default function InterviewReport() {
         <div className="flex flex-wrap gap-3">
           <Link
             to="/ai-interview"
-            className="px-8 py-3 rounded-full bg-primary text-on-primary font-bold shadow-lg shadow-primary/20"
+            className="px-8 py-3 rounded-full bg-primary text-on-primary font-bold shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
           >
             Practise another round
           </Link>

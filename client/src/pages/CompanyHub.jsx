@@ -72,7 +72,7 @@ export default function CompanyHub() {
               {company.focusAreas.map((area) => (
                 <span
                   key={area}
-                  className="text-[10px] px-2.5 py-1 bg-surface-container-lowest text-on-surface-variant font-bold rounded-2xl border border-outline-variant/15"
+                  className="text-[10px] px-2.5 py-1 bg-surface-container-lowest text-on-surface-variant font-bold rounded-2xl border border-outline-variant/60"
                 >
                   {area}
                 </span>
@@ -100,7 +100,7 @@ export default function CompanyHub() {
 
         {/* Journey + insights */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-          <section className="lg:col-span-2 bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/15">
+          <section className="lg:col-span-2 bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60">
             <div className="flex items-baseline justify-between gap-3 mb-3">
               <h2 className="font-headline text-base font-bold">The interview journey</h2>
               {company.processDuration && (
@@ -150,7 +150,7 @@ export default function CompanyHub() {
               {company.insights.map((insight, index) => (
                 <blockquote
                   key={index}
-                  className="bg-surface-container-lowest rounded-lg p-3 border border-outline-variant/10"
+                  className="bg-surface-container-lowest rounded-lg p-3 border border-outline-variant/60"
                 >
                   <p className="text-xs text-on-surface leading-relaxed">“{insight.quote}”</p>
                   <footer className="text-[10px] text-on-surface-variant font-bold mt-2">
@@ -176,7 +176,7 @@ export default function CompanyHub() {
           </div>
 
           {topQuestions.length === 0 ? (
-            <p className="text-sm text-on-surface-variant bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/15">
+            <p className="text-sm text-on-surface-variant bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60">
               No reported questions for {company.name} yet.
             </p>
           ) : (
@@ -184,7 +184,7 @@ export default function CompanyHub() {
               {topQuestions.map((question) => (
                 <article
                   key={question._id}
-                  className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/15 flex flex-col"
+                  className="bg-surface-container-lowest rounded-xl p-4 border border-outline-variant/60 flex flex-col"
                 >
                   <div className="flex flex-wrap items-center gap-1.5 mb-2">
                     {question.topics.slice(0, 1).map((topic) => (
@@ -206,7 +206,7 @@ export default function CompanyHub() {
 
                   <h3 className="font-bold text-sm leading-snug flex-1">{question.title}</h3>
 
-                  <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-outline-variant/10">
+                  <div className="flex items-center justify-between gap-2 mt-3 pt-2.5 border-t border-outline-variant/60">
                     <span className="text-[10px] text-on-surface-variant font-medium">
                       Asked {question.askedCount} times
                     </span>
