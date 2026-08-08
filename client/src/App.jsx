@@ -14,7 +14,9 @@ import Profile from './pages/Profile.jsx';
 import PyqLibrary from './pages/PyqLibrary.jsx';
 import Register from './pages/Register.jsx';
 import ResumeBuilder from './pages/ResumeBuilder.jsx';
+import SkillAttempt from './pages/SkillAttempt.jsx';
 import SkillTest from './pages/SkillTest.jsx';
+import Skills from './pages/Skills.jsx';
 import TestReview from './pages/TestReview.jsx';
 import Tracker from './pages/Tracker.jsx';
 import TestRunner from './pages/TestRunner.jsx';
@@ -45,6 +47,7 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/skills" element={<Skills />} />
             <Route path="/skill-test" element={<SkillTest />} />
             <Route path="/skill-test/review/:attemptId" element={<TestReview />} />
             <Route path="/coding-practice" element={<CodingPractice />} />
@@ -68,6 +71,7 @@ export default function App() {
           {/* The test runner is deliberately full screen: no navigation to
               wander off into while the clock is running. */}
           <Route path="/skill-test/:slug" element={<TestRunner />} />
+          <Route path="/skills/attempt/:attemptId" element={<SkillAttempt />} />
         </Route>
 
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

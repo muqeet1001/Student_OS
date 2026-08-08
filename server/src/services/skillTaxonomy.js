@@ -83,16 +83,37 @@ export const SKILL_ALIASES = {
   'Problem Solving': ['problem[- ]solving', 'analytical'],
 };
 
-/** Compiled once — the parser runs this over every job description. */
+/*
+ * Compiled once — the parser runs this over every job description.
+ *
+ * The leading `.` in the lookbehind matters: without it the bare `js` alias
+ * matches inside "Node.js", and every Node.js skill silently resolves to
+ * JavaScript.
+ */
 const COMPILED = Object.entries(SKILL_ALIASES).map(([canonical, aliases]) => ({
   canonical,
-  pattern: new RegExp(`(?<![a-z0-9])(${aliases.join('|')})(?![a-z0-9])`, 'i'),
+  pattern: new RegExp(`(?<![a-z0-9.])(${aliases.join('|')})(?![a-z0-9])`, 'i'),
 }));
+
+/** Exact alias lookup, so a whole-string match always wins over a substring. */
+const EXACT = new Map(
+  Object.entries(SKILL_ALIASES).flatMap(([canonical, aliases]) => [
+    [canonical.toLowerCase(), canonical],
+    // Aliases are regex sources; only the literal ones can be matched exactly.
+    ...aliases
+      .filter((alias) => !/[\\^$*+?()[\]{}|]/.test(alias))
+      .map((alias) => [alias.toLowerCase(), canonical]),
+  ]),
+);
 
 /** Canonical form of a single free-text skill, or the trimmed input. */
 export function canonicalise(raw) {
   const value = String(raw ?? '').trim();
   if (!value) return '';
+
+  // "Node.js" must resolve to Node.js, not to JavaScript via its `js` alias.
+  const exact = EXACT.get(value.toLowerCase());
+  if (exact) return exact;
 
   const hit = COMPILED.find(({ pattern }) => pattern.test(value));
   return hit ? hit.canonical : value;

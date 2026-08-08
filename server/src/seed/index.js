@@ -24,6 +24,7 @@ import { Test, TestQuestion } from '../models/Test.js';
 import { InterviewQuestion } from '../models/InterviewQuestion.js';
 import { Company } from '../models/Company.js';
 import { Application, JobPosting } from '../models/JobPosting.js';
+import { SkillAssessment, SkillAttempt } from '../models/SkillAssessment.js';
 import { User } from '../models/User.js';
 import { Profile } from '../models/Profile.js';
 import { Bookmark, SolvedProblem, Submission } from '../models/Submission.js';
@@ -38,6 +39,7 @@ import { tests } from './data/tests.js';
 import { interviewQuestions } from './data/interviewQuestions.js';
 import { companies } from './data/companies.js';
 import { jobs } from './data/jobs.js';
+import { skillAssessments } from './data/skillAssessments.js';
 
 const flags = new Set(process.argv.slice(2));
 const FRESH = flags.has('--fresh');
@@ -136,6 +138,20 @@ async function seedJobs() {
   logger.info(`Seeded ${jobs.length} job postings`);
 }
 
+async function seedSkillAssessments() {
+  for (const assessment of skillAssessments) {
+    // Replaced wholesale rather than merged: questions have no natural key,
+    // so an upsert would strand edits to any prompt that changed.
+    await SkillAssessment.findOneAndUpdate({ skill: assessment.skill }, assessment, {
+      upsert: true,
+      setDefaultsOnInsert: true,
+    });
+  }
+
+  const total = skillAssessments.reduce((sum, item) => sum + item.questions.length, 0);
+  logger.info(`Seeded ${skillAssessments.length} skill assessments (${total} questions)`);
+}
+
 async function syncIndexes() {
   const models = [
     User, Profile,
@@ -144,6 +160,7 @@ async function syncIndexes() {
     Test, TestQuestion, TestAttempt,
     InterviewQuestion, InterviewSession,
     Resume, Company, JobPosting, Application,
+    SkillAssessment, SkillAttempt,
   ];
 
   for (const model of models) {
@@ -200,6 +217,7 @@ export async function run({ connect = true } = {}) {
       InterviewQuestion.deleteMany({}),
       Company.deleteMany({}),
       JobPosting.deleteMany({}),
+      SkillAssessment.deleteMany({}),
     ]);
     logger.warn('Cleared existing reference data (--fresh)');
   }
@@ -211,6 +229,7 @@ export async function run({ connect = true } = {}) {
   await seedInterviewQuestions();
   await seedCompanies();
   await seedJobs();
+  await seedSkillAssessments();
   await syncIndexes();
   if (DEMO) await seedDemoUser();
 

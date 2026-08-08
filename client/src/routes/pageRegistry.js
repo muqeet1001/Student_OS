@@ -2,6 +2,7 @@
 export const navLinks = [
   { label: 'Dashboard', path: '/dashboard', icon: 'dashboard', short: 'Home' },
   { label: 'Coding Practice', path: '/coding-practice', icon: 'code', short: 'Code' },
+  { label: 'Skills', path: '/skills', icon: 'verified', short: 'Skills' },
   { label: 'Skill Test', path: '/skill-test', icon: 'quiz', short: 'Tests' },
   { label: 'PYQ Library', path: '/pyq-library', icon: 'history_edu', short: 'PYQs' },
   { label: 'Jobs', path: '/jobs', icon: 'work', short: 'Jobs' },
