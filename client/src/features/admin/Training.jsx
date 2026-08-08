@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../../components/StateBlocks.jsx';
 import { useApiResource } from '../../hooks/useApiResource.js';
 import { api } from '../../lib/api.js';
+import CheckinCode from './CheckinCode.jsx';
 
 const STATUS_TONES = {
   planned: 'bg-secondary-container text-on-secondary-container',
@@ -251,6 +252,7 @@ function Effectiveness({ sessionId }) {
 
 function SessionCard({ session, onChanged }) {
   const [showing, setShowing] = useState(false);
+  const [code, setCode] = useState(false);
   const summary = session.attendanceSummary;
 
   async function setStatus(status) {
@@ -324,14 +326,24 @@ function SessionCard({ session, onChanged }) {
         </div>
       </div>
 
-      <button
-        type="button"
-        onClick={() => setShowing((value) => !value)}
-        className="text-xs font-bold text-primary hover:underline mt-3"
-      >
-        {showing ? 'Hide' : 'Did it work?'}
-      </button>
+      <div className="flex items-center gap-4 mt-3">
+        <button
+          type="button"
+          onClick={() => setShowing((value) => !value)}
+          className="text-xs font-bold text-primary hover:underline"
+        >
+          {showing ? 'Hide' : 'Did it work?'}
+        </button>
+        <button
+          type="button"
+          onClick={() => setCode((value) => !value)}
+          className="text-xs font-bold text-on-surface-variant hover:text-primary"
+        >
+          {code ? 'Hide code' : 'Show check-in code'}
+        </button>
+      </div>
 
+      {code && <CheckinCode kind="training" id={session._id} onClose={() => setCode(false)} />}
       {showing && <Effectiveness sessionId={session._id} />}
     </div>
   );

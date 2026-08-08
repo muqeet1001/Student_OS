@@ -11,6 +11,7 @@ import path from 'node:path';
 process.env.NODE_ENV = 'production';
 process.env.JWT_ACCESS_SECRET ||= 'test-access-secret';
 process.env.JWT_REFRESH_SECRET ||= 'test-refresh-secret';
+process.env.CHECKIN_SECRET ||= 'test-checkin-secret';
 
 const clientDist = path.resolve(import.meta.dirname, '../../client/dist');
 const hasBuild = existsSync(path.join(clientDist, 'index.html'));

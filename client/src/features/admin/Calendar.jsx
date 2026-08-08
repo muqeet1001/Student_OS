@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../../components/StateBlocks.jsx';
 import { useApiResource } from '../../hooks/useApiResource.js';
 import { api } from '../../lib/api.js';
+import CheckinCode from './CheckinCode.jsx';
 
 const TYPE_TONES = {
   drive: 'bg-primary/10 text-primary',
@@ -285,6 +286,7 @@ function ScheduleSlots({ event, onDone, onCancel }) {
 function EventCard({ event, onChanged }) {
   const [open, setOpen] = useState(false);
   const [scheduling, setScheduling] = useState(false);
+  const [code, setCode] = useState(false);
 
   async function markSlot(slotId, status) {
     try {
@@ -341,7 +343,19 @@ function EventCard({ event, onChanged }) {
             Schedule
           </button>
         )}
+
+        {event.slots?.length > 0 && (
+          <button
+            type="button"
+            onClick={() => setCode((value) => !value)}
+            className="text-xs font-bold text-on-surface-variant shrink-0 hover:text-primary"
+          >
+            {code ? 'Hide code' : 'Check-in'}
+          </button>
+        )}
       </div>
+
+      {code && <CheckinCode kind="event" id={event._id} onClose={() => setCode(false)} />}
 
       {scheduling && (
         <ScheduleSlots

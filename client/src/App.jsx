@@ -4,6 +4,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import Achievements from './pages/Achievements.jsx';
 import Calendar from './pages/Calendar.jsx';
 import Settings from './pages/Settings.jsx';
+import CheckIn from './pages/CheckIn.jsx';
 import AdminDashboard from './pages/AdminDashboard.jsx';
 import CodingPractice from './pages/CodingPractice.jsx';
 import CompanyHub from './pages/CompanyHub.jsx';
@@ -80,6 +81,10 @@ export default function App() {
               wander off into while the clock is running. */}
           <Route path="/skill-test/:slug" element={<TestRunner />} />
           <Route path="/skills/attempt/:attemptId" element={<SkillAttempt />} />
+
+          {/* Scanned from a projector, so it is full screen: the student
+              is standing in a doorway holding a phone. */}
+          <Route path="/check-in/:kind/:id" element={<CheckIn />} />
         </Route>
 
         <Route path="/" element={<Navigate to="/dashboard" replace />} />

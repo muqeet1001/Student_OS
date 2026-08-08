@@ -39,6 +39,13 @@ export const config = {
     refreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '30d',
   },
 
+  /*
+   * Its own secret rather than reusing a JWT one: check-in codes are shown
+   * on a projector to a room full of people, so the material behind them
+   * should never be the material behind a session token.
+   */
+  checkinSecret: required('CHECKIN_SECRET'),
+
   ai: {
     baseUrl: (process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, ''),
     apiKey: process.env.AI_API_KEY || '',

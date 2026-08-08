@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import * as trainings from '../controllers/training.controller.js';
+import { makeCheckinHandler, makeCodeHandler } from '../controllers/checkin.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import {
@@ -9,11 +10,19 @@ import {
   markAttendanceSchema,
   updateTrainingSchema,
 } from '../validators/training.validators.js';
+import { checkinSchema } from '../validators/checkin.validators.js';
 
 export const trainingRoutes = Router();
 
-// Attendance and effectiveness cover the whole cohort, so staff only.
-trainingRoutes.use(requireAuth, requireRole('admin'));
+trainingRoutes.use(requireAuth);
+
+// Students check themselves in, so this one sits above the staff gate.
+trainingRoutes.post('/:id/checkin', validate(checkinSchema), makeCheckinHandler('training'));
+
+// Everything else covers the whole cohort, so staff only.
+trainingRoutes.use(requireRole('admin'));
+
+trainingRoutes.get('/:id/checkin-code', makeCodeHandler('training'));
 
 trainingRoutes.get('/', trainings.listTrainings);
 trainingRoutes.post('/', validate(createTrainingSchema), trainings.createTraining);

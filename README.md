@@ -26,18 +26,26 @@ restart — set a real URI to persist anything.
 
 ## What you need to provide
 
-Only three values are required. Everything else has a working default.
+Four values are required in production. Everything else has a working default.
 
 | Variable | Required | How to get it |
 |---|---|---|
 | `MONGO_URI` | production | Atlas connection string, **including the database name**: `…mongodb.net/student_os?retryWrites=true&w=majority`. Allow your server's IP under Atlas → Network Access. |
 | `JWT_ACCESS_SECRET` | production | `openssl rand -hex 48` |
 | `JWT_REFRESH_SECRET` | production | `openssl rand -hex 48` — must differ from the access secret |
+| `CHECKIN_SECRET` | production | `openssl rand -hex 48` — signs attendance codes. Its own secret, because those codes are displayed on a projector to a room. |
 | `AI_API_KEY` | optional | Only for model-based interview feedback. Scoring works fully without it. |
 
-`server/.env.example` documents every variable. `.env` is gitignored — keep
-real credentials out of the repository, and rotate any secret that has been
-pasted into a chat, issue or PR.
+`server/.env.example` documents every variable.
+
+> **`server/.env` is committed to this repository on purpose**, so that
+> collaborators can clone and run without setup. That is a deliberate
+> trade-off, and it has a consequence worth stating plainly: **every secret
+> in that file is public.** Anyone who can read this repository can read the
+> database password. Before this is used with real student data, generate
+> fresh secrets, rotate the Atlas password, and untrack the file
+> (`git rm --cached server/.env`). Committed credentials stay in git history
+> even after deletion, so rotating is the only real fix.
 
 ## Commands
 
@@ -62,10 +70,23 @@ pasted into a chat, issue or PR.
 - **AI mock interview** — scored on relevance, structure, specificity and delivery, with feedback that names what to fix
 - **Resume builder** — generated from the profile, transparent ATS score, print to PDF, saved versions frozen at save time
 - **Dashboard** — one weighted readiness score and what to do next
+- **Roadmap** — a four-week plan whose items complete themselves from evidence, never from a checkbox
+- **Achievements** — tiered badges and levels derived from work already recorded elsewhere
+- **Calendar** — drives, tests and interviews, showing *your* slot time rather than the event's, with clashes flagged
+- **Jobs and tracker** — matched roles, applications through to offer
+- **Settings** — notification categories, signed-in devices, and help
 
 **For placement staff**
 
 - **Cohort view** — every student's readiness, filterable by branch, graduation year and risk band, with a per-student drill-down
+- **Job matcher** — paste a JD, get a ranked shortlist with the reason for every score
+- **Drives** — eligibility, bulk shortlisting, CSV export
+- **Offers and placement report** — placement rate counted by distinct student, median package alongside the mean
+- **Placement calendar** — interview slots generated across parallel panels, with cross-event double-bookings surfaced
+- **QR attendance** — rotating check-in codes for events and training sessions
+- **Company CRM** — contacts, visit history derived from drives, and recruiter feedback aggregated into fundable themes
+- **Training** — sessions, attendance, and effectiveness measured against a comparison group rather than against nothing
+- **Insights** — cohort-wide gaps turned into training recommendations that name a headcount
 
 ## Architecture
 
