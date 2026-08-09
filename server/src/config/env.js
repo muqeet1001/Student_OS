@@ -2,6 +2,8 @@ import dotenv from 'dotenv';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+import { assertSecretsAreNotPublic } from './publicSecrets.js';
+
 const here = path.dirname(fileURLToPath(import.meta.url));
 const serverRoot = path.resolve(here, '../..');
 
@@ -72,3 +74,19 @@ export const config = {
     maxOutput: Number(process.env.CODE_RUNNER_MAX_OUTPUT) || 10_000,
   },
 };
+
+/*
+ * Checked at import, so a misconfigured production server fails on startup
+ * rather than after it has begun accepting traffic. See publicSecrets.js for
+ * why this exists at all.
+ */
+assertSecretsAreNotPublic(
+  {
+    JWT_ACCESS_SECRET: config.jwt.accessSecret,
+    JWT_REFRESH_SECRET: config.jwt.refreshSecret,
+    CHECKIN_SECRET: config.checkinSecret,
+    MONGO_URI: config.mongoUri,
+    AI_API_KEY: config.ai.apiKey,
+  },
+  { isProduction },
+);

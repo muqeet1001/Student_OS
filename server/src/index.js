@@ -29,8 +29,29 @@ async function bootstrap() {
 
   process.on('SIGINT', () => shutdown('SIGINT'));
   process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+  /*
+   * A rejected promise nobody handled is a bug, but it is not proof the
+   * process is unusable — it is usually one request's error path. Log it
+   * loudly and keep serving the other users; crashing the whole instance
+   * because one handler forgot a catch is a worse outcome than the bug.
+   */
   process.on('unhandledRejection', (reason) => {
-    logger.error('Unhandled rejection:', reason);
+    logger.error('Unhandled rejection:', reason instanceof Error ? reason.stack : reason);
+  });
+
+  /*
+   * An uncaught exception is different: the stack that threw is gone and
+   * whatever it was part-way through is now in an unknown state. Node's own
+   * guidance is to treat the process as unrecoverable. So this logs, stops
+   * accepting new connections, and exits non-zero for the supervisor to
+   * restart — rather than the previous behaviour, which was to let the
+   * default handler kill the process with no log line explaining why.
+   */
+  process.on('uncaughtException', (error) => {
+    logger.error('Uncaught exception — shutting down:', error?.stack || error);
+    server.close(() => process.exit(1));
+    setTimeout(() => process.exit(1), 5_000).unref();
   });
 }
 

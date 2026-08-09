@@ -2,6 +2,7 @@ import path from 'node:path';
 import { existsSync } from 'node:fs';
 
 import express from 'express';
+import mongoose from 'mongoose';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -13,6 +14,9 @@ import { config } from './config/env.js';
 import { routes } from './routes/index.js';
 import { errorHandler, notFoundHandler } from './middleware/error.js';
 import { logger } from './utils/logger.js';
+
+/** mongoose.connection.readyState, in words rather than as a magic number. */
+const DB_STATES = ['disconnected', 'connected', 'connecting', 'disconnecting'];
 
 export function createApp() {
   const app = express();
@@ -32,9 +36,22 @@ export function createApp() {
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
 
-  if (!config.isProduction) {
-    app.use(morgan('dev'));
-  }
+  /*
+   * Request logging in production too, not only development.
+   *
+   * It used to be dev-only, which left a deployed instance with no access log
+   * at all — no way to answer "was that request even received", "which
+   * endpoint is slow", or "what was being hit when it fell over". The
+   * combined format is what log shippers expect; health checks are dropped
+   * because an orchestrator polling every few seconds would otherwise be most
+   * of the log.
+   */
+  app.use(
+    morgan(config.isProduction ? 'combined' : 'dev', {
+      skip: (req) => req.path.startsWith('/api/health'),
+      stream: { write: (line) => logger.info(line.trimEnd()) },
+    }),
+  );
 
   app.use(
     '/api',
@@ -49,10 +66,39 @@ export function createApp() {
 
   app.use('/uploads', express.static(config.uploadsDir, { maxAge: '7d' }));
 
+  /*
+   * Liveness and readiness are deliberately separate endpoints.
+   *
+   * Liveness answers "is this process alive" — if it stops answering, the
+   * orchestrator should restart the container. It must not depend on the
+   * database: a Mongo outage is not fixed by killing every API pod, and
+   * wiring a restart to it turns a recoverable database blip into a crash
+   * loop across the whole fleet.
+   *
+   * Readiness answers "should traffic be routed here", which the database
+   * absolutely does gate — an instance that cannot reach Mongo serves
+   * nothing but 500s, and a load balancer needs to know that. This is the
+   * one to point a load balancer's health check at.
+   */
   app.get('/api/health', (_req, res) => {
     res.json({
       success: true,
       data: { status: 'ok', env: config.env, uptime: process.uptime() },
+    });
+  });
+
+  app.get('/api/health/ready', (_req, res) => {
+    // 1 is `connected`; 2 is `connecting`, which is not ready yet.
+    const connected = mongoose.connection.readyState === 1;
+
+    res.status(connected ? 200 : 503).json({
+      success: connected,
+      data: {
+        status: connected ? 'ready' : 'not-ready',
+        database: DB_STATES[mongoose.connection.readyState] ?? 'unknown',
+        env: config.env,
+        uptime: process.uptime(),
+      },
     });
   });
 

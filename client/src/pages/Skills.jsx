@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
@@ -10,10 +10,16 @@ const LEVEL_TONES = {
   beginner: 'bg-surface-container text-on-surface-variant',
 };
 
-function History({ skill }) {
-  const { data } = useApiResource(`/skills/${encodeURIComponent(skill)}/history`);
-  const attempts = data?.attempts ?? [];
-
+/**
+ * Attempts arrive with the assessment list, not from a request per card.
+ *
+ * Each card used to fetch `/skills/:skill/history` itself, so opening this
+ * page cost one round trip per assessment — ten of them, on top of the list
+ * request that had already returned every attempt in its `history` field. The
+ * data was fetched twice and the second time was serialised behind the first.
+ * On a campus connection that is a visible stall for nothing.
+ */
+function History({ attempts }) {
   if (attempts.length < 2) return null;
 
   const max = Math.max(...attempts.map((a) => a.percentage), 100);
@@ -40,7 +46,7 @@ function History({ skill }) {
   );
 }
 
-function AssessmentCard({ assessment, onStart, starting }) {
+function AssessmentCard({ assessment, attempts, onStart, starting }) {
   const { latest } = assessment;
 
   return (
@@ -73,7 +79,7 @@ function AssessmentCard({ assessment, onStart, starting }) {
         {latest && ` · last scored ${latest.percentage}%`}
       </p>
 
-      <History skill={assessment.skill} />
+      <History attempts={attempts} />
 
       <button
         type="button"
@@ -119,6 +125,19 @@ export default function Skills() {
   const assessments = data?.assessments ?? [];
   const verified = assessments.filter((item) => item.latest).length;
 
+  // Grouped once here rather than filtered inside each card, so rendering
+  // stays linear in the number of attempts instead of cards × attempts.
+  const attemptsBySkill = useMemo(() => {
+    const grouped = new Map();
+
+    // The API returns newest first; the chart reads left to right in time.
+    for (const attempt of [...(data?.history ?? [])].reverse()) {
+      grouped.set(attempt.skill, [...(grouped.get(attempt.skill) ?? []), attempt]);
+    }
+
+    return grouped;
+  }, [data]);
+
   return (
     <div className="bg-background text-on-surface min-h-dvh">
       <div className="max-w-7xl mx-auto px-5 md:px-8 pt-16 lg:pt-6 pb-10 space-y-4">
@@ -149,6 +168,7 @@ export default function Skills() {
             <AssessmentCard
               key={assessment._id}
               assessment={assessment}
+              attempts={attemptsBySkill.get(assessment.skill) ?? []}
               onStart={start}
               starting={starting}
             />

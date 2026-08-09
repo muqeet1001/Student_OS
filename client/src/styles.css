@@ -1,6 +1,39 @@
 @import 'tailwindcss';
 
 /*
+ * Fonts are bundled rather than fetched from the Google Fonts CDN.
+ *
+ * A smoke run on a network without CDN access showed what the dependency
+ * actually cost: the icon stylesheet failed, and because Material Symbols
+ * addresses icons by ligature, all 115 icons in the app fell back to
+ * rendering their own names. Self-hosting also stops every visitor's IP
+ * reaching a third party on page load, and removes a render-blocking
+ * round trip to an origin we do not control.
+ *
+ * These are the variable cuts, so one file per family covers every weight
+ * the design uses.
+ */
+@import '@fontsource-variable/plus-jakarta-sans';
+@import '@fontsource-variable/manrope';
+@import '@fontsource-variable/jetbrains-mono';
+
+/*
+ * Subset to the icons this app uses — 84 of 3,000 — which is what makes
+ * self-hosting viable at all: the full variable font is 3.8 MB, the subset
+ * is 66 KB. Rebuilt by scripts/build-icon-font.mjs on every production
+ * build, so a newly added icon cannot be silently left out.
+ */
+@font-face {
+  font-family: 'Material Symbols Outlined';
+  font-style: normal;
+  font-weight: 100 700;
+  /* `block` rather than `swap`: there is no sensible fallback glyph for an
+     icon, and swapping in the ligature text is the failure being fixed. */
+  font-display: block;
+  src: url('./assets/fonts/material-symbols-subset.woff2') format('woff2');
+}
+
+/*
  * The design is light-only. Binding `dark:` to a class (rather than v4's
  * default `prefers-color-scheme`) keeps the leftover dark: utilities inert
  * instead of half-darkening the UI for anyone whose OS prefers dark.
@@ -77,10 +110,10 @@
   --color-inverse-primary: #fb923c;
 
   /* Typography */
-  --font-headline: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-body: 'Manrope', ui-sans-serif, system-ui, sans-serif;
-  --font-label: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-headline: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-body: 'Manrope Variable', 'Manrope', ui-sans-serif, system-ui, sans-serif;
+  --font-label: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
 
   /*
    * Rounding stays softer than Tailwind's default because it carries the

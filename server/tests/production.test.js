@@ -9,9 +9,19 @@ import path from 'node:path';
  * fallback and cache headers are all independent of Mongo.
  */
 process.env.NODE_ENV = 'production';
-process.env.JWT_ACCESS_SECRET ||= 'test-access-secret';
-process.env.JWT_REFRESH_SECRET ||= 'test-refresh-secret';
-process.env.CHECKIN_SECRET ||= 'test-checkin-secret';
+process.env.JWT_ACCESS_SECRET = 'test-access-secret';
+process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
+process.env.CHECKIN_SECRET = 'test-checkin-secret';
+
+/*
+ * Overridden, not defaulted. server/.env is committed and its values are
+ * public, so the startup guard refuses to configure a production server with
+ * them — correctly. This suite is simulating a *properly* configured
+ * production server, which means supplying values of its own rather than
+ * inheriting the ones the guard exists to reject.
+ */
+process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/student_os_production_test';
+process.env.AI_API_KEY = '';
 
 const clientDist = path.resolve(import.meta.dirname, '../../client/dist');
 const hasBuild = existsSync(path.join(clientDist, 'index.html'));
@@ -28,13 +38,30 @@ before(async () => {
 
 after(() => server?.close());
 
-test('health check responds without a database', async () => {
+test('liveness responds without a database', async () => {
+  // Liveness must not depend on Mongo. If it did, a database blip would fail
+  // every container's health check and the orchestrator would restart the
+  // whole fleet — turning a recoverable outage into a crash loop.
   const res = await fetch(`${base}/api/health`);
   assert.equal(res.status, 200);
 
   const body = await res.json();
   assert.equal(body.success, true);
   assert.equal(body.data.status, 'ok');
+});
+
+test('readiness reports 503 while the database is unreachable', async () => {
+  // This suite runs with no Mongo connection, which is exactly the state
+  // readiness exists to report. Answering 200 here — as the single old health
+  // endpoint did — tells a load balancer to send traffic to an instance that
+  // can only return 500s.
+  const res = await fetch(`${base}/api/health/ready`);
+  assert.equal(res.status, 503);
+
+  const body = await res.json();
+  assert.equal(body.success, false);
+  assert.equal(body.data.status, 'not-ready');
+  assert.equal(body.data.database, 'disconnected');
 });
 
 test('an unknown API path returns JSON, not the SPA shell', async () => {

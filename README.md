@@ -74,11 +74,12 @@ both fail this. Bind-mount a real one:
 | `npm run dev` | Client and API together, both with hot reload |
 | `npm run build` | Production client build into `client/dist` |
 | `npm start` | Production API, which also serves the built client |
-| `npm test` | 450 tests — judge sandbox, interview scoring, seed integrity, production serving |
+| `npm test` | 458 tests — judge sandbox, interview scoring, seed integrity, production serving |
 | `npm run seed` | Upsert reference data (safe to re-run) |
 | `npm run seed:demo` | Also create the demo account and a full demo placement office |
 | `npm run seed:fresh` | Wipe reference data first (leaves student data alone) |
 | `npm run seed:demo:fresh` | Rebuild the demo cohort from scratch |
+| `npm run e2e` | Browser smoke test over every route — see `e2e/README.md` |
 
 ### What gets seeded
 
@@ -115,6 +116,40 @@ belong in a production database — an empty screen is obviously empty, while
 "68% placed" reads as fact. Demo students live on `@students.demo.invalid`, a
 TLD reserved by RFC 2606 that can never resolve, so a demo broadcast cannot
 reach a real inbox even if SMTP is configured.
+
+## Production notes
+
+Things that were deliberate rather than incidental, and are easy to undo by
+accident.
+
+**No third-party CDN at runtime.** Fonts and icons are bundled. A smoke run on
+a network without CDN access showed what the previous Google Fonts dependency
+cost: Material Symbols addresses icons by ligature, so when its stylesheet
+failed, all 115 icons in the app rendered their own names as plain text. This
+runs on college networks, which block third-party origins routinely. Bundling
+also keeps visitors' IPs off a third party on every page load. The icon font is
+subset to the 84 icons actually used — 3.8 MB down to 66 KB — by
+`client/scripts/build-icon-font.mjs`, which scrapes icon names from both
+workspaces (the server names icons too, in notifications and today's plan) so
+a newly added one cannot be silently left out.
+
+**Liveness and readiness are separate.** `/api/health` says the process is
+alive and never touches Mongo — wiring a restart to database health turns a
+recoverable outage into a fleet-wide crash loop. `/api/health/ready` returns
+503 when the database is unreachable. Point a load balancer at the second one
+and a container restart policy at the first.
+
+**Production refuses to start on the committed secrets.** `server/.env` is
+committed on purpose, so everything in it is public. The risk is not the
+decision, it is forgetting it — deploying, having it work, and running a real
+cohort's placement records behind a JWT secret published on GitHub. So the
+published values are recognised by fingerprint and rejected when
+`NODE_ENV=production`. Development is untouched.
+
+**Source maps are not shipped.** A production build was serving 4.2 MB of maps
+beside 1.1 MB of code, publishing readable source with it. If you add an error
+tracker, switch `sourcemap` to `'hidden'` in `client/vite.config.js` and upload
+the maps to it rather than serving them.
 
 ## Features
 
