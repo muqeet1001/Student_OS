@@ -8,7 +8,9 @@
  * Exactly one option per question is correct — the schema enforces it, so a
  * typo here fails the seed rather than producing an unscoreable assessment.
  */
-export const skillAssessments = [
+import { extraSkillAssessments } from './skillAssessments.extra.js';
+
+const coreAssessments = [
   {
     skill: 'JavaScript',
     category: 'programming',
@@ -320,3 +322,5 @@ export const skillAssessments = [
     ],
   },
 ];
+
+export const skillAssessments = [...coreAssessments, ...extraSkillAssessments];
