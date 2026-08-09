@@ -1,5 +1,7 @@
 /** Previous-year questions, linked to a coding problem where one exists. */
-export const pyqs = [
+import { extraPyqs } from './pyqs.extra.js';
+
+const corePyqs = [
   {
     title: 'Two Sum with a sorted input',
     askedCount: 48,
@@ -132,3 +134,5 @@ export const pyqs = [
     topics: ['Operating Systems'],
   },
 ];
+
+export const pyqs = [...corePyqs, ...extraPyqs];

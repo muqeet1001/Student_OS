@@ -2,7 +2,9 @@
  * Coding problems. `testCases` feed the sandboxed judge, so `expectedOutput`
  * must match exactly what `functionName` returns.
  */
-export const problems = [
+import { extraProblems } from './problems.extra.js';
+
+const coreProblems = [
   {
     slug: 'two-sum',
     title: 'Two Sum',
@@ -168,3 +170,5 @@ export const problems = [
     ],
   },
 ];
+
+export const problems = [...coreProblems, ...extraProblems];

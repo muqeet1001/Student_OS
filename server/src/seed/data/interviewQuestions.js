@@ -4,7 +4,9 @@
  * `keywords` drive the relevance score, so they must be the points a strong
  * answer genuinely has to hit — not every word that could appear.
  */
-export const interviewQuestions = [
+import { extraInterviewQuestions } from './interviewQuestions.extra.js';
+
+const coreInterviewQuestions = [
   // ---------------------------------------------------------------- behavioural
   {
     prompt: 'Tell me about a time you disagreed with a teammate. How did you resolve it?',
@@ -126,4 +128,9 @@ export const interviewQuestions = [
     keywords: ['growth', 'skills', 'direction'],
     hint: 'Show direction and ambition without sounding like you are leaving in a year.',
   },
+];
+
+export const interviewQuestions = [
+  ...coreInterviewQuestions,
+  ...extraInterviewQuestions,
 ];
