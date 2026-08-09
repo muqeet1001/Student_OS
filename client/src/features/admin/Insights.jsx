@@ -1,6 +1,7 @@
 import React from 'react';
 import { ErrorBlock, LoadingBlock } from '../../components/StateBlocks.jsx';
 import { useApiResource } from '../../hooks/useApiResource.js';
+import PlacementInsight from './PlacementInsight.jsx';
 
 const PRIORITY_TONES = {
   high: 'bg-error-container/25 text-on-error-container',
@@ -60,6 +61,8 @@ export default function Insights() {
       </div>
 
       {/* What to run — the actionable half of the page. */}
+      <PlacementInsight />
+
       {recommendations.length > 0 && (
         <section className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-5">
           <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-on-surface-variant mb-3">

@@ -7,7 +7,14 @@ import { InterviewSession } from '../models/InterviewSession.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { loadCohort } from '../services/cohort.service.js';
+import { Recruiter } from '../models/Recruiter.js';
+import { Offer } from '../models/Offer.js';
 import { analyseCohort } from '../services/cohortAnalytics.js';
+import { buildPlacementInsight } from '../services/placementInsights.js';
+import { aiStatus } from '../services/aiClient.js';
+import { summariseFeedback } from '../services/recruiterInsights.js';
+import { buildPlacementReport } from '../services/placementReport.js';
+import { buildAlumniStats } from '../services/alumniStats.js';
 
 const WEIGHTS = { profile: 0.2, coding: 0.35, tests: 0.25, interview: 0.2 };
 
@@ -292,4 +299,46 @@ export const exportStudents = asyncHandler(async (req, res) => {
   res.setHeader('Content-Type', 'text/csv; charset=utf-8');
   res.setHeader('Content-Disposition', `attachment; filename="students-${stamp}.csv"`);
   res.send(csv);
+});
+
+/**
+ * A written reading of the placement position.
+ *
+ * Every figure behind this is computed by the same deterministic services
+ * that draw the rest of the admin screens; the model only interprets and
+ * prioritises them. Kept on its own endpoint so the Insights page renders
+ * instantly from real numbers and the narrative arrives after, or not at
+ * all — a slow or missing model must never delay the data.
+ */
+export const getPlacementInsight = asyncHandler(async (req, res) => {
+  const { branch = '', graduationYear = '' } = req.query;
+
+  const [cohort, recruiters, profiles, offers, studentCount] = await Promise.all([
+    loadCohort({ branch, graduationYear }),
+    Recruiter.find({}).select('name feedback').lean(),
+    Profile.find({ graduationYear: { $ne: null } }).select('user graduationYear branch').lean(),
+    Offer.find({}).select('student company status ctc').lean(),
+    User.countDocuments({ role: 'student' }),
+  ]);
+
+  const analytics = analyseCohort(cohort);
+
+  const { insight, error, findings } = await buildPlacementInsight({
+    analytics,
+    placement: buildPlacementReport({ totalStudents: studentCount, offers, profiles }),
+    recruiters: summariseFeedback(recruiters),
+    alumni: buildAlumniStats({ profiles, offers }),
+  });
+
+  res.json({
+    success: true,
+    data: {
+      insight,
+      error,
+      // Returned either way, so the page still has something actionable
+      // when the model is unavailable.
+      findings,
+      ai: aiStatus(),
+    },
+  });
 });

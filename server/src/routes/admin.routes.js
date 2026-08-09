@@ -13,6 +13,9 @@ export const adminRoutes = Router();
 adminRoutes.use(requireAuth, requireRole('admin'));
 
 adminRoutes.get('/analytics', admin.getAnalytics);
+// Separate from /analytics so the page renders from real numbers first
+// and the written reading arrives after, or not at all.
+adminRoutes.get('/analytics/insight', admin.getPlacementInsight);
 adminRoutes.get('/students/export', admin.exportStudents);
 adminRoutes.get('/students', admin.listStudents);
 adminRoutes.post('/match', validate(matchSchema), match.matchStudents);
