@@ -32,6 +32,7 @@
 import bcrypt from 'bcryptjs';
 
 import { logger } from '../utils/logger.js';
+import { seedDemoActivity } from './demoActivity.js';
 import { parseJobDescription } from '../services/jobMatch.js';
 
 import { User } from '../models/User.js';
@@ -43,6 +44,12 @@ import { Recruiter } from '../models/Recruiter.js';
 import { Training } from '../models/Training.js';
 import { Announcement } from '../models/Announcement.js';
 import { ReadinessSnapshot } from '../models/ReadinessSnapshot.js';
+import { Bookmark, SolvedProblem, Submission } from '../models/Submission.js';
+import { QuestionProgress } from '../models/Question.js';
+import { TestAttempt } from '../models/Test.js';
+import { InterviewSession } from '../models/InterviewSession.js';
+import { Resume } from '../models/Resume.js';
+import { Problem } from '../models/Problem.js';
 
 import {
   BRANCHES,
@@ -392,9 +399,16 @@ async function adoptExistingStudents(cohort) {
       track: 'technical',
       targetRole: 'software-engineer',
       bundle: 'web',
-      // Mid-range on purpose: a demo account that is either top or bottom of
-      // its batch shows only one end of every screen it appears on.
-      strength: 0.6,
+      /*
+       * Set here rather than adjusted later, because strength is read twice —
+       * once when readiness snapshots are generated and again when practice
+       * history is. Nudging it between the two would make the history chart
+       * disagree with the solved count it is supposed to be charting.
+       *
+       * Comfortably above average but short of the top: a demo account at
+       * either extreme shows only one end of every screen it lands on.
+       */
+      strength: 0.72,
       skills: [],
       projects: [],
     });
@@ -985,7 +999,8 @@ async function insertTrainings(cohort, now, random) {
 
   await Training.insertMany(rows);
 
-  const snapshots = buildSnapshots(finalYear, attendedByStudent, now, random);
+  const problemCount = await Problem.estimatedDocumentCount();
+  const snapshots = buildSnapshots(finalYear, attendedByStudent, now, random, problemCount);
   await ReadinessSnapshot.insertMany(snapshots);
 
   return { trainings: rows.length, snapshots: snapshots.length };
@@ -998,7 +1013,7 @@ async function insertTrainings(cohort, now, random) {
  * needs a reading on each side of a session, not a continuous series, and a
  * daily series for the whole batch is thousands of rows nobody reads.
  */
-function buildSnapshots(students, attendedByStudent, now, random) {
+function buildSnapshots(students, attendedByStudent, now, random, problemCount) {
   const STEP_DAYS = 3;
   const SPAN_DAYS = 120;
   const rows = [];
@@ -1063,7 +1078,15 @@ function buildSnapshots(students, attendedByStudent, now, random) {
           Object.entries(components).map(([key, value]) => [key, Math.round(value)]),
         ),
         totals: {
-          solved: Math.round((SPAN_DAYS - offset) * student.strength * 0.4),
+          /*
+           * Capped at the number of problems that exist. Ramping freely
+           * produced snapshots claiming forty-odd solved problems against a
+           * library of nineteen, so the history chart contradicted the
+           * dashboard on the very next screen.
+           */
+          solved: Math.round(
+            ((SPAN_DAYS - offset) / SPAN_DAYS) * problemCount * (0.15 + student.strength * 0.6),
+          ),
           verifiedSkills: student.skills.filter((skill) => skill.verified).length,
           interviews: Math.round((SPAN_DAYS - offset) / 30) * (student.strength > 0.5 ? 2 : 1),
           applications: Math.round((SPAN_DAYS - offset) * 0.05),
@@ -1210,6 +1233,17 @@ export async function clearDemoCohort() {
     }),
     Training.deleteMany({ 'attendance.student': { $in: ids } }),
     Announcement.deleteMany({ 'recipients.student': { $in: ids } }),
+    // Practice history, which is per-student and so covers the adopted
+    // accounts too — otherwise a rebuild doubles the demo student's solved
+    // count and every readiness number computed from it.
+    Submission.deleteMany({ user: { $in: ids } }),
+    SolvedProblem.deleteMany({ user: { $in: ids } }),
+    Bookmark.deleteMany({ user: { $in: ids } }),
+    QuestionProgress.deleteMany({ user: { $in: ids } }),
+    TestAttempt.deleteMany({ user: { $in: ids } }),
+    InterviewSession.deleteMany({ user: { $in: ids } }),
+    Resume.deleteMany({ user: { $in: ids } }),
+
     Recruiter.deleteMany({ name: { $in: companyNames } }),
     // Generated accounts only. Deleting the adopted ones here removed
     // demo@studentos.com on every rebuild, so the account the reference seed
@@ -1254,6 +1288,12 @@ export async function seedDemoCohort({ fresh = false, now = new Date() } = {}) {
   const events = await insertEvents(cohort, drives.current, now, random);
   const { trainings, snapshots } = await insertTrainings(cohort, now, random);
   const announcements = await insertAnnouncements(cohort, now, random);
+  const activity = await seedDemoActivity({
+    students: cohort.students,
+    currentYear: cohort.currentYear,
+    demoEmail: ADOPTED_EMAILS[0],
+    now,
+  });
 
   const driveCount = drives.current.length + drives.past.length;
 
@@ -1263,9 +1303,15 @@ export async function seedDemoCohort({ fresh = false, now = new Date() } = {}) {
       `${offers} offers, ${events} calendar events, ${trainings} training sessions, ` +
       `${snapshots} readiness snapshots, ${announcements} announcements`,
   );
+  logger.info(
+    `Seeded practice history — ${activity.solved} problems solved across ` +
+      `${activity.submissions} submissions, ${activity.testAttempts} test attempts, ` +
+      `${activity.interviews} mock interviews, ${activity.resumes} resumes, ` +
+      `${activity.questionProgress} PYQs worked through`,
+  );
   logger.info(`Demo students sign in with any @${DEMO_EMAIL_DOMAIN} address / ${DEMO_PASSWORD}`);
 
-  return { students, recruiters, drives: driveCount, offers, events, trainings, snapshots, announcements };
+  return { students, recruiters, drives: driveCount, offers, events, trainings, snapshots, announcements, ...activity };
 }
 
 export const __testing = { planOffers, makeRandom, RATE_BY_OFFSET, BATCH_SIZE, STANDALONE_EVENT_TITLES };

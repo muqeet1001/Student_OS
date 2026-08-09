@@ -38,6 +38,13 @@ describe('demo cohort', { skip }, () => {
       Announcement: (await import('../src/models/Announcement.js')).Announcement,
       Profile: (await import('../src/models/Profile.js')).Profile,
       ReadinessSnapshot: (await import('../src/models/ReadinessSnapshot.js')).ReadinessSnapshot,
+      Submission: (await import('../src/models/Submission.js')).Submission,
+      SolvedProblem: (await import('../src/models/Submission.js')).SolvedProblem,
+      Bookmark: (await import('../src/models/Submission.js')).Bookmark,
+      QuestionProgress: (await import('../src/models/Question.js')).QuestionProgress,
+      TestAttempt: (await import('../src/models/Test.js')).TestAttempt,
+      InterviewSession: (await import('../src/models/InterviewSession.js')).InterviewSession,
+      Resume: (await import('../src/models/Resume.js')).Resume,
     };
 
     demo = await seedDemoCohort({ fresh: true });
@@ -49,6 +56,85 @@ describe('demo cohort', { skip }, () => {
     assert.ok(demo.events > 0);
     assert.ok(demo.trainings > 0);
     assert.ok(demo.announcements > 0);
+    assert.ok(demo.solved > 0, 'nobody solved anything — every coding screen is empty');
+    assert.ok(demo.testAttempts > 0);
+    assert.ok(demo.interviews > 0);
+    assert.ok(demo.resumes > 0);
+  });
+
+  test('nobody solved more problems than exist', async () => {
+    const { Problem } = await import('../src/models/Problem.js');
+    const problemCount = await Problem.countDocuments();
+
+    const perStudent = await models.SolvedProblem.aggregate([
+      { $group: { _id: '$user', solved: { $sum: 1 } } },
+      { $sort: { solved: -1 } },
+      { $limit: 1 },
+    ]);
+
+    assert.ok(perStudent[0].solved <= problemCount, 'solved count exceeds the problem library');
+
+    /*
+     * The same ceiling applies to the readiness history. Snapshots used to
+     * ramp freely and claimed forty-odd solved problems against a library of
+     * nineteen, so the growth chart contradicted the dashboard beside it.
+     */
+    const highest = await models.ReadinessSnapshot.findOne().sort({ 'totals.solved': -1 }).lean();
+    assert.ok(
+      highest.totals.solved <= problemCount,
+      `a snapshot claims ${highest.totals.solved} solved of ${problemCount} problems`,
+    );
+  });
+
+  test('every solved problem has an accepted submission behind it', async () => {
+    const [solved, accepted] = await Promise.all([
+      models.SolvedProblem.find().select('user problem').lean(),
+      models.Submission.find({ verdict: 'accepted' }).select('user problem').lean(),
+    ]);
+
+    const proof = new Set(accepted.map((row) => `${row.user}::${row.problem}`));
+
+    for (const row of solved) {
+      assert.ok(
+        proof.has(`${row.user}::${row.problem}`),
+        'a problem is marked solved with no accepted submission to show for it',
+      );
+    }
+  });
+
+  test('test attempts are scored by the same arithmetic the submit endpoint uses', async () => {
+    const attempts = await models.TestAttempt.find().lean();
+    assert.ok(attempts.length > 0);
+
+    for (const attempt of attempts) {
+      const score = attempt.answers.reduce((sum, answer) => sum + answer.marksAwarded, 0);
+      assert.equal(attempt.score, score, 'stored score disagrees with the answers');
+      assert.equal(attempt.percentage, Math.round((score / attempt.maxScore) * 100));
+
+      // A wrong answer must never carry marks, however the seed picked it.
+      for (const answer of attempt.answers) {
+        if (!answer.isCorrect) assert.equal(answer.marksAwarded, 0);
+      }
+    }
+  });
+
+  test('interview sessions carry the score the analyser actually gives', async () => {
+    const { scoreAnswer } = await import('../src/services/answerAnalyzer.js');
+    const { InterviewQuestion } = await import('../src/models/InterviewQuestion.js');
+
+    const sessions = await models.InterviewSession.find().limit(5).lean();
+    assert.ok(sessions.length > 0);
+
+    for (const session of sessions) {
+      for (const answer of session.answers) {
+        const question = await InterviewQuestion.findById(answer.question).lean();
+        const rescored = scoreAnswer(answer.answer, question);
+
+        // Re-running the scorer over the stored text has to reproduce the
+        // stored score, or the demo is showing numbers the app cannot derive.
+        assert.equal(rescored.score, answer.score, 'stored answer score is not reproducible');
+      }
+    }
   });
 
   test('no company hired more students than it shortlisted', async () => {
@@ -171,7 +257,10 @@ describe('demo cohort', { skip }, () => {
 
     assert.equal(await demoCohortExists(), false);
 
-    for (const name of ['Drive', 'Offer', 'PlacementEvent', 'Training', 'Recruiter', 'Announcement', 'ReadinessSnapshot']) {
+    for (const name of [
+      'Drive', 'Offer', 'PlacementEvent', 'Training', 'Recruiter', 'Announcement', 'ReadinessSnapshot',
+      'Submission', 'SolvedProblem', 'Bookmark', 'QuestionProgress', 'TestAttempt', 'InterviewSession', 'Resume',
+    ]) {
       assert.equal(await models[name].countDocuments(), 0, `${name} left rows behind`);
     }
   });

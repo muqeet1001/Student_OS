@@ -74,7 +74,7 @@ both fail this. Bind-mount a real one:
 | `npm run dev` | Client and API together, both with hot reload |
 | `npm run build` | Production client build into `client/dist` |
 | `npm start` | Production API, which also serves the built client |
-| `npm test` | 446 tests — judge sandbox, interview scoring, seed integrity, production serving |
+| `npm test` | 450 tests — judge sandbox, interview scoring, seed integrity, production serving |
 | `npm run seed` | Upsert reference data (safe to re-run) |
 | `npm run seed:demo` | Also create the demo account and a full demo placement office |
 | `npm run seed:fresh` | Wipe reference data first (leaves student data alone) |
@@ -95,18 +95,26 @@ and safe in any database:
 | 16 job postings | descriptions written as prose, so the parser is exercised |
 | 10 skill assessments | 63 questions used to verify a skill |
 
-`npm run seed:demo` adds a **demo placement office** on top: 72 students
+`npm run seed:demo` adds a **demo placement office** on top: 73 students
 across four graduating batches, plus the drives, offers, interview slots,
 training sessions, recruiter records and announcements that make the staff
-screens show something. It is deterministic, so the same cohort appears on
-every machine.
+screens show something — and a practice history (solved problems, test
+attempts, mock interviews, resumes) so the student screens are not a column
+of zeroes. It is deterministic, so the same cohort appears on every machine.
+
+Nothing in it invents a score. Test attempts are graded against the real
+correct options, interview answers go through the same analyser the API calls,
+and resumes are scored by the real ATS checker — so every number on a demo
+screen is one the app can reproduce.
+
+Sign in as `demo@studentos.com` for the student side or `admin@studentos.com`
+for the placement office, both with `demo1234`.
 
 This half is deliberately opt-in. Invented offers and placement rates do not
 belong in a production database — an empty screen is obviously empty, while
 "68% placed" reads as fact. Demo students live on `@students.demo.invalid`, a
 TLD reserved by RFC 2606 that can never resolve, so a demo broadcast cannot
-reach a real inbox even if SMTP is configured. Any of those addresses signs in
-with `demo1234`.
+reach a real inbox even if SMTP is configured.
 
 ## Features
 
