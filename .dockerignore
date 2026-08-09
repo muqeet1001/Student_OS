@@ -1,0 +1,17 @@
+node_modules
+**/node_modules
+client/dist
+server/uploads
+.git
+.github
+e2e
+coverage
+.nyc_output
+*.log
+.DS_Store
+
+# Never bake secrets into an image layer. server/.env is committed to this
+# repository, so copying it in would ship public credentials as the image's
+# defaults — exactly the mistake the startup guard exists to catch. Supply
+# configuration at run time with -e / --env-file.
+server/.env

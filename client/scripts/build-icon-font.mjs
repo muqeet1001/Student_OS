@@ -46,7 +46,25 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const clientRoot = path.resolve(here, '..');
 const repoRoot = path.resolve(clientRoot, '..');
 
-const SOURCE_FONT = path.join(repoRoot, 'node_modules/material-symbols/material-symbols-outlined.woff2');
+/*
+ * Resolved through Node rather than assembled as a path.
+ *
+ * Assuming `<repo>/node_modules/material-symbols/…` assumes npm hoisted the
+ * package to the workspace root, which it does not always do — inside the
+ * Docker build it landed under client/node_modules and this script declared
+ * the package missing and failed the image build.
+ */
+function resolveSourceFont() {
+  try {
+    return fileURLToPath(
+      import.meta.resolve('material-symbols/material-symbols-outlined.woff2'),
+    );
+  } catch {
+    return null;
+  }
+}
+
+const SOURCE_FONT = resolveSourceFont();
 const OUT_DIR = path.join(clientRoot, 'src/assets/fonts');
 const OUT_FONT = path.join(OUT_DIR, 'material-symbols-subset.woff2');
 const OUT_MANIFEST = path.join(OUT_DIR, 'icons.json');
@@ -97,9 +115,29 @@ function collectIcons() {
   return [...icons].sort();
 }
 
+/**
+ * Falls back to the committed font, or fails if there is not one.
+ *
+ * Regenerating is a convenience; having a font at all is not. Anything that
+ * stops the subsetter running — no Python, no source package — should leave a
+ * buildable tree behind, and only stop the build outright when there is
+ * genuinely nothing to ship.
+ */
+function fallBackToCommitted(reason) {
+  if (existsSync(OUT_FONT)) {
+    console.warn(`⚠ ${reason} — using the committed icon font.`);
+    console.warn('  Icons added since it was last built will render as plain text.');
+    console.warn('  To regenerate: npm install && pip install fonttools brotli');
+    return true;
+  }
+
+  console.error(`✗ ${reason}, and there is no committed font to fall back on.`);
+  return false;
+}
+
 function main() {
-  if (!existsSync(SOURCE_FONT)) {
-    console.error(`✗ ${SOURCE_FONT} not found — run npm install.`);
+  if (!SOURCE_FONT || !existsSync(SOURCE_FONT)) {
+    if (fallBackToCommitted('The material-symbols package is not installed')) return;
     process.exit(1);
   }
 
@@ -135,21 +173,26 @@ function main() {
      * The warning is loud because a stale font is the failure this whole
      * script exists to prevent: a newly added icon would render as a word.
      */
-    if (existsSync(OUT_FONT)) {
-      console.warn('⚠ Could not regenerate the icon font — using the committed one.');
-      console.warn('  Icons added since it was last built will render as plain text.');
-      console.warn('  To regenerate: pip install fonttools brotli');
-      return;
-    }
-
-    console.error('✗ Icon font subsetting failed and there is no committed font to fall back on.');
-    console.error('  Install the toolchain with: pip install fonttools brotli');
+    if (fallBackToCommitted('Icon font subsetting failed')) return;
     throw error;
   }
 
+  /*
+   * The manifest holds only what the source scan produced — no byte counts.
+   *
+   * It is what CI diffs to catch a newly added icon that nobody regenerated
+   * the font for. That check has to be reproducible, and the woff2 itself is
+   * not: brotli output shifts between fontTools versions, so comparing the
+   * binary would fail whenever CI's toolchain differed from a developer's.
+   * The icon list is a pure function of the source, so it does not.
+   */
   writeFileSync(
     OUT_MANIFEST,
-    `${JSON.stringify({ generated: 'scripts/build-icon-font.mjs', ...result }, null, 2)}\n`,
+    `${JSON.stringify(
+      { generated: 'scripts/build-icon-font.mjs', icons: result.icons, missing: result.missing },
+      null,
+      2,
+    )}\n`,
   );
 
   /*

@@ -1,0 +1,122 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      # A real MongoDB, not the in-memory stand-in. The integration suites
+      # skip loudly without one, and a skipped suite that looks like a passing
+      # suite is how bugs reach production here.
+      mongo:
+        image: mongo:7
+        ports: ['27017:27017']
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ping:1})'"
+          --health-interval 10s --health-timeout 5s --health-retries 10
+
+    env:
+      MONGO_URI: mongodb://127.0.0.1:27017/student_os
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Install font subsetting toolchain
+        # The build falls back to the committed font without these, so this
+        # step is what makes the staleness check below meaningful.
+        run: pip install fonttools brotli
+
+      - run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Check the committed icon font is not stale
+        # The font is committed so a fresh clone runs without Python. The risk
+        # that creates is a newly added icon rendering as plain text in
+        # production because nobody regenerated it.
+        #
+        # Only the manifest is diffed, not the woff2: brotli output is not
+        # byte-reproducible across fontTools versions, so comparing the binary
+        # would fail whenever CI's toolchain differed from a developer's. The
+        # icon list is a pure function of the source, and it is the thing that
+        # actually changes when someone adds an icon.
+        run: |
+          if ! git diff --quiet -- client/src/assets/fonts/icons.json; then
+            echo "::error::A new icon was added without rebuilding the font. Run 'npm run build:icons --workspace client' and commit the result."
+            git --no-pager diff -- client/src/assets/fonts/icons.json
+            exit 1
+          fi
+
+  e2e:
+    runs-on: ubuntu-latest
+    needs: test
+
+    services:
+      mongo:
+        image: mongo:7
+        ports: ['27017:27017']
+        options: >-
+          --health-cmd "mongosh --quiet --eval 'db.runCommand({ping:1})'"
+          --health-interval 10s --health-timeout 5s --health-retries 10
+
+    env:
+      MONGO_URI: mongodb://127.0.0.1:27017/student_os
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+
+      - run: npm run build
+        env:
+          NODE_ENV: production
+
+      # The demo cohort is what makes "this screen is empty" a failure rather
+      # than a valid state. Without it the smoke test would pass against a
+      # completely broken API.
+      - run: npm run seed:demo
+
+      - name: Start the production server
+        run: |
+          cd server
+          NODE_ENV=production PORT=5099 \
+          CLIENT_URL=http://127.0.0.1:5099 \
+          JWT_ACCESS_SECRET=$(openssl rand -hex 48) \
+          JWT_REFRESH_SECRET=$(openssl rand -hex 48) \
+          CHECKIN_SECRET=$(openssl rand -hex 48) \
+          AI_API_KEY= \
+          node src/index.js &
+          # Wait on readiness, not liveness — liveness answers before the
+          # database connection is up, and every check would then race it.
+          for i in $(seq 1 30); do
+            curl -sf http://127.0.0.1:5099/api/health/ready > /dev/null && exit 0
+            sleep 1
+          done
+          echo "server did not become ready" && exit 1
+
+      - run: npm run e2e
+      - run: npm run e2e:authz

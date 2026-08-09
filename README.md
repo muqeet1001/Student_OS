@@ -147,6 +147,23 @@ cohort's placement records behind a JWT secret published on GitHub. So the
 published values are recognised by fingerprint and rejected when
 `NODE_ENV=production`. Development is untouched.
 
+**Deploying.** `Dockerfile` builds one image serving the API and the built
+client on one origin — deliberately, because the refresh token is an httpOnly
+cookie and same-origin keeps it same-site with no CORS preflight. It runs as
+`node`, not root, and its `HEALTHCHECK` uses readiness. Configuration is
+supplied at run time; `server/.env` is in `.dockerignore` so its public
+credentials are never baked into a layer.
+
+```bash
+docker build -t student-os .
+docker run -p 5000:5000 \
+  -e MONGO_URI="mongodb+srv://…/student_os" \
+  -e JWT_ACCESS_SECRET="$(openssl rand -hex 48)" \
+  -e JWT_REFRESH_SECRET="$(openssl rand -hex 48)" \
+  -e CHECKIN_SECRET="$(openssl rand -hex 48)" \
+  student-os
+```
+
 **Source maps are not shipped.** A production build was serving 4.2 MB of maps
 beside 1.1 MB of code, publishing readable source with it. If you add an error
 tracker, switch `sourcemap` to `'hidden'` in `client/vite.config.js` and upload
