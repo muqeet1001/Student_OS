@@ -80,6 +80,7 @@ both fail this. Bind-mount a real one:
 | `npm run seed:fresh` | Wipe reference data first (leaves student data alone) |
 | `npm run seed:demo:fresh` | Rebuild the demo cohort from scratch |
 | `npm run e2e` | Browser smoke test over every route — see `e2e/README.md` |
+| `npm run e2e:authz` | Authorization probe — staff surfaces, role escalation, self-verification |
 
 ### What gets seeded
 
