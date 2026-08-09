@@ -18,7 +18,8 @@
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "seed:demo": "npm run seed --workspace server -- --demo",
-    "seed:fresh": "npm run seed --workspace server -- --fresh"
+    "seed:fresh": "npm run seed --workspace server -- --fresh",
+    "seed:demo:fresh": "npm run seed --workspace server -- --demo --fresh"
   },
   "devDependencies": {
     "concurrently": "^9.1.0"

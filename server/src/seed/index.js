@@ -1,15 +1,22 @@
 /**
  * Seeds the reference data every screen reads from: coding problems, the PYQ
  * library, skill tests and the interview question bank. Optionally creates a
- * demo student to sign in with.
+ * demo account and a whole demo placement office to go with it.
  *
- *   npm run seed            # upsert reference data
- *   npm run seed -- --fresh # delete reference data first
- *   npm run seed -- --demo  # also create the demo account
+ *   npm run seed                     # upsert reference data
+ *   npm run seed -- --fresh          # delete reference data first
+ *   npm run seed -- --demo           # also create the demo cohort
+ *   npm run seed -- --demo --fresh   # rebuild the demo cohort from scratch
  *
  * Reference collections are upserted by their natural key, so re-running is
  * safe and never duplicates. User-generated data (submissions, attempts,
  * profiles) is never touched unless --fresh is passed.
+ *
+ * The split between the two halves is deliberate. Reference data is content —
+ * the same for every college, and safe anywhere. The demo cohort in `demo.js`
+ * is one college's operational record: invented students, offers and
+ * placement rates. That belongs nowhere near a production database, so it is
+ * only ever written when --demo is passed explicitly.
  */
 import { realpathSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
@@ -41,6 +48,8 @@ import { QuestionProgress } from '../models/Question.js';
 import { TestAttempt } from '../models/Test.js';
 import { InterviewSession } from '../models/InterviewSession.js';
 import { Resume } from '../models/Resume.js';
+
+import { seedDemoCohort } from './demo.js';
 
 import { problems } from './data/problems.js';
 import { pyqs } from './data/pyqs.js';
@@ -180,6 +189,33 @@ async function syncIndexes() {
   logger.info(`Synced indexes across ${models.length} collections`);
 }
 
+/**
+ * The staff account.
+ *
+ * Without one, `--demo` produces a placement office nobody can open: every
+ * drive, recruiter, training and report screen is admin-only, so the whole
+ * demo cohort would be invisible behind a 403. Roles are deliberately not
+ * self-assignable through the API, which makes seeding the only way to get
+ * one on a fresh database.
+ */
+async function seedDemoAdmin() {
+  const email = 'admin@studentos.com';
+
+  if (await User.findOne({ email })) {
+    logger.info(`Demo admin already exists (${email})`);
+    return;
+  }
+
+  await User.create({
+    name: 'Placement Officer',
+    email,
+    password: 'demo1234',
+    role: 'admin',
+  });
+
+  logger.info(`Created demo admin — ${email} / demo1234`);
+}
+
 async function seedDemoUser() {
   const email = 'demo@studentos.com';
   const existing = await User.findOne({ email });
@@ -203,7 +239,10 @@ async function seedDemoUser() {
     headline: 'Computer Science • Final year',
     bio: 'Demo account seeded for local development. Edit or delete freely.',
     branch: 'Computer Science',
-    graduationYear: new Date().getFullYear() + 1,
+    // The current year, so the demo account belongs to the batch that is
+    // actively being placed. Any other year strands it in a cohort of one on
+    // every batch-wise report.
+    graduationYear: new Date().getFullYear(),
     track: 'technical',
   });
 
@@ -241,7 +280,12 @@ export async function run({ connect = true } = {}) {
   await seedJobs();
   await seedSkillAssessments();
   await syncIndexes();
-  if (DEMO) await seedDemoUser();
+
+  if (DEMO) {
+    await seedDemoUser();
+    await seedDemoAdmin();
+    await seedDemoCohort({ fresh: FRESH });
+  }
 
   if (connect) await disconnectDatabase();
   logger.success('Seeding complete');
