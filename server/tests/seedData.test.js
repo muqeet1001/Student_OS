@@ -49,6 +49,63 @@ test('seeded tests are scoreable — exactly one correct option each', () => {
   }
 });
 
+/**
+ * Authoring mistakes the schema cannot catch.
+ *
+ * A duplicated prompt, two identically-worded options or a missing
+ * explanation all validate fine and all make a paper worse to sit. With a
+ * hundred-odd questions across a dozen papers these stop being hypothetical.
+ */
+test('no paper repeats a slug, a prompt or an option', () => {
+  const slugs = new Set();
+
+  for (const paper of tests) {
+    assert.equal(slugs.has(paper.slug), false, `duplicate paper slug: ${paper.slug}`);
+    slugs.add(paper.slug);
+
+    const prompts = new Set();
+
+    for (const question of paper.questions) {
+      assert.equal(
+        prompts.has(question.prompt),
+        false,
+        `${paper.slug} asks the same question twice: "${question.prompt.slice(0, 50)}"`,
+      );
+      prompts.add(question.prompt);
+
+      const texts = question.options.map((option) => option.text);
+      assert.equal(
+        new Set(texts).size,
+        texts.length,
+        `${paper.slug} has duplicate options for "${question.prompt.slice(0, 40)}"`,
+      );
+
+      assert.ok(
+        question.explanation?.trim(),
+        `"${question.prompt.slice(0, 50)}" has no explanation — a bare right answer teaches nothing`,
+      );
+    }
+  }
+});
+
+test('every paper is long enough and timed sensibly', () => {
+  for (const paper of tests) {
+    assert.ok(paper.questions.length >= 5, `${paper.slug} has too few questions to be a paper`);
+    assert.ok(
+      paper.durationMinutes >= paper.questions.length * 0.5,
+      `${paper.slug} allows under 30 seconds per question`,
+    );
+  }
+});
+
+test('the paper set covers every category a campus round tests', () => {
+  const categories = new Set(tests.map((paper) => paper.category));
+
+  for (const required of ['aptitude', 'technical', 'communication']) {
+    assert.ok(categories.has(required), `no ${required} paper is seeded`);
+  }
+});
+
 test('seeded interview questions satisfy the InterviewQuestion schema', () => {
   for (const question of interviewQuestions) {
     assertValid(InterviewQuestion, question, question.prompt.slice(0, 40));

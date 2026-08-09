@@ -3,7 +3,12 @@
  * the TestQuestion schema validates this, so a typo here fails the seed
  * rather than producing an unscoreable test.
  */
-export const tests = [
+import { aptitudeTests } from './tests.aptitude.js';
+import { technicalTests } from './tests.technical.js';
+import { communicationTests } from './tests.communication.js';
+
+/** The three original papers, kept here; the rest live alongside by category. */
+const corePapers = [
   {
     slug: 'aptitude-sprint',
     title: 'Aptitude Sprint',
@@ -84,6 +89,79 @@ export const tests = [
           { text: '4' },
         ],
         explanation: 'Four distinct letters give 4! = 24.',
+      },
+      {
+        prompt: 'A sum of ₹8,000 amounts to ₹9,200 in 3 years at simple interest. What is the rate?',
+        topic: 'Interest',
+        difficulty: 'medium',
+        options: [
+          { text: '5% per annum', isCorrect: true },
+          { text: '4% per annum' },
+          { text: '6% per annum' },
+          { text: '15% per annum' },
+        ],
+        explanation: 'Interest is ₹1,200 over 3 years, so ₹400 a year on ₹8,000 — that is 5%.',
+      },
+      {
+        prompt: 'Two pipes fill a tank in 20 and 30 minutes respectively. Together they take:',
+        topic: 'Time & Work',
+        difficulty: 'medium',
+        options: [
+          { text: '12 minutes', isCorrect: true },
+          { text: '15 minutes' },
+          { text: '25 minutes' },
+          { text: '10 minutes' },
+        ],
+        explanation: 'Combined rate is 1/20 + 1/30 = 1/12 of the tank per minute, so 12 minutes.',
+      },
+      {
+        prompt: 'A bag holds 4 red and 6 blue balls. What is the probability of drawing a red ball?',
+        topic: 'Probability',
+        difficulty: 'easy',
+        options: [
+          { text: '2/5', isCorrect: true },
+          { text: '3/5' },
+          { text: '1/4' },
+          { text: '4/6' },
+        ],
+        explanation: '4 favourable outcomes out of 10 gives 4/10 = 2/5.',
+      },
+      {
+        prompt: 'The ratio 5:8 expressed as a percentage is:',
+        topic: 'Ratios',
+        difficulty: 'easy',
+        options: [
+          { text: '62.5%', isCorrect: true },
+          { text: '60%' },
+          { text: '58%' },
+          { text: '65%' },
+        ],
+        explanation: '5 / 8 = 0.625, which is 62.5%.',
+      },
+      {
+        prompt: 'If the price of rice rises by 25%, by what percentage must consumption fall to keep spending unchanged?',
+        topic: 'Percentages',
+        difficulty: 'hard',
+        options: [
+          { text: '20%', isCorrect: true },
+          { text: '25%' },
+          { text: '15%' },
+          { text: '30%' },
+        ],
+        explanation:
+          'New price is 1.25×. To keep the product constant, consumption must become 1/1.25 = 0.8, a 20% fall. It is not 25% — the base has changed.',
+      },
+      {
+        prompt: 'What is the next number: 1, 4, 9, 16, 25, ?',
+        topic: 'Number Series',
+        difficulty: 'easy',
+        options: [
+          { text: '36', isCorrect: true },
+          { text: '30' },
+          { text: '32' },
+          { text: '49' },
+        ],
+        explanation: 'These are perfect squares, so the next is 6² = 36.',
       },
     ],
   },
@@ -192,6 +270,83 @@ export const tests = [
         ],
         explanation: 'Removing transitive dependencies means a fact is stored once, so updates cannot disagree.',
       },
+      {
+        prompt: 'Which HTTP method should be idempotent?',
+        topic: 'Networking',
+        difficulty: 'medium',
+        options: [
+          { text: 'PUT', isCorrect: true },
+          { text: 'POST' },
+          { text: 'PATCH' },
+          { text: 'CONNECT' },
+        ],
+        explanation:
+          'Repeating a PUT with the same body leaves the resource in the same state. POST is expected to create something each time.',
+      },
+      {
+        prompt: 'What does a database index cost you?',
+        topic: 'DBMS',
+        difficulty: 'medium',
+        options: [
+          { text: 'Slower writes and extra storage', isCorrect: true },
+          { text: 'Nothing — indexes are free' },
+          { text: 'Slower reads' },
+          { text: 'Loss of referential integrity' },
+        ],
+        explanation:
+          'Every insert and update must maintain the index too. That trade is why you index the columns you filter on, not all of them.',
+      },
+      {
+        prompt: 'In Big-O terms, which grows fastest as n increases?',
+        topic: 'Complexity',
+        difficulty: 'easy',
+        options: [
+          { text: 'O(n²)', isCorrect: true },
+          { text: 'O(n log n)' },
+          { text: 'O(n)' },
+          { text: 'O(log n)' },
+        ],
+        explanation: 'Quadratic growth overtakes all the others as n gets large.',
+      },
+      {
+        prompt: 'A deadlock requires all four of these conditions except:',
+        topic: 'Operating Systems',
+        difficulty: 'medium',
+        options: [
+          { text: 'Round-robin scheduling', isCorrect: true },
+          { text: 'Mutual exclusion' },
+          { text: 'Hold and wait' },
+          { text: 'Circular wait' },
+        ],
+        explanation:
+          'The four conditions are mutual exclusion, hold and wait, no preemption and circular wait. Scheduling policy is not one of them.',
+      },
+      {
+        prompt: 'What is the primary purpose of a load balancer?',
+        topic: 'Systems',
+        difficulty: 'easy',
+        options: [
+          { text: 'Distribute incoming requests across several servers', isCorrect: true },
+          { text: 'Compress responses' },
+          { text: 'Cache database queries' },
+          { text: 'Encrypt traffic end to end' },
+        ],
+        explanation:
+          'It spreads load and routes around unhealthy instances. Caching and TLS termination are separate jobs it sometimes also does.',
+      },
+      {
+        prompt: 'Git: which command creates a new commit that undoes an earlier one?',
+        topic: 'Tooling',
+        difficulty: 'medium',
+        options: [
+          { text: 'git revert', isCorrect: true },
+          { text: 'git reset --hard' },
+          { text: 'git checkout' },
+          { text: 'git stash' },
+        ],
+        explanation:
+          'revert adds an inverse commit, which is safe on shared branches. reset --hard rewrites history and discards work.',
+      },
     ],
   },
   {
@@ -240,6 +395,71 @@ export const tests = [
         explanation: 'A written summary respects the helper\'s time and frequently surfaces the answer as you write it.',
       },
       {
+        prompt: 'An interviewer asks a question you genuinely cannot answer. The best response is to:',
+        topic: 'Interview Conduct',
+        difficulty: 'medium',
+        options: [
+          { text: 'Say what you do know, then say plainly that you do not know the rest', isCorrect: true },
+          { text: 'Guess confidently and hope it lands' },
+          { text: 'Say nothing and wait for a hint' },
+          { text: 'Change the subject to something you prepared' },
+        ],
+        explanation:
+          'Interviewers are calibrating how much to trust your other answers. A confident wrong guess costs more than the question was worth.',
+      },
+      {
+        prompt: 'You disagree with a decision your team has already made. The most useful thing to do is:',
+        topic: 'Teamwork',
+        difficulty: 'medium',
+        options: [
+          { text: 'Raise the specific concern once, then commit to the decision', isCorrect: true },
+          { text: 'Keep raising it until the decision changes' },
+          { text: 'Say nothing and work around it' },
+          { text: 'Implement it badly to prove the point' },
+        ],
+        explanation:
+          'Disagree and commit. Repeating the objection stalls the team; silence loses information nobody else had.',
+      },
+      {
+        prompt: 'In a group discussion round, the strongest contribution is usually to:',
+        topic: 'Group Discussion',
+        difficulty: 'medium',
+        options: [
+          { text: 'Build on a previous point and move the group towards a conclusion', isCorrect: true },
+          { text: 'Speak the most times' },
+          { text: 'Repeat your first point more forcefully' },
+          { text: 'Wait until the end and summarise everything' },
+        ],
+        explanation:
+          'Assessors score whether you advance the discussion. Volume without direction reads as noise.',
+      },
+      {
+        prompt: 'You spot a bug in a teammate\'s code the day before release. You should:',
+        topic: 'Teamwork',
+        difficulty: 'medium',
+        options: [
+          { text: 'Tell them directly with the reproduction steps', isCorrect: true },
+          { text: 'Fix it silently in their branch' },
+          { text: 'Raise it publicly in the group channel first' },
+          { text: 'Wait until after release to avoid stress' },
+        ],
+        explanation:
+          'Direct and specific gets it fixed fastest. Silent fixes lose the knowledge; waiting ships the bug.',
+      },
+      {
+        prompt: 'Which is the clearest way to describe your role on a team project?',
+        topic: 'Clarity',
+        difficulty: 'easy',
+        options: [
+          { text: '"I built the payment module and wrote its tests."', isCorrect: true },
+          { text: '"We built an e-commerce platform."' },
+          { text: '"I was involved in various parts of the project."' },
+          { text: '"I handled the backend and other responsibilities."' },
+        ],
+        explanation:
+          'Interviewers are trying to work out what *you* did. "We" and "various" leave them unable to credit you with anything.',
+      },
+      {
         prompt: 'How should you open a status update to a non-technical stakeholder?',
         topic: 'Clarity',
         difficulty: 'medium',
@@ -253,4 +473,11 @@ export const tests = [
       },
     ],
   },
+];
+
+export const tests = [
+  ...corePapers,
+  ...aptitudeTests,
+  ...technicalTests,
+  ...communicationTests,
 ];
