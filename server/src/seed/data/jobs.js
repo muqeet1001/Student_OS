@@ -4,7 +4,9 @@
  * bottom — so the parser is exercised against realistic input rather than a
  * tidy list it would always get right.
  */
-export const jobs = [
+import { extraJobs } from './jobs.extra.js';
+
+const coreJobs = [
   {
     title: 'Frontend Developer Intern',
     company: 'Nova Labs',
@@ -120,3 +122,5 @@ Minimum CGPA 7.0. Computer Science and IT students graduating in 2026.`,
     daysUntilDeadline: 7,
   },
 ];
+
+export const jobs = [...coreJobs, ...extraJobs];

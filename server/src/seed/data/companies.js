@@ -6,7 +6,9 @@
  * them, not to named individuals, so nothing here claims to be a real quote
  * from a real employee.
  */
-export const companies = [
+import { extraCompanies } from './companies.extra.js';
+
+const coreCompanies = [
   {
     slug: 'google',
     name: 'Google',
@@ -296,3 +298,5 @@ export const companies = [
     ],
   },
 ];
+
+export const companies = [...coreCompanies, ...extraCompanies];
