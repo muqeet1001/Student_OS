@@ -11,6 +11,7 @@ import { adminLinks, navLinks } from '../routes/pageRegistry.js';
 export default function SideNavBar({ open = false, onClose }) {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const visibleLinks = user?.role === 'admin' ? adminLinks : navLinks;
 
   async function handleLogout() {
     await logout();
@@ -35,7 +36,7 @@ export default function SideNavBar({ open = false, onClose }) {
       >
         <div className="flex flex-col gap-3 overflow-y-auto custom-scrollbar flex-1 pb-4">
           <div className="px-8 flex items-center justify-between gap-3">
-            <NavLink to="/dashboard" className="flex items-center gap-3" onClick={onClose}>
+            <NavLink to={user?.role === 'admin' ? '/admin' : '/dashboard'} className="flex items-center gap-3" onClick={onClose}>
               <div className="w-9 h-9 bg-primary-container rounded-xl flex items-center justify-center shadow-[0_1px_2px_rgba(0,0,0,0.06)]">
                 <span
                   className="material-symbols-outlined text-white"
@@ -60,8 +61,7 @@ export default function SideNavBar({ open = false, onClose }) {
           </div>
 
           <nav className="flex flex-col" aria-label="Main navigation">
-            {/* Staff-only destinations are appended, never mixed in. */}
-            {[...navLinks, ...(user?.role === 'admin' ? adminLinks : [])].map((link) => (
+            {visibleLinks.map((link) => (
               <NavLink
                 key={link.path}
                 to={link.path}
@@ -103,6 +103,15 @@ export default function SideNavBar({ open = false, onClose }) {
             >
               <span className="material-symbols-outlined text-lg">logout</span>
             </button>
+            <NavLink
+              to="/settings"
+              onClick={onClose}
+              className="p-2 text-gray-400 hover:text-white transition-colors shrink-0"
+              title="Settings"
+              aria-label="Settings"
+            >
+              <span className="material-symbols-outlined text-lg">settings</span>
+            </NavLink>
           </div>
         </div>
       </aside>

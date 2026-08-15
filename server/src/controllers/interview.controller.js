@@ -3,6 +3,7 @@ import { InterviewSession } from '../models/InterviewSession.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { scoreAnswer, summariseSession } from '../services/answerAnalyzer.js';
+import { parseJobDescription } from '../services/jobMatch.js';
 
 /** Fields safe to expose while the session is still running. */
 const LIVE_QUESTION_FIELDS = '_id prompt round difficulty hint';
@@ -70,7 +71,7 @@ export const listSessions = asyncHandler(async (req, res) => {
 });
 
 export const startSession = asyncHandler(async (req, res) => {
-  const { round, difficulty, targetRole, questionCount } = req.body;
+  const { round, difficulty, targetRole, jobDescription = '', questionCount } = req.body;
 
   // One open session at a time, so "resume" is never ambiguous.
   const existing = await InterviewSession.findOne({ user: req.user._id, status: 'in-progress' });
@@ -80,11 +81,28 @@ export const startSession = asyncHandler(async (req, res) => {
     });
   }
 
-  const pool = await InterviewQuestion.aggregate([
-    { $match: { round, difficulty, active: true } },
-    { $sample: { size: questionCount } },
-    { $project: { _id: 1 } },
-  ]);
+  let pool;
+  if (jobDescription) {
+    const required = parseJobDescription(jobDescription).skills.map((skill) => skill.name.toLowerCase());
+    const candidates = await InterviewQuestion.find({ round, difficulty, active: true })
+      .select('_id keywords').lean();
+    pool = candidates
+      .map((question) => ({
+        _id: question._id,
+        overlap: (question.keywords ?? []).filter((keyword) => {
+          const expected = keyword.toLowerCase();
+          return required.some((skill) => skill.includes(expected) || expected.includes(skill));
+        }).length,
+      }))
+      .sort((a, b) => b.overlap - a.overlap)
+      .slice(0, questionCount);
+  } else {
+    pool = await InterviewQuestion.aggregate([
+      { $match: { round, difficulty, active: true } },
+      { $sample: { size: questionCount } },
+      { $project: { _id: 1 } },
+    ]);
+  }
 
   /*
    * Top up from the same round at any difficulty when the exact filter
@@ -118,6 +136,7 @@ export const startSession = asyncHandler(async (req, res) => {
     round,
     difficulty,
     targetRole,
+    jobDescription,
     questions: pool.map((item) => item._id),
   });
 

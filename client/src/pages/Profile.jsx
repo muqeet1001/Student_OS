@@ -414,14 +414,14 @@ export default function Profile() {
                 <SectionCard
                   className="md:col-span-6"
                   icon="workspace_premium"
-                  title="Certifications"
+                  title="Achievements & certifications"
                   action={<AddButton onClick={() => setDialog({ type: 'certification' })} />}
                 >
                   {profile.certifications.length === 0 ? (
                     <EmptyBlock
                       icon="workspace_premium"
-                      title="No certifications yet"
-                      description="Cloud and platform certificates stand out on student profiles."
+                      title="No achievements yet"
+                      description="Add certificates, hackathons and awards. Internships belong under experience."
                     />
                   ) : (
                     <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -446,6 +446,7 @@ export default function Profile() {
                             </div>
                           </div>
                           <div>
+                            <p className="text-[10px] font-black uppercase tracking-wider text-primary">{cert.kind ?? 'certificate'}</p>
                             <h5 className="font-bold text-sm">{cert.title}</h5>
                             {cert.issuer && <p className="text-xs text-on-surface-variant">{cert.issuer}</p>}
                             {cert.credentialId && (

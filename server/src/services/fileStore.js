@@ -42,6 +42,7 @@ export function safeFilename(name) {
     .pop()
     .trim();
 
+  // eslint-disable-next-line no-control-regex -- header controls are exactly what must be removed
   const cleaned = base.replace(/["\u0000-\u001f]/g, '').slice(0, 120);
   return cleaned || 'document';
 }

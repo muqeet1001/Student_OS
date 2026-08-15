@@ -19,7 +19,7 @@ export const getMyProfile = asyncHandler(async (req, res) => {
 export const updateMyProfile = asyncHandler(async (req, res) => {
   const profile = await Profile.findOrCreateFor(req.user._id);
 
-  const { links, ...rest } = req.body;
+  const { links, publicProfile, ...rest } = req.body;
   Object.assign(profile, rest);
 
   // `links` is a nested path, so merge field by field to keep any link the
@@ -28,6 +28,13 @@ export const updateMyProfile = asyncHandler(async (req, res) => {
     for (const [key, value] of Object.entries(links)) {
       profile.links[key] = value;
     }
+  }
+
+  if (publicProfile) {
+    for (const [key, value] of Object.entries(publicProfile)) {
+      profile.publicProfile[key] = value;
+    }
+    if (!profile.publicProfile.enabled) profile.publicProfile.openToReferrals = false;
   }
 
   await profile.save();
@@ -126,9 +133,12 @@ export const getPublicProfile = asyncHandler(async (req, res) => {
   if (!user || !user.isActive) throw ApiError.notFound('That student could not be found');
 
   const profile = await Profile.findOne({ user: user._id });
-  if (!profile) throw ApiError.notFound('That student has not set up a profile yet');
+  if (!profile || !profile.publicProfile?.enabled) {
+    throw ApiError.notFound('That student does not have a public profile');
+  }
 
-  const { phone, ...publicFields } = profile.toJSON();
+  const publicFields = profile.toJSON();
+  delete publicFields.phone;
 
   res.json({
     success: true,

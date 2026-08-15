@@ -50,6 +50,9 @@ export default function InterviewReport() {
   }
 
   const tone = toneFor(session.overallScore);
+  const dimensions = Object.entries(session.dimensions ?? {}).sort((a, b) => b[1] - a[1]);
+  const strongest = dimensions[0];
+  const weakest = dimensions.at(-1);
 
   return (
     <div className="bg-background text-on-surface min-h-dvh">
@@ -88,6 +91,21 @@ export default function InterviewReport() {
             ))}
           </div>
         </header>
+
+        {strongest && weakest && (
+          <section className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div className="rounded-xl p-4 border border-green-200 bg-green-50">
+              <p className="text-[10px] font-black uppercase tracking-wider text-green-700">Keep doing this</p>
+              <h2 className="font-bold mt-1">{DIMENSION_LABELS[strongest[0]] ?? strongest[0]}</h2>
+              <p className="text-sm text-green-900/75 mt-1">This was your strongest signal at {strongest[1]}%. Preserve it in the next attempt.</p>
+            </div>
+            <div className="rounded-xl p-4 border border-secondary-fixed bg-secondary-container/30">
+              <p className="text-[10px] font-black uppercase tracking-wider text-on-secondary-container">Retry focus</p>
+              <h2 className="font-bold mt-1">{DIMENSION_LABELS[weakest[0]] ?? weakest[0]}</h2>
+              <p className="text-sm text-on-surface-variant mt-1">At {weakest[1]}%, this is the single improvement most worth practising next.</p>
+            </div>
+          </section>
+        )}
 
         {/* Coaching summary */}
         {session.summary?.length > 0 && (
@@ -182,10 +200,10 @@ export default function InterviewReport() {
 
         <div className="flex flex-wrap gap-3">
           <Link
-            to="/ai-interview"
+            to={`/ai-interview?round=${encodeURIComponent(session.round)}&role=${encodeURIComponent(session.targetRole ?? '')}`}
             className="px-8 py-3 rounded-full bg-primary text-on-primary font-bold shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
           >
-            Practise another round
+            Retry this round
           </Link>
         </div>
       </div>

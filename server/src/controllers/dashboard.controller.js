@@ -1,4 +1,4 @@
-import { Profile } from '../models/Profile.js';
+import { calculateProfileCompleteness, Profile } from '../models/Profile.js';
 import { Problem } from '../models/Problem.js';
 import { SolvedProblem } from '../models/Submission.js';
 import { TestAttempt } from '../models/Test.js';
@@ -111,6 +111,7 @@ export const getDashboard = asyncHandler(async (req, res) => {
     : 0;
 
   const atsReport = profile ? scoreResume({ profile, user: account }) : { score: 0, checks: [] };
+  if (profile) profile.completeness = calculateProfileCompleteness(profile);
   const roleMatch = matchRole(profile, profile?.targetRole);
 
   const skills = profile?.skills ?? [];

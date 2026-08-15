@@ -4,7 +4,7 @@ import { Bookmark, SolvedProblem, Submission } from '../models/Submission.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { validated } from '../middleware/validate.js';
-import { runJavaScript, VERDICT_LABELS } from '../services/codeRunner/index.js';
+import { executeJavaScript, VERDICT_LABELS } from '../services/codeRunner/index.js';
 import { computeActivity, computeStreak } from '../services/streak.service.js';
 
 /** Test data for hidden cases must never reach the client. */
@@ -119,7 +119,7 @@ export const runCode = asyncHandler(async (req, res) => {
 
   const visible = problem.testCases.filter((test) => !test.hidden);
 
-  const report = await runJavaScript({
+  const report = await executeJavaScript({
     code: req.body.code,
     functionName: problem.functionName,
     timeoutMs: problem.timeoutMs,
@@ -151,7 +151,7 @@ export const submitCode = asyncHandler(async (req, res) => {
     throw ApiError.badRequest('This problem has no test cases yet');
   }
 
-  const report = await runJavaScript({
+  const report = await executeJavaScript({
     code: req.body.code,
     functionName: problem.functionName,
     timeoutMs: problem.timeoutMs,

@@ -436,6 +436,9 @@ export default function ProblemWorkspace() {
                               {report.passedCount}/{report.totalCount} cases
                             </span>
                           )}
+                          {report.engine && (
+                            <span className="text-white/35 font-normal">via {report.engine}</span>
+                          )}
                         </span>
                       )}
                     </div>

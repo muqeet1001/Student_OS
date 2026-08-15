@@ -38,14 +38,10 @@ Four values are required in production. Everything else has a working default.
 
 `server/.env.example` documents every variable.
 
-> **`server/.env` is committed to this repository on purpose**, so that
-> collaborators can clone and run without setup. That is a deliberate
-> trade-off, and it has a consequence worth stating plainly: **every secret
-> in that file is public.** Anyone who can read this repository can read the
-> database password. Before this is used with real student data, generate
-> fresh secrets, rotate the Atlas password, and untrack the file
-> (`git rm --cached server/.env`). Committed credentials stay in git history
-> even after deletion, so rotating is the only real fix.
+> **Never commit `server/.env`.** This repository previously tracked one, so
+> credentials from that file must be treated as exposed even after deletion:
+> rotate the Atlas password, JWT/check-in secrets, and AI key before deploying.
+> Store replacements in the deployment platform's secret manager.
 
 ## Running the tests
 
@@ -74,12 +70,13 @@ both fail this. Bind-mount a real one:
 | `npm run dev` | Client and API together, both with hot reload |
 | `npm run build` | Production client build into `client/dist` |
 | `npm start` | Production API, which also serves the built client |
-| `npm test` | 458 tests — judge sandbox, interview scoring, seed integrity, production serving |
+| `npm test` | 470 tests — judge sandbox, interview scoring, seed integrity, production serving |
 | `npm run seed` | Upsert reference data (safe to re-run) |
 | `npm run seed:demo` | Also create the demo account and a full demo placement office |
 | `npm run seed:fresh` | Wipe reference data first (leaves student data alone) |
 | `npm run seed:demo:fresh` | Rebuild the demo cohort from scratch |
 | `npm run e2e` | Browser smoke test over every route — see `e2e/README.md` |
+| `npm run e2e:journeys` | Desktop/mobile browser audit for layout, icons, API errors, and auth redirects |
 | `npm run e2e:authz` | Authorization probe — staff surfaces, role escalation, self-verification |
 
 ### What gets seeded
@@ -92,7 +89,7 @@ and safe in any database:
 | 19 coding problems | with real test cases the judge runs |
 | 30 previous-year questions | linked to a practisable problem where one exists |
 | 12 skill tests | 138 MCQs across aptitude, technical and communication |
-| 34 interview questions | across rounds and difficulties |
+| 40 interview questions | across rounds and difficulties |
 | 12 company prep hubs | round structures, focus areas, preparation notes |
 | 16 job postings | descriptions written as prose, so the parser is exercised |
 | 10 skill assessments | 63 questions used to verify a skill |
@@ -140,19 +137,16 @@ recoverable outage into a fleet-wide crash loop. `/api/health/ready` returns
 503 when the database is unreachable. Point a load balancer at the second one
 and a container restart policy at the first.
 
-**Production refuses to start on the committed secrets.** `server/.env` is
-committed on purpose, so everything in it is public. The risk is not the
-decision, it is forgetting it — deploying, having it work, and running a real
-cohort's placement records behind a JWT secret published on GitHub. So the
-published values are recognised by fingerprint and rejected when
-`NODE_ENV=production`. Development is untouched.
+**Production refuses to start on known exposed secrets.** Historical values
+are recognised by fingerprint and rejected in `NODE_ENV=production`, providing
+a final guard against accidentally reusing credentials that appeared in git.
 
 **Deploying.** `Dockerfile` builds one image serving the API and the built
 client on one origin — deliberately, because the refresh token is an httpOnly
 cookie and same-origin keeps it same-site with no CORS preflight. It runs as
 `node`, not root, and its `HEALTHCHECK` uses readiness. Configuration is
-supplied at run time; `server/.env` is in `.dockerignore` so its public
-credentials are never baked into a layer.
+supplied at run time; `server/.env` is in `.dockerignore` so local credentials
+never enter an image layer.
 
 ```bash
 docker build -t student-os .
@@ -173,7 +167,9 @@ the maps to it rather than serving them.
 
 **For students**
 
-- **Coding practice** — sandboxed judge with real test cases, per-problem drafts, streaks
+- **Six clear destinations** — Home, My Plan, Practice, Opportunities, Profile & Resume, and Updates replace a menu of disconnected tools; every existing tool remains available inside the relevant hub
+- **Eligibility centre** — jobs are separated into recommended, eligible, needs-work, saved and applied views, with the specific blocker shown before a student spends time applying
+- **Coding practice** — live Judge0 execution with real test cases, development-only local fallback, per-problem drafts and streaks
 - **Skill tests** — server-timed, auto-scored; passing verifies a skill on the profile
 - **PYQ library** — previous-year questions filterable by company, year, round and topic
 - **Company prep** — real round structures, strategy notes, most-asked questions
@@ -183,11 +179,17 @@ the maps to it rather than serving them.
 - **Roadmap** — a four-week plan whose items complete themselves from evidence, never from a checkbox
 - **Achievements** — tiered badges and levels derived from work already recorded elsewhere
 - **Calendar** — drives, tests and interviews, showing *your* slot time rather than the event's, with clashes flagged
-- **Jobs and tracker** — matched roles, applications through to offer
+- **Applications** — saved and applied roles live with opportunities, with stage tracking from application through offer
+- **Human review** — students can request focused profile, resume or project feedback and receive the placement officer's response in the same workspace
+- **Career Lab** — a job skill-gap simulator, evidence-grounded AI career mentor, live GitHub repository analyzer, placement-readiness simulator, and opt-in alumni/referral network
+- **Public profiles** — students explicitly choose whether to publish their verified skills, projects, education and accomplishments; phone and email remain private, and referral discovery requires a second opt-in
+- **Progress analytics** — 90-day readiness, coding, verified-skill, ATS and interview trends are shown together in My Plan
 - **Settings** — notification categories, signed-in devices, and help
 
 **For placement staff**
 
+- **Action queue** — students are prioritised by concrete intervention signals such as no applications, incomplete profiles, repeated assessment failures, no interview practice or unverified skills
+- **Review queue** — focused student requests can be answered and closed without moving the conversation to email
 - **Cohort view** — every student's readiness, filterable by branch, graduation year and risk band, with a per-student drill-down
 - **Job matcher** — paste a JD, get a ranked shortlist with the reason for every score
 - **Drives** — eligibility, bulk shortlisting, CSV export
@@ -209,7 +211,7 @@ client/                 React 19 + Vite + Tailwind v4
   src/context/          AuthContext — access token in memory, refresh in cookie
 
 server/                 Express + Mongoose
-  src/models/           15 collections — see docs/database.md
+  src/models/           28 collections — see docs/database.md
   src/controllers/      Route handlers
   src/services/         codeRunner (VM sandbox), answerAnalyzer, atsScore,
                         streak, notifications, token
@@ -241,7 +243,7 @@ preflight. Deploy with `npm install && npm run build`, start with `npm start`.
 
 ## Documentation
 
-- [`docs/database.md`](docs/database.md) — all 15 collections, relationships,
+- [`docs/database.md`](docs/database.md) — all 28 collections, relationships,
   indexes and the readiness weighting
 
 ## Deployment
@@ -259,16 +261,22 @@ Set `NODE_ENV=production`, `MONGO_URI` and both JWT secrets in the host's
 environment. The server refuses to boot in production without them rather than
 falling back to insecure defaults.
 
-Uploaded avatars and certificates are written to `server/uploads`. On a host
-with an ephemeral filesystem, mount a persistent volume there or move uploads
-to object storage before going live.
+Uploaded avatars and certificates are written to `server/uploads`; mount a
+persistent volume there on hosts with ephemeral filesystems. Student vault
+documents are stored in MongoDB GridFS, so their metadata and bytes are backed
+up together and survive application redeploys.
 
 ## Status
 
-Working and tested: authentication, profiles, coding practice, PYQ library,
-skill tests, mock interviews, resume builder, company prep, admin cohort view,
-dashboard.
+Working and tested: authentication and session revocation; profiles; coding
+practice; PYQ progress; skill tests and detailed reviews; verified-skill
+assessments; mock interviews and reports; resume versions; company prep;
+dashboard, roadmap, achievements and notifications; jobs and application
+tracking; calendar and QR check-in; document upload/download/review through
+GridFS; and the complete placement-office workflow for cohorts, matching,
+drives, offers, scheduling, recruiters, announcements, training and insights.
 
 Not built yet: email verification and password reset, an admin UI for
-authoring content (the seed script covers it for now), and object storage for
-uploads.
+authoring reference content (the seed script covers it for now), and external
+object storage for profile avatars/certificate media (mount `server/uploads`
+persistently in production).

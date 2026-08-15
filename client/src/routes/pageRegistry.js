@@ -1,30 +1,19 @@
 /** Single source of truth for the sidebar and the mobile bottom bar. */
 export const navLinks = [
-  { label: 'Dashboard', path: '/dashboard', icon: 'dashboard', short: 'Home' },
-  { label: 'Coding Practice', path: '/coding-practice', icon: 'code', short: 'Code' },
-  { label: 'Skills', path: '/skills', icon: 'verified', short: 'Skills' },
-  { label: 'Skill Test', path: '/skill-test', icon: 'quiz', short: 'Tests' },
-  { label: 'PYQ Library', path: '/pyq-library', icon: 'history_edu', short: 'PYQs' },
-  { label: 'My Roadmap', path: '/roadmap', icon: 'map', short: 'Roadmap' },
-  { label: 'Achievements', path: '/achievements', icon: 'military_tech', short: 'Badges' },
-  { label: 'Calendar', path: '/calendar', icon: 'event', short: 'Calendar' },
-  { label: 'Jobs', path: '/jobs', icon: 'work', short: 'Jobs' },
-  { label: 'Tracker', path: '/tracker', icon: 'view_kanban', short: 'Tracker' },
-  { label: 'Company Prep', path: '/company-prep', icon: 'apartment', short: 'Company' },
-  { label: 'Resume Builder', path: '/resume-builder', icon: 'description', short: 'Resume' },
-  { label: 'AI Interview', path: '/ai-interview', icon: 'psychology', short: 'Interview' },
-  { label: 'Inbox', path: '/inbox', icon: 'mail', short: 'Inbox' },
-  { label: 'Documents', path: '/documents', icon: 'folder', short: 'Docs' },
-  { label: 'Profile', path: '/profile', icon: 'person', short: 'Profile' },
-  { label: 'Settings', path: '/settings', icon: 'settings', short: 'Settings' },
+  { label: 'Home', path: '/dashboard', icon: 'dashboard', short: 'Home' },
+  { label: 'My Plan', path: '/my-plan', icon: 'map', short: 'Plan' },
+  { label: 'Practice', path: '/practice', icon: 'school', short: 'Practice' },
+  { label: 'Opportunities', path: '/opportunities', icon: 'work', short: 'Jobs' },
+  { label: 'Profile & Resume', path: '/career-profile', icon: 'person', short: 'Profile' },
+  { label: 'Updates', path: '/updates', icon: 'campaign', short: 'Updates' },
 ];
 
 /** Shown only to admins, appended after the student links. */
 export const adminLinks = [
-  { label: 'Students', path: '/admin', icon: 'groups', short: 'Students' },
+  { label: 'Placement Office', path: '/admin', icon: 'groups', short: 'Office' },
 ];
 
 /** The bottom bar only has room for the five most-used destinations. */
 export const mobileLinks = navLinks.filter((link) =>
-  ['/dashboard', '/jobs', '/coding-practice', '/skill-test', '/profile'].includes(link.path),
+  ['/dashboard', '/my-plan', '/practice', '/opportunities', '/updates'].includes(link.path),
 );

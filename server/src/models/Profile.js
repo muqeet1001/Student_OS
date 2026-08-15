@@ -33,6 +33,7 @@ const projectSchema = new mongoose.Schema(
 
 const certificationSchema = new mongoose.Schema(
   {
+    kind: { type: String, enum: ['certificate', 'hackathon', 'award'], default: 'certificate' },
     title: { type: String, required: true, trim: true, maxlength: 140 },
     issuer: { type: String, default: '', maxlength: 120 },
     credentialId: { type: String, default: '', maxlength: 120 },
@@ -103,6 +104,12 @@ const profileSchema = new mongoose.Schema(
     },
     targetCompanies: { type: [String], default: [] },
 
+    /** Public discovery is opt-in; referral availability is a second explicit choice. */
+    publicProfile: {
+      enabled: { type: Boolean, default: false },
+      openToReferrals: { type: Boolean, default: false },
+    },
+
     skills: { type: [skillSchema], default: [] },
     projects: { type: [projectSchema], default: [] },
     certifications: { type: [certificationSchema], default: [] },
@@ -123,21 +130,29 @@ profileSchema.statics.findOrCreateFor = async function findOrCreateFor(userId) {
  * Rough completeness signal (0-100) used by the dashboard readiness score.
  * Weighted so the sections recruiters actually read count for most.
  */
-profileSchema.methods.completeness = function completeness() {
+export function calculateProfileCompleteness(profile = {}) {
+  const skills = profile.skills ?? [];
+  const projects = profile.projects ?? [];
+  const education = profile.education ?? [];
+  const links = profile.links ?? {};
   const checks = [
-    [Boolean(this.headline), 10],
-    [Boolean(this.bio), 10],
-    [Boolean(this.location), 5],
-    [Boolean(this.graduationYear), 5],
-    [Boolean(this.branch), 5],
-    [this.skills.length >= 5, 20],
-    [this.projects.length >= 2, 20],
-    [this.education.length >= 1, 15],
-    [Boolean(this.links.github || this.links.linkedin), 10],
+    [Boolean(profile.headline), 10],
+    [Boolean(profile.bio), 10],
+    [Boolean(profile.location), 5],
+    [Boolean(profile.graduationYear), 5],
+    [Boolean(profile.branch), 5],
+    [skills.length >= 5, 20],
+    [projects.length >= 2, 20],
+    [education.length >= 1, 15],
+    [Boolean(links.github || links.linkedin), 10],
   ];
 
   const earned = checks.reduce((total, [passed, weight]) => total + (passed ? weight : 0), 0);
   return Math.min(100, earned);
+}
+
+profileSchema.methods.completeness = function completeness() {
+  return calculateProfileCompleteness(this);
 };
 
 export const Profile = mongoose.model('Profile', profileSchema);

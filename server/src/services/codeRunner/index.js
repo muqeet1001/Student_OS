@@ -150,3 +150,31 @@ export function runJavaScript({ code, tests, functionName, timeoutMs = config.co
     child.stdin.end(JSON.stringify({ code, tests, functionName, timeoutMs }));
   });
 }
+
+/**
+ * Runs through the configured live judge and falls back to the local sandbox
+ * if the shared service is unavailable. Tests always stay local so CI remains
+ * deterministic and does not consume a third-party quota.
+ */
+export async function executeJavaScript(job) {
+  const useRemote = config.codeRunner.provider === 'judge0' && process.env.NODE_ENV !== 'test';
+  if (!useRemote) return { ...(await runJavaScript(job)), engine: 'Local sandbox' };
+
+  try {
+    const { runWithJudge0 } = await import('./judge0.js');
+    const report = await runWithJudge0(job);
+    if (report.status !== VERDICTS.INTERNAL_ERROR || !config.codeRunner.fallbackLocal) return report;
+  } catch (error) {
+    if (!config.codeRunner.fallbackLocal) {
+      return {
+        status: VERDICTS.INTERNAL_ERROR,
+        message: `The live judge is unavailable: ${error.message}`,
+        logs: [],
+        results: [],
+        engine: 'Judge0',
+      };
+    }
+  }
+
+  return { ...(await runJavaScript(job)), engine: 'Local fallback' };
+}

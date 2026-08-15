@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useApiResource } from '../hooks/useApiResource.js';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import { api } from '../lib/api.js';
@@ -13,9 +13,12 @@ const SCORE_TONES = [
 ];
 
 export default function ResumeBuilder() {
+  const [searchParams] = useSearchParams();
+  const targetJobId = searchParams.get('job');
   // The score is computed server-side so a saved version and the live
   // preview can never disagree about the same profile.
   const { data, setData, loading, error, refetch } = useApiResource('/resumes/builder');
+  const { data: targetJob } = useApiResource(targetJobId ? `/jobs/${targetJobId}` : '/jobs/top-matches', { enabled: Boolean(targetJobId) });
   const [accent, setAccent] = useState('#a83206');
   const [saving, setSaving] = useState(false);
 
@@ -27,7 +30,8 @@ export default function ResumeBuilder() {
   const tone = report ? SCORE_TONES.find((item) => report.score >= item.min) : null;
 
   async function saveVersion() {
-    const title = window.prompt('Name this version', `Resume ${versions.length + 1}`);
+    const suggestedTitle = targetJob?.job ? `${targetJob.job.company} — ${targetJob.job.title}` : `Resume ${versions.length + 1}`;
+    const title = window.prompt('Name this version', suggestedTitle);
     if (!title?.trim()) return;
 
     setSaving(true);
@@ -100,6 +104,16 @@ export default function ResumeBuilder() {
       <div className="max-w-[110rem] mx-auto px-5 md:px-8 pb-12 grid grid-cols-12 gap-3">
         {/* ATS panel */}
         <aside className="print:hidden col-span-12 xl:col-span-4 space-y-4">
+          {targetJob?.job && (
+            <section className="bg-inverse-surface text-white rounded-xl p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] opacity-70">Tailoring for</p>
+              <h2 className="font-headline text-lg font-black mt-1">{targetJob.job.title}</h2>
+              <p className="text-sm opacity-75">{targetJob.job.company} · {targetJob.match?.score ?? 0}% job-description match</p>
+              {targetJob.match?.matched?.length > 0 && <p className="text-xs mt-3 text-green-200">Matched keywords: {targetJob.match.matched.slice(0, 5).map((item) => item.name).join(', ')}.</p>}
+              {targetJob.match?.missing?.length > 0 && <p className="text-xs mt-2 opacity-85">Missing keywords: {targetJob.match.missing.slice(0, 5).map((item) => item.name).join(', ')}. Add them only where your projects or experience prove them.</p>}
+              <Link to={`/jobs/${targetJobId}`} className="inline-flex mt-3 text-xs font-bold underline">Back to opportunity</Link>
+            </section>
+          )}
           {report && (
             <>
               <div className="bg-surface-container-lowest rounded-xl p-4 shadow-sm border border-outline-variant/60">

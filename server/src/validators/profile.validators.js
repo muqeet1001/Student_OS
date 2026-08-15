@@ -21,6 +21,12 @@ export const updateProfileSchema = z.object({
     .optional(),
   targetRoles: z.array(z.string().trim().max(80)).max(10).optional(),
   targetCompanies: z.array(z.string().trim().max(80)).max(20).optional(),
+  publicProfile: z
+    .object({
+      enabled: z.boolean().optional(),
+      openToReferrals: z.boolean().optional(),
+    })
+    .optional(),
 });
 
 export const skillSchema = z.object({
@@ -41,6 +47,7 @@ export const projectSchema = z.object({
 });
 
 export const certificationSchema = z.object({
+  kind: z.enum(['certificate', 'hackathon', 'award']).default('certificate'),
   title: z.string().trim().min(1, 'Certification title is required').max(140),
   issuer: z.string().trim().max(120).default(''),
   credentialId: z.string().trim().max(120).default(''),

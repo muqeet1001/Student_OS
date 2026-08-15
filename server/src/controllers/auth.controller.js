@@ -26,21 +26,29 @@ async function issueSession(user, req, res) {
   const accessToken = signAccessToken(user);
   const refreshToken = signRefreshToken(user);
   const { exp } = verifyRefreshToken(refreshToken);
-
-  const account = await User.findById(user._id).select('+refreshTokens');
   const now = new Date();
 
-  account.refreshTokens = [
-    ...account.refreshTokens.filter((entry) => entry.expiresAt > now),
+  // A user can sign in or refresh from several tabs at once. Updating the
+  // token array atomically avoids stale Mongoose documents overwriting each
+  // other (or throwing VersionError) while still enforcing the session cap.
+  await User.updateOne(
+    { _id: user._id },
     {
-      tokenHash: hashToken(refreshToken),
-      userAgent: (req.headers['user-agent'] || '').slice(0, 200),
-      expiresAt: new Date(exp * 1000),
+      $set: { lastLoginAt: now },
+      $push: {
+        refreshTokens: {
+          $each: [
+            {
+              tokenHash: hashToken(refreshToken),
+              userAgent: (req.headers['user-agent'] || '').slice(0, 200),
+              expiresAt: new Date(exp * 1000),
+            },
+          ],
+          $slice: -MAX_SESSIONS,
+        },
+      },
     },
-  ].slice(-MAX_SESSIONS);
-
-  account.lastLoginAt = now;
-  await account.save({ validateBeforeSave: false });
+  );
 
   res.cookie(REFRESH_COOKIE, refreshToken, refreshCookieOptions());
   return accessToken;
@@ -93,17 +101,26 @@ export const refresh = asyncHandler(async (req, res) => {
   if (!user || !user.isActive) throw ApiError.unauthorized('Session is no longer valid');
 
   const presented = hashToken(token);
-  const known = user.refreshTokens.some(
-    (entry) => entry.tokenHash === presented && entry.expiresAt > new Date(),
+  const now = new Date();
+
+  // Claim the presented token with one conditional write. If two requests
+  // present the same cookie, exactly one rotates it and the other receives a
+  // normal expired-session response instead of racing two document saves.
+  const claimed = await User.updateOne(
+    {
+      _id: user._id,
+      isActive: true,
+      refreshTokens: {
+        $elemMatch: { tokenHash: presented, expiresAt: { $gt: now } },
+      },
+    },
+    { $pull: { refreshTokens: { tokenHash: presented } } },
   );
-  if (!known) {
+
+  if (claimed.modifiedCount !== 1) {
     // The token verified but is not on file — it was rotated away or revoked.
     throw ApiError.unauthorized('Session is no longer valid');
   }
-
-  // Rotate: drop the presented token before issuing its replacement.
-  user.refreshTokens = user.refreshTokens.filter((entry) => entry.tokenHash !== presented);
-  await user.save({ validateBeforeSave: false });
 
   const accessToken = await issueSession(user, req, res);
   res.json({ success: true, data: { user: user.toJSON(), accessToken } });

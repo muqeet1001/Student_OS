@@ -28,9 +28,10 @@ export default function Login() {
     setFieldErrors({});
 
     try {
-      await login(form);
+      const signedInUser = await login(form);
       // Send the visitor back to whatever they were trying to reach.
-      const target = location.state?.from?.pathname || '/dashboard';
+      const target =
+        location.state?.from?.pathname || (signedInUser.role === 'admin' ? '/admin' : '/dashboard');
       navigate(target, { replace: true });
     } catch (error) {
       if (error instanceof ApiError) {

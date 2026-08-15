@@ -230,6 +230,7 @@ export function ProjectForm({ initial, onSubmit, onCancel }) {
 
 export function CertificationForm({ initial, onSubmit, onCancel }) {
   const [form, setForm] = useState({
+    kind: initial?.kind ?? 'certificate',
     title: initial?.title ?? '',
     issuer: initial?.issuer ?? '',
     credentialId: initial?.credentialId ?? '',
@@ -245,7 +246,8 @@ export function CertificationForm({ initial, onSubmit, onCancel }) {
       onSubmit={(event) => handleSubmit(event, { ...form, issuedAt: form.issuedAt || undefined })}
     >
       <FormError message={formError} />
-      <Input label="Certification" value={form.title} onChange={set('title')} error={errors.title} required placeholder="AWS Cloud Practitioner" />
+      <label className="block space-y-1"><span className="text-xs font-bold uppercase tracking-wider text-outline">Type</span><select value={form.kind} onChange={set('kind')} className="w-full bg-surface-container-low border-2 border-transparent rounded-lg px-3 py-2 text-sm"><option value="certificate">Certificate</option><option value="hackathon">Hackathon</option><option value="award">Award</option></select></label>
+      <Input label="Title" value={form.title} onChange={set('title')} error={errors.title} required placeholder="AWS Cloud Practitioner" />
       <div className="grid sm:grid-cols-2 gap-3">
         <Input label="Issuer" value={form.issuer} onChange={set('issuer')} error={errors.issuer} placeholder="Amazon Web Services" />
         <Input label="Issued on" type="date" value={form.issuedAt} onChange={set('issuedAt')} error={errors.issuedAt} />

@@ -17,13 +17,22 @@ import { chromium } from 'playwright';
 const BASE = process.env.E2E_BASE_URL || 'http://localhost:5055';
 const EMAIL = process.env.E2E_EMAIL || 'demo@studentos.com';
 const PASSWORD = process.env.E2E_PASSWORD || 'demo1234';
+const ADMIN_EMAIL = process.env.E2E_ADMIN_EMAIL || 'admin@studentos.com';
+const ADMIN_PASSWORD = process.env.E2E_ADMIN_PASSWORD || 'demo1234';
 
-const CHROME =
-  process.env.E2E_CHROME || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome';
+// Let Playwright resolve the browser it installed on the current platform.
+// A custom executable is still useful in slim CI images, but the old
+// Linux-only default made this suite fail immediately on Windows and macOS.
+const CHROME = process.env.E2E_CHROME;
 
 /** Routes every signed-in student can reach. */
 const ROUTES = [
   '/dashboard',
+  '/my-plan',
+  '/practice',
+  '/opportunities',
+  '/career-profile',
+  '/updates',
   '/profile',
   '/skills',
   '/skill-test',
@@ -38,6 +47,7 @@ const ROUTES = [
   '/tracker',
   '/company-prep',
   '/ai-interview',
+  '/career-lab',
 ];
 
 const results = [];
@@ -79,14 +89,14 @@ function watch(page) {
   return problems;
 }
 
-async function signIn(context) {
+async function signIn(context, { email = EMAIL, password = PASSWORD, destination = /dashboard/ } = {}) {
   const page = await context.newPage();
   await page.goto(`${BASE}/login`, { waitUntil: 'domcontentloaded' });
-  await page.fill('input[type="email"]', EMAIL);
-  await page.fill('input[type="password"]', PASSWORD);
+  await page.fill('input[type="email"]', email);
+  await page.fill('input[type="password"]', password);
 
   await Promise.all([
-    page.waitForURL(/dashboard/, { timeout: 20000 }),
+    page.waitForURL(destination, { timeout: 20000 }),
     page.click('button[type="submit"]'),
   ]);
 
@@ -94,7 +104,7 @@ async function signIn(context) {
 }
 
 async function main() {
-  const browser = await chromium.launch({ executablePath: CHROME });
+  const browser = await chromium.launch(CHROME ? { executablePath: CHROME } : {});
   const context = await browser.newContext({ viewport: { width: 1366, height: 900 } });
 
   await check('signs in with real credentials', () => signIn(context));
@@ -113,7 +123,17 @@ async function main() {
         // misfired — the failure that once filled this UI with the word
         // "arrow_forward".
         rawIcons: [...document.querySelectorAll('.material-symbols-outlined')]
-          .filter((node) => getComputedStyle(node).visibility !== 'hidden')
+          .filter((node) => {
+            const style = getComputedStyle(node);
+            // A loaded ligature is roughly one em wide. Checking fontFamily
+            // cannot tell whether the face actually loaded: computed styles
+            // retain the requested family while the browser renders fallback
+            // text. A much wider box is the raw icon name leaking through.
+            return (
+              style.visibility !== 'hidden' &&
+              node.getBoundingClientRect().width > parseFloat(style.fontSize) * 1.75
+            );
+          })
           .map((node) => node.textContent.trim())
           .filter((text) => /^[a-z][a-z_]{4,}$/.test(text)),
       }));
@@ -167,6 +187,40 @@ async function main() {
     }
 
     await stranger.close();
+  });
+
+  await check('admin lands in and can open every placement-office module', async () => {
+    const staff = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+    await signIn(staff, { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, destination: /\/admin$/ });
+
+    const page = await staff.newPage();
+    const problems = watch(page);
+    await page.goto(`${BASE}/admin`, { waitUntil: 'networkidle', timeout: 25000 });
+
+    const tabs = page.getByRole('tab');
+    if ((await tabs.count()) !== 5) problems.push(`expected 5 primary admin workflows, found ${await tabs.count()}`);
+
+    for (let index = 0; index < (await tabs.count()); index += 1) {
+      await tabs.nth(index).click();
+      await page.waitForTimeout(350);
+      const body = await page.locator('body').innerText();
+      if (/something went wrong|failed to load|could not load|route not found/i.test(body)) {
+        problems.push(`admin module failed: ${await tabs.nth(index).innerText()}`);
+      }
+    }
+
+    const moreTools = page.getByLabel('More placement tools');
+    for (const value of ['interventions', 'reviews', 'cohort', 'companies', 'alumni', 'announcements']) {
+      await moreTools.selectOption(value);
+      await page.waitForTimeout(350);
+      const body = await page.locator('body').innerText();
+      if (/something went wrong|failed to load|could not load|route not found/i.test(body)) {
+        problems.push(`admin tool failed: ${value}`);
+      }
+    }
+
+    await staff.close();
+    if (problems.length) throw new Error(problems.join('; '));
   });
 
   await browser.close();

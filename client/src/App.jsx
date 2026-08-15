@@ -30,6 +30,12 @@ import TestRunner from './pages/TestRunner.jsx';
 import AiInterview from './pages/AiInterview.jsx';
 import InterviewReport from './pages/InterviewReport.jsx';
 import InterviewSession from './pages/InterviewSession.jsx';
+import MyPlan from './pages/MyPlan.jsx';
+import Practice from './pages/Practice.jsx';
+import CareerProfile from './pages/CareerProfile.jsx';
+import Updates from './pages/Updates.jsx';
+import CareerLab from './pages/CareerLab.jsx';
+import PublicProfile from './pages/PublicProfile.jsx';
 
 import AppLayout from './components/AppLayout.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
@@ -49,10 +55,18 @@ export default function App() {
           <Route path="/register" element={<Register />} />
         </Route>
 
+        <Route path="/public/:userId" element={<PublicProfile />} />
+
         <Route element={<ProtectedRoute />}>
           {/* Screens that share the navigation chrome. */}
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/my-plan" element={<MyPlan />} />
+            <Route path="/practice" element={<Practice />} />
+            <Route path="/opportunities" element={<Jobs />} />
+            <Route path="/career-profile" element={<CareerProfile />} />
+            <Route path="/updates" element={<Updates />} />
+            <Route path="/career-lab" element={<CareerLab />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/skills" element={<Skills />} />
             <Route path="/skill-test" element={<SkillTest />} />
@@ -72,9 +86,14 @@ export default function App() {
             <Route path="/tracker" element={<Tracker />} />
             <Route path="/company-prep" element={<CompanyPrep />} />
             <Route path="/company-prep/:slug" element={<CompanyHub />} />
-            <Route path="/admin" element={<AdminDashboard />} />
             <Route path="/ai-interview" element={<AiInterview />} />
             <Route path="/ai-interview/report/:sessionId" element={<InterviewReport />} />
+          </Route>
+
+          <Route element={<ProtectedRoute roles={['admin']} />}>
+            <Route element={<AppLayout />}>
+              <Route path="/admin" element={<AdminDashboard />} />
+            </Route>
           </Route>
 
           {/* Like the test runner, the live interview is full screen so there

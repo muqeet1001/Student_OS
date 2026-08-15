@@ -198,4 +198,58 @@ export const extraInterviewQuestions = [
     modelAnswer:
       'Two things. First, what does the first six months look like for someone joining this team — is there a project I would own, or would I be supporting an existing one? Second, when something breaks in production at 2am, what actually happens? I ask because the answer tells me a lot about how the team is set up and how much I would learn from it.',
   },
+  {
+    prompt: 'Tell me about a time the requirements were unclear. How did you move forward?',
+    round: 'behavioural',
+    difficulty: 'medium',
+    keywords: ['clarified', 'assumption', 'prototype', 'feedback'],
+    hint: 'Show how you reduced uncertainty without waiting for perfect instructions.',
+    modelAnswer:
+      'For our project the brief said students should receive personalised reminders, but nobody had defined personalised. I wrote down three possible meanings and asked our guide which outcome mattered. While waiting, I built a small prototype using course and deadline as the two inputs and labelled those assumptions clearly. The prototype made the discussion concrete, we changed one rule after feedback, and avoided spending a week on a recommendation model nobody had asked for.',
+  },
+  {
+    prompt: 'A teammate accidentally committed directly to the shared branch and broke the build. What would you do?',
+    round: 'behavioural',
+    difficulty: 'hard',
+    keywords: ['restore', 'communicate', 'blameless', 'prevent'],
+    hint: 'Cover the immediate recovery and the process improvement without turning it into a blame story.',
+    modelAnswer:
+      'First I would restore the build, either by reverting the commit or fixing it quickly if the correction is obvious. I would tell the team what changed and what I was doing so nobody built on top of a broken branch. Afterwards I would speak to the teammate privately and add branch protection plus required CI checks. The useful outcome is a safer system; embarrassing one person does not prevent the next mistake.',
+  },
+  {
+    prompt: 'Explain the Node.js event loop and why CPU-heavy work can make an API unresponsive.',
+    round: 'technical',
+    difficulty: 'medium',
+    keywords: ['event loop', 'single thread', 'blocking', 'worker'],
+    hint: 'Connect the model to a real symptom and name one practical remedy.',
+    modelAnswer:
+      'JavaScript callbacks run on one main thread. Node delegates many I/O operations and handles their completions through the event loop, which lets one process serve many connections efficiently. A long CPU calculation is different: it occupies the main thread, so timers and other requests cannot run even if their I/O is ready. I would split small work into chunks or move genuinely CPU-heavy work to worker threads or a separate job service.',
+  },
+  {
+    prompt: 'You pulled a shared branch and now have a Git merge conflict. How do you resolve it safely?',
+    round: 'technical',
+    difficulty: 'easy',
+    keywords: ['conflict markers', 'intent', 'test', 'commit'],
+    hint: 'Describe how you preserve both developers\' intent, not only the Git commands.',
+    modelAnswer:
+      'I open each conflicted file and read both versions around the conflict markers. Before choosing lines, I check the commits or ask the other developer what their change intended to do. I edit the file into one coherent result, remove every marker, run the relevant tests, then stage and commit the resolution. I do not blindly choose ours or theirs because either side may contain behaviour the other depends on.',
+  },
+  {
+    prompt: 'Design rate limiting for a public login API.',
+    round: 'system-design',
+    difficulty: 'hard',
+    keywords: ['identity', 'window', 'shared store', 'retry'],
+    hint: 'Discuss what you count, where the count lives, and how clients learn when to retry.',
+    modelAnswer:
+      'I would limit by more than IP because offices and colleges share addresses; use a combination of IP and normalised account identifier, with stricter rules after repeated failures. A token bucket allows small bursts while enforcing a steady rate. Counts must live in a shared store such as Redis so every API instance sees the same state, and updates should be atomic. Rejected requests return 429 with Retry-After. I would also monitor the limiter so an attack cannot silently lock out a whole campus network.',
+  },
+  {
+    prompt: 'How would you design secure document uploads for student resumes and certificates?',
+    round: 'system-design',
+    difficulty: 'medium',
+    keywords: ['validate', 'size limit', 'storage', 'authorisation'],
+    hint: 'Treat the uploaded file as untrusted and cover access after it is stored.',
+    modelAnswer:
+      'I would enforce a small size limit, allow only required formats, and verify the file signature rather than trusting its extension or Content-Type header. Files get generated names outside the public web root, with metadata in the database and malware scanning before they become available. Downloads go through an authorised endpoint or short-lived signed URL, so knowing a filename is not enough to read another student\'s document. I would also set a safe download Content-Type and Content-Disposition.',
+  },
 ];

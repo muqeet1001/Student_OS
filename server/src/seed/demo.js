@@ -352,6 +352,10 @@ async function insertStudents(cohort) {
       graduationYear: student.graduationYear,
       track: student.track,
       targetRole: student.targetRole,
+      publicProfile: {
+        enabled: student.graduationYear < cohort.currentYear,
+        openToReferrals: student.graduationYear < cohort.currentYear,
+      },
       skills: student.skills,
       projects: student.projects,
       education: [
@@ -738,7 +742,7 @@ async function insertOffers(plannedOffers, drives) {
     }
   }
 
-  const rows = plannedOffers.map(({ graduationYear, ...offer }) => ({
+  const rows = plannedOffers.map(({ graduationYear: _graduationYear, ...offer }) => ({
     ...offer,
     drive: driveFor.get(`${offer.company}::${offer.student}`) ?? null,
   }));

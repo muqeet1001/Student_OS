@@ -77,7 +77,7 @@ function Card({ item, onMove, onRemove, busy }) {
  * write, so applying to a job puts it here with no extra step.
  */
 export default function Tracker() {
-  const { data, setData, loading, error, refetch } = useApiResource('/jobs/applications');
+  const { data, loading, error, refetch } = useApiResource('/jobs/applications');
   const [busy, setBusy] = useState(false);
 
   if (loading && !data) return <LoadingBlock label="Loading your applications" className="min-h-dvh" />;

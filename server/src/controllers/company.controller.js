@@ -2,6 +2,7 @@ import { Company } from '../models/Company.js';
 import { Question, QuestionProgress } from '../models/Question.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { loadCohort } from '../services/cohort.service.js';
 
 export const listCompanies = asyncHandler(async (req, res) => {
   const companies = await Company.find({ active: true })
@@ -34,7 +35,7 @@ export const getCompanyHub = asyncHandler(async (req, res) => {
   const company = await Company.findOne({ slug: req.params.slug, active: true }).lean();
   if (!company) throw new ApiError(404, 'Company prep hub not found.');
 
-  const questions = await Question.find({
+  const [questions, cohort] = await Promise.all([Question.find({
     company: new RegExp(`^${company.name}$`, 'i'),
     isPublished: true,
   })
@@ -42,7 +43,21 @@ export const getCompanyHub = asyncHandler(async (req, res) => {
     .populate('problem', 'slug title difficulty')
     .sort({ askedCount: -1, year: -1 })
     .limit(10)
-    .lean();
+    .lean(), loadCohort({ search: req.user.email })]);
+
+  const student = cohort[0];
+  const ownedSkills = (student?.profile?.skills ?? []).map((skill) => skill.name.toLowerCase());
+  const requirements = company.focusAreas.map((name) => ({
+    name,
+    met: ownedSkills.some((skill) => name.toLowerCase().includes(skill) || skill.includes(name.toLowerCase())),
+  }));
+  const skillsScore = requirements.length
+    ? Math.round((requirements.filter((item) => item.met).length / requirements.length) * 100)
+    : 0;
+  const companyReadiness = Math.round(
+    skillsScore * 0.45 + (student?.components?.coding ?? 0) * 0.25 +
+    (student?.components?.interview ?? 0) * 0.2 + (student?.components?.profile ?? 0) * 0.1,
+  );
 
   // Mark what the student has already worked through.
   const progress = await QuestionProgress.find({
@@ -58,6 +73,14 @@ export const getCompanyHub = asyncHandler(async (req, res) => {
     success: true,
     data: {
       company,
+      readiness: {
+        score: companyReadiness,
+        skillsScore,
+        requirements,
+        coding: student?.components?.coding ?? 0,
+        interview: student?.components?.interview ?? 0,
+        profile: student?.components?.profile ?? 0,
+      },
       topQuestions: questions.map((question) => ({
         ...question,
         progress: statusById.get(String(question._id)) ?? null,

@@ -3,16 +3,9 @@ import { createHash } from 'node:crypto';
 /**
  * Refuses to start a production server on secrets that are public.
  *
- * `server/.env` is committed to this repository on purpose, so a clone runs
- * without setup. That is a defensible choice for a demo and an indefensible
- * one for a deployment: everything in that file is readable by anyone who can
- * read the repo, including the database password. The danger is not the
- * decision — it is forgetting it. Someone deploys, it works, and the
- * placement records of a real cohort sit behind a JWT secret published on
- * GitHub.
- *
- * So the values are recognised and rejected, in production only. Development
- * is untouched: that is what the committed file is for.
+ * This repository historically tracked a server/.env. Removing it does not
+ * remove those credentials from git history, so their fingerprints remain a
+ * useful last line of defence against accidental reuse in production.
  *
  * Stored as truncated SHA-256 rather than as the literals themselves. The
  * strings are already public, so this is not hiding anything — it just avoids
@@ -61,7 +54,7 @@ export function assertSecretsAreNotPublic(values, { isProduction }) {
 
   throw new Error(
     `Refusing to start: ${exposed.join(', ')} ${exposed.length === 1 ? 'is' : 'are'} still set to ` +
-      'the value committed to this repository, which is public. Generate replacements ' +
+      'a value exposed in this repository history. Generate replacements ' +
       "(`openssl rand -hex 48`), rotate the database password, and set them in the deployment's " +
       'own environment rather than in server/.env.',
   );

@@ -48,6 +48,7 @@ import { QuestionProgress } from '../models/Question.js';
 import { TestAttempt } from '../models/Test.js';
 import { InterviewSession } from '../models/InterviewSession.js';
 import { Resume } from '../models/Resume.js';
+import { ReviewRequest } from '../models/ReviewRequest.js';
 
 import { seedDemoCohort } from './demo.js';
 
@@ -179,7 +180,7 @@ async function syncIndexes() {
     InterviewQuestion, InterviewSession,
     Resume, Company, JobPosting, Application,
     SkillAssessment, SkillAttempt, ReadinessSnapshot, Drive, Offer, PlacementEvent, Recruiter, Training,
-    StudentDocument, Announcement,
+    StudentDocument, Announcement, ReviewRequest,
   ];
 
   for (const model of models) {

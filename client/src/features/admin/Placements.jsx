@@ -258,7 +258,7 @@ export default function Placements() {
 
         {rows.length === 0 ? (
           <EmptyBlock
-            icon="local_offer"
+            icon="sell"
             title="No offers recorded"
             description="Record one and the report above fills in."
           />

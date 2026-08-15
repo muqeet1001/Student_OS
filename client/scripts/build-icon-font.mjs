@@ -68,6 +68,7 @@ const SOURCE_FONT = resolveSourceFont();
 const OUT_DIR = path.join(clientRoot, 'src/assets/fonts');
 const OUT_FONT = path.join(OUT_DIR, 'material-symbols-subset.woff2');
 const OUT_MANIFEST = path.join(OUT_DIR, 'icons.json');
+const PYTHON = process.env.PYTHON || (process.platform === 'win32' ? 'python' : 'python3');
 
 /** Directories scanned for icon names, in both workspaces. */
 const SCAN_DIRS = [path.join(clientRoot, 'src'), path.join(repoRoot, 'server/src')];
@@ -75,9 +76,14 @@ const SCAN_DIRS = [path.join(clientRoot, 'src'), path.join(repoRoot, 'server/src
 const PATTERNS = [
   // <span className="material-symbols-outlined …">home</span>
   /material-symbols-outlined[^>]*>\s*([a-z0-9_]+)\s*</g,
+  // <span className="material-symbols-outlined">{done ? 'check_circle' : 'radio_button_unchecked'}</span>
+  /material-symbols-outlined[^>]*>\s*\{[^}]*\?\s*['"]([a-z0-9_]+)['"]/g,
+  /material-symbols-outlined[^>]*>\s*\{[^}]*:\s*['"]([a-z0-9_]+)['"]/g,
   // { icon: 'home' } — how the server names an icon, and how client tables do
   /\bicon:\s*'([a-z0-9_]+)'/g,
   /\bicon:\s*"([a-z0-9_]+)"/g,
+  // <StateBlock icon="home" /> and other component props.
+  /\bicon=["']([a-z0-9_]+)["']/g,
 ];
 
 /**
@@ -85,7 +91,7 @@ const PATTERNS = [
  * value that arrives from data. Listed explicitly so they are still bundled.
  * Keep this short; if it grows, the pattern list above is the thing to fix.
  */
-const ALWAYS_INCLUDE = ['error', 'info', 'warning', 'check', 'close', 'help'];
+const ALWAYS_INCLUDE = ['error', 'info', 'warning', 'check', 'close', 'help', 'schedule'];
 
 function walk(dir) {
   if (!existsSync(dir)) return [];
@@ -153,7 +159,7 @@ function main() {
   let result;
   try {
     const stdout = execFileSync(
-      'python3',
+      PYTHON,
       [path.join(here, 'subset-icon-font.py')],
       {
         input: JSON.stringify({ source: SOURCE_FONT, icons, output: OUT_FONT }),

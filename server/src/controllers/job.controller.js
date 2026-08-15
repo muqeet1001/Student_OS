@@ -18,6 +18,7 @@ export const listJobs = asyncHandler(async (req, res) => {
     company = '',
     saved = '',
     applied = '',
+    eligibility = '',
     sort = 'match',
     page = 1,
     limit = 12,
@@ -66,6 +67,8 @@ export const listJobs = asyncHandler(async (req, res) => {
 
   if (saved === 'true') rows = rows.filter((row) => row.stage === 'saved');
   if (applied === 'true') rows = rows.filter((row) => row.stage && row.stage !== 'saved');
+  if (eligibility === 'eligible') rows = rows.filter((row) => row.match?.blockers.length === 0);
+  if (eligibility === 'blocked') rows = rows.filter((row) => row.match?.blockers.length > 0);
 
   const sorters = {
     match: (a, b) => (b.match?.score ?? 0) - (a.match?.score ?? 0),

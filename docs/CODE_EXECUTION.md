@@ -1,21 +1,24 @@
 # Code execution
 
-Student OS judges JavaScript submissions itself rather than calling out to a
-third-party service. This note explains what the sandbox does and does not
-protect against, so the trade-off is a deliberate one.
+Student OS sends JavaScript submissions to Judge0 by default. A local child
+process remains available for development and deterministic tests. This note
+explains what that fallback does and does not protect against.
 
 ## How a submission runs
 
 1. `POST /api/problems/:slug/run` or `/submit` validates the payload and
    applies a per-user rate limit (20 executions per minute).
-2. `runJavaScript()` spawns a **fresh child process** per execution:
+2. Production sends a self-contained harness to the configured Judge0 API,
+   which supplies the actual process/container isolation.
+3. Tests, local-only mode, and an explicitly enabled development fallback use
+   `runJavaScript()`, which spawns a **fresh child process** per execution:
    `node --max-old-space-size=128 --disallow-code-generation-from-strings runner.child.js`
-3. The job (code, test cases, function name, timeout) is written to the
+4. The job (code, test cases, function name, timeout) is written to the
    child's stdin as JSON. The report comes back on stdout as JSON.
-4. The child evaluates the submission with `node:vm` in a context built from
+5. The child evaluates the submission with `node:vm` in a context built from
    an explicit allowlist of globals, then calls the required function once per
    test case and compares the return value.
-5. The parent kills the child if it overruns the deadline — `SIGTERM` first,
+6. The parent kills the child if it overruns the deadline — `SIGTERM` first,
    then `SIGKILL`.
 
 ## What is contained
@@ -43,10 +46,9 @@ explicitly, and new escapes are found periodically. The meaningful isolation
 here is the *process*: a successful vm escape lands in a short-lived child with
 a capped heap and an empty environment, not in the API process.
 
-That is appropriate for the threat model this feature actually has — students
-running their own practice solutions, where the realistic failure is an
-accidental infinite loop. It is **not** sufficient for running deliberately
-hostile code from anonymous users.
+That is appropriate only for trusted local development. Production disables
+local fallback by default; if Judge0 is unavailable, the request returns a
+judge error instead of executing untrusted code in the API container.
 
 If you open submissions to untrusted users, replace the executor with a real
 isolation layer. `runJavaScript()` is a single function with a narrow

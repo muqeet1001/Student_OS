@@ -9,19 +9,18 @@ import path from 'node:path';
  * fallback and cache headers are all independent of Mongo.
  */
 process.env.NODE_ENV = 'production';
-process.env.JWT_ACCESS_SECRET = 'test-access-secret';
-process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
-process.env.CHECKIN_SECRET = 'test-checkin-secret';
+process.env.JWT_ACCESS_SECRET = 'test-access-secret-that-is-at-least-32-characters';
+process.env.JWT_REFRESH_SECRET = 'test-refresh-secret-that-is-at-least-32-characters';
+process.env.CHECKIN_SECRET = 'test-checkin-secret-that-is-at-least-32-characters';
 
 /*
- * Overridden, not defaulted. server/.env is committed and its values are
- * public, so the startup guard refuses to configure a production server with
- * them — correctly. This suite is simulating a *properly* configured
- * production server, which means supplying values of its own rather than
- * inheriting the ones the guard exists to reject.
+ * Overridden, not defaulted. A developer may have a local server/.env, while
+ * this suite must simulate a properly isolated production configuration.
  */
 process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/student_os_production_test';
 process.env.AI_API_KEY = '';
+process.env.CODE_RUNNER_PROVIDER = 'judge0';
+process.env.CODE_RUNNER_FALLBACK_LOCAL = 'false';
 
 const clientDist = path.resolve(import.meta.dirname, '../../client/dist');
 const hasBuild = existsSync(path.join(clientDist, 'index.html'));

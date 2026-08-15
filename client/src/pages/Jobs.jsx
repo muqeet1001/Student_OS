@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
 import { useDebouncedValue } from '../hooks/useDebouncedValue.js';
@@ -71,6 +71,13 @@ function JobCard({ job }) {
         </div>
       )}
 
+      {job.match && (
+        <div className={`mb-3 rounded-lg px-2.5 py-2 text-[11px] ${job.match.blockers.length === 0 ? 'bg-green-50 text-green-800' : 'bg-error-container/15 text-on-error-container'}`}>
+          <p className="font-black">{job.match.blockers.length === 0 ? 'Eligible to apply' : 'Not currently eligible'}</p>
+          <p className="mt-0.5 leading-relaxed">{job.match.blockers[0] ?? (missing[0] ? `Improve ${missing[0].name} to strengthen your application.` : 'You meet the listed hard requirements.')}</p>
+        </div>
+      )}
+
       <div className="mt-auto pt-2 border-t border-outline-variant/60 flex items-center justify-between gap-2 text-xs">
         <span className="text-on-surface-variant truncate">{job.location || 'Location flexible'}</span>
         {left !== null && (
@@ -90,10 +97,11 @@ function JobCard({ job }) {
 }
 
 export default function Jobs() {
-  const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('company') ?? '');
   const [type, setType] = useState('');
   const [workMode, setWorkMode] = useState('');
-  const [view, setView] = useState('all');
+  const [view, setView] = useState('recommended');
   const [sort, setSort] = useState('match');
 
   const debounced = useDebouncedValue(search, 350);
@@ -105,6 +113,8 @@ export default function Jobs() {
     if (workMode) params.set('workMode', workMode);
     if (view === 'saved') params.set('saved', 'true');
     if (view === 'applied') params.set('applied', 'true');
+    if (view === 'eligible') params.set('eligibility', 'eligible');
+    if (view === 'blocked') params.set('eligibility', 'blocked');
     return params.toString();
   }, [debounced, type, workMode, view, sort]);
 
@@ -116,16 +126,18 @@ export default function Jobs() {
       <div className="max-w-7xl mx-auto px-5 md:px-8 pt-16 lg:pt-6 pb-10 space-y-4">
         <header>
           <h1 className="font-headline text-xl md:text-2xl font-black tracking-tight">
-            Jobs & opportunities
+            Placement eligibility centre
           </h1>
           <p className="text-sm text-on-surface-variant mt-0.5">
-            Ranked by how well your verified skills and evidence match each role.
+            See what you can apply for now, what blocks you, and whether the gap can be improved.
           </p>
         </header>
 
         <div className="flex flex-wrap items-center gap-2">
           {[
-            { key: 'all', label: 'All' },
+            { key: 'recommended', label: 'Recommended' },
+            { key: 'eligible', label: 'Eligible' },
+            { key: 'blocked', label: 'Needs work' },
             { key: 'saved', label: 'Saved' },
             { key: 'applied', label: 'Applied' },
           ].map((item) => (
@@ -201,9 +213,9 @@ export default function Jobs() {
         {!loading && !error && jobs.length === 0 && (
           <EmptyBlock
             icon="work_off"
-            title={view === 'all' ? 'No jobs posted yet' : `Nothing ${view}`}
+            title={view === 'recommended' ? 'No jobs posted yet' : `Nothing ${view}`}
             description={
-              view === 'all'
+              view === 'recommended'
                 ? 'Your placement office has not posted anything here yet.'
                 : 'Jobs you save or apply to will show up here.'
             }

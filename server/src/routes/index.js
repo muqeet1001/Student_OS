@@ -19,6 +19,8 @@ import { profileRoutes } from './profile.routes.js';
 import { questionRoutes } from './question.routes.js';
 import { resumeRoutes } from './resume.routes.js';
 import { testRoutes } from './test.routes.js';
+import { reviewRoutes } from './review.routes.js';
+import { careerRoutes } from './career.routes.js';
 
 export const routes = Router();
 
@@ -41,4 +43,6 @@ routes.use('/trainings', trainingRoutes);
 routes.use('/documents', documentRoutes);
 routes.use('/announcements', announcementRoutes);
 routes.use('/skills', skillAssessmentRoutes);
+routes.use('/reviews', reviewRoutes);
+routes.use('/career', careerRoutes);
 routes.use('/admin', adminRoutes);

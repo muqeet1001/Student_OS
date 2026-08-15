@@ -11,6 +11,7 @@ const CATEGORY_META = {
 };
 
 function AttemptHistory() {
+  const navigate = useNavigate();
   const { data, loading, error, refetch } = useApiResource('/tests/attempts');
 
   if (loading) return <LoadingBlock label="Loading history" />;
@@ -36,15 +37,25 @@ function AttemptHistory() {
               {attempt.status === 'expired' && ' • timed out'}
             </p>
           </div>
-          <div className="text-right shrink-0">
-            <p
-              className={`text-lg font-black ${attempt.passed ? 'text-green-700' : 'text-error'}`}
+          <div className="flex items-center gap-4 shrink-0">
+            <div className="text-right">
+              <p
+                className={`text-lg font-black ${attempt.passed ? 'text-green-700' : 'text-error'}`}
+              >
+                {attempt.percentage}%
+              </p>
+              <p className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">
+                {attempt.score}/{attempt.maxScore} marks
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate(`/skill-test/review/${attempt._id}`)}
+              className="px-4 py-2 rounded-full bg-primary text-on-primary text-xs font-bold hover:bg-primary-dim transition-colors"
+              aria-label={`Review ${attempt.test?.title ?? 'test'} attempt`}
             >
-              {attempt.percentage}%
-            </p>
-            <p className="text-[10px] uppercase font-bold tracking-widest text-on-surface-variant">
-              {attempt.score}/{attempt.maxScore} marks
-            </p>
+              Review
+            </button>
           </div>
         </div>
       ))}

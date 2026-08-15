@@ -160,13 +160,6 @@ function strongAnswerFor(question) {
   );
 }
 
-const STRONG_ANSWER =
-  'In my final-year project our attendance API was timing out under load during morning roll call. ' +
-  'I profiled the endpoint and found we were running one database query per student, so a class of 60 ' +
-  'meant 60 round trips. I rewrote it as a single aggregate query and added an index on the student ' +
-  'and date fields. Response time went from about 4 seconds to 180 milliseconds, and I added a test ' +
-  'that fails if the endpoint issues more than two queries so the regression cannot come back quietly.';
-
 const WEAK_ANSWER =
   'I think I would try to make it faster and look at the code to see what is slow, then fix it.';
 
@@ -186,6 +179,7 @@ const DEMO_PROFILE = {
   targetRole: 'fullstack',
   targetRoles: ['Full Stack Developer', 'Backend Engineer'],
   targetCompanies: ['Zoho', 'Freshworks', 'Amazon'],
+  publicProfile: { enabled: true, openToReferrals: false },
   links: {
     github: 'https://github.com/demo-student',
     linkedin: 'https://linkedin.com/in/demo-student',

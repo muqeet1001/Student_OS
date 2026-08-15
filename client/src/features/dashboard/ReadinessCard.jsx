@@ -55,7 +55,7 @@ export default function ReadinessCard({ readiness }) {
           <p className="font-headline text-base font-bold mt-1">{label}</p>
         </div>
         <Link
-          to="/profile"
+          to="/my-plan"
           className="text-xs font-bold text-primary hover:underline whitespace-nowrap shrink-0"
         >
           View report

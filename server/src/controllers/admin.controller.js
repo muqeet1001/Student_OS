@@ -1,5 +1,5 @@
 import { User } from '../models/User.js';
-import { Profile } from '../models/Profile.js';
+import { calculateProfileCompleteness, Profile } from '../models/Profile.js';
 import { SolvedProblem } from '../models/Submission.js';
 import { Problem } from '../models/Problem.js';
 import { TestAttempt } from '../models/Test.js';
@@ -15,6 +15,7 @@ import { aiStatus } from '../services/aiClient.js';
 import { summariseFeedback } from '../services/recruiterInsights.js';
 import { buildPlacementReport } from '../services/placementReport.js';
 import { buildAlumniStats } from '../services/alumniStats.js';
+import { Application } from '../models/JobPosting.js';
 
 const WEIGHTS = { profile: 0.2, coding: 0.35, tests: 0.25, interview: 0.2 };
 
@@ -72,7 +73,7 @@ export const listStudents = asyncHandler(async (req, res) => {
   const students = await User.find(userFilter).select('name email createdAt').lean();
   const ids = students.map((student) => student._id);
 
-  const [profiles, solved, totalProblems, attempts, interviews] = await Promise.all([
+  const [profiles, solved, totalProblems, attempts, interviews, applications] = await Promise.all([
     Profile.find({ user: { $in: ids } })
       .select('user branch graduationYear headline completeness skills targetRoles')
       .lean(),
@@ -103,12 +104,18 @@ export const listStudents = asyncHandler(async (req, res) => {
       { $match: { user: { $in: ids }, status: 'completed' } },
       { $group: { _id: '$user', completed: { $sum: 1 }, average: { $avg: '$overallScore' } } },
     ]),
+
+    Application.aggregate([
+      { $match: { user: { $in: ids }, stage: { $ne: 'saved' } } },
+      { $group: { _id: '$user', count: { $sum: 1 }, lastAt: { $max: '$updatedAt' } } },
+    ]),
   ]);
 
   const profileBy = new Map(profiles.map((item) => [String(item.user), item]));
   const solvedBy = new Map(solved.map((item) => [String(item._id), item.count]));
   const testsBy = new Map(attempts.map((item) => [String(item._id), item]));
   const interviewBy = new Map(interviews.map((item) => [String(item._id), item]));
+  const applicationsBy = new Map(applications.map((item) => [String(item._id), item]));
 
   let rows = students.map((student) => {
     const key = String(student._id);
@@ -116,9 +123,10 @@ export const listStudents = asyncHandler(async (req, res) => {
     const solvedCount = solvedBy.get(key) ?? 0;
     const test = testsBy.get(key);
     const interview = interviewBy.get(key);
+    const application = applicationsBy.get(key);
 
     const components = {
-      profile: profile?.completeness ?? 0,
+      profile: calculateProfileCompleteness(profile),
       coding: totalProblems ? Math.round((solvedCount / totalProblems) * 100) : 0,
       tests: Math.round(test?.average ?? 0),
       interview: Math.round(interview?.average ?? 0),
@@ -146,6 +154,8 @@ export const listStudents = asyncHandler(async (req, res) => {
       interviewsCompleted: interview?.completed ?? 0,
       interviewAverage: components.interview,
       lastActiveAt: test?.lastAt ?? null,
+      applications: application?.count ?? 0,
+      lastApplicationAt: application?.lastAt ?? null,
       components,
       readiness,
       band: bandFor(readiness),

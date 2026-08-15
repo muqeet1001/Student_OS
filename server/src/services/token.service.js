@@ -37,7 +37,9 @@ export function refreshCookieOptions() {
   return {
     httpOnly: true,
     secure: config.isProduction,
-    sameSite: config.isProduction ? 'none' : 'lax',
+    // Client and API share an origin in production. Lax blocks cross-site
+    // form/fetch requests from carrying this credential.
+    sameSite: 'lax',
     path: '/api/auth',
     maxAge: 30 * 24 * 60 * 60 * 1000,
   };

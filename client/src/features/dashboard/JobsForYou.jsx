@@ -15,17 +15,7 @@ export default function JobsForYou() {
   if (loading || jobs.length === 0) return null;
 
   return (
-    <section className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-5">
-      <div className="flex items-baseline justify-between gap-3 mb-3">
-        <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-on-surface-variant">
-          Jobs for you
-        </h2>
-        <Link to="/jobs" className="text-xs font-bold text-primary hover:underline">
-          See all
-        </Link>
-      </div>
-
-      <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
         {jobs.map((job) => (
           <li key={job._id}>
             <Link
@@ -47,6 +37,5 @@ export default function JobsForYou() {
           </li>
         ))}
       </ul>
-    </section>
   );
 }

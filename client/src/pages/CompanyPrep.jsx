@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
@@ -10,11 +10,7 @@ export default function CompanyPrep() {
   const [tier, setTier] = useState('');
 
   const companies = data?.companies ?? [];
-
-  const visible = useMemo(
-    () => (tier ? companies.filter((company) => company.tier === tier) : companies),
-    [companies, tier],
-  );
+  const visible = tier ? companies.filter((company) => company.tier === tier) : companies;
 
   return (
     <div className="bg-background text-on-surface min-h-dvh">

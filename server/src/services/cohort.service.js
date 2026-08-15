@@ -6,7 +6,7 @@
  * being rewritten per endpoint.
  */
 import { User } from '../models/User.js';
-import { Profile } from '../models/Profile.js';
+import { calculateProfileCompleteness, Profile } from '../models/Profile.js';
 import { Problem } from '../models/Problem.js';
 import { SolvedProblem } from '../models/Submission.js';
 import { TestAttempt } from '../models/Test.js';
@@ -91,7 +91,7 @@ export async function loadCohort({ search = '', branch = '', graduationYear = ''
     const interview = interviewBy.get(key);
 
     const components = {
-      profile: profile.completeness ?? 0,
+      profile: calculateProfileCompleteness(profile),
       coding: totalProblems ? Math.round((solvedCount / totalProblems) * 100) : 0,
       tests: Math.round(test?.average ?? 0),
       interview: Math.round(interview?.average ?? 0),

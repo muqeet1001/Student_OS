@@ -12,7 +12,6 @@ export function notFoundHandler(req, _res, next) {
  * Translates known error shapes into a consistent JSON envelope:
  *   { success: false, message, details? }
  */
-// eslint-disable-next-line no-unused-vars -- Express identifies error middleware by arity
 export function errorHandler(err, _req, res, _next) {
   let error = err;
 

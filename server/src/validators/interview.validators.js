@@ -6,6 +6,7 @@ export const startInterviewSchema = z.object({
   round: z.enum(['behavioural', 'technical', 'system-design', 'hr']),
   difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
   targetRole: z.string().trim().max(120).optional(),
+  jobDescription: z.string().trim().max(5000).optional(),
   questionCount: z.coerce.number().int().min(3).max(10).default(5),
 });
 

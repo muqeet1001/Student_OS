@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { assertSecretsAreNotPublic } from './publicSecrets.js';
+import { assertProductionSecurity } from './productionValidation.js';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const serverRoot = path.resolve(here, '../..');
@@ -72,6 +73,18 @@ export const config = {
   codeRunner: {
     timeoutMs: Number(process.env.CODE_RUNNER_TIMEOUT_MS) || 4000,
     maxOutput: Number(process.env.CODE_RUNNER_MAX_OUTPUT) || 10_000,
+    provider: process.env.CODE_RUNNER_PROVIDER || 'judge0',
+    apiUrl: (process.env.CODE_RUNNER_API_URL || 'https://ce.judge0.com').replace(/\/$/, ''),
+    apiKey: process.env.CODE_RUNNER_API_KEY || '',
+    apiKeyHeader: process.env.CODE_RUNNER_API_KEY_HEADER || 'X-RapidAPI-Key',
+    languageId: Number(process.env.CODE_RUNNER_LANGUAGE_ID) || 0,
+    remoteTimeoutMs: Number(process.env.CODE_RUNNER_REMOTE_TIMEOUT_MS) || 15_000,
+    // node:vm is useful for trusted development, but is not a security
+    // boundary. Never silently move untrusted code into the web container in
+    // production merely because the remote judge is unavailable.
+    fallbackLocal:
+      process.env.CODE_RUNNER_FALLBACK_LOCAL === 'true' ||
+      (!isProduction && process.env.CODE_RUNNER_FALLBACK_LOCAL !== 'false'),
   },
 };
 
@@ -80,6 +93,7 @@ export const config = {
  * rather than after it has begun accepting traffic. See publicSecrets.js for
  * why this exists at all.
  */
+assertProductionSecurity(config);
 assertSecretsAreNotPublic(
   {
     JWT_ACCESS_SECRET: config.jwt.accessSecret,

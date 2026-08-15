@@ -34,6 +34,8 @@ const interviewSessionSchema = new mongoose.Schema(
     },
     difficulty: { type: String, required: true, enum: ['easy', 'medium', 'hard'] },
     targetRole: { type: String, trim: true },
+    /** Optional JD used to prioritise questions whose expected concepts overlap the role. */
+    jobDescription: { type: String, trim: true, default: '', maxlength: 5000 },
 
     /**
      * The question set is fixed when the session starts, so a refresh or a

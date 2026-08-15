@@ -3,7 +3,6 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
 import { api } from '../lib/api.js';
-import MatchBadge from '../features/jobs/MatchBadge.jsx';
 
 /** Where a student goes to close each kind of gap. */
 const FIX_ROUTES = {
@@ -121,6 +120,13 @@ export default function JobDetail() {
                 Open posting ↗
               </a>
             )}
+
+            <Link
+              to={`/resume-builder?job=${jobId}`}
+              className="px-5 py-2.5 rounded-lg bg-surface-container font-bold text-sm hover:bg-surface-container-high transition-colors"
+            >
+              Tailor resume
+            </Link>
 
             {application && (
               <button

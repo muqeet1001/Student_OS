@@ -13,6 +13,8 @@ import Companies from '../features/admin/Companies.jsx';
 import Training from '../features/admin/Training.jsx';
 import Alumni from '../features/admin/Alumni.jsx';
 import Announcements from '../features/admin/Announcements.jsx';
+import InterventionQueue from '../features/admin/InterventionQueue.jsx';
+import ReviewQueue from '../features/admin/ReviewQueue.jsx';
 
 const BAND_STYLES = {
   ready: 'bg-green-100 text-green-800',
@@ -38,7 +40,7 @@ function ReadinessCell({ value, band }) {
 
 export default function AdminDashboard() {
   const { user } = useAuth();
-  const [tab, setTab] = useState('match');
+  const [tab, setTab] = useState('eligibility');
 
   const [search, setSearch] = useState('');
   const [branch, setBranch] = useState('');
@@ -90,7 +92,17 @@ export default function AdminDashboard() {
         <header>
           <p className="text-xs font-bold uppercase tracking-[0.22em] text-primary">Placement office</p>
           <h1 className="font-headline text-2xl md:text-3xl font-black tracking-tight mt-1">
-            {tab === 'match'
+            {tab === 'eligibility'
+              ? 'Automatic eligibility checker'
+              : tab === 'scheduling'
+                ? 'Interview scheduling and attendance'
+                : tab === 'analytics-training'
+                  ? 'Placement analytics and skill-gap training'
+            : tab === 'interventions'
+              ? 'Students needing intervention'
+              : tab === 'reviews'
+                ? 'Mentor review requests'
+              : tab === 'match'
               ? 'Shortlist candidates'
               : tab === 'insights'
                 ? 'Cohort insights'
@@ -112,26 +124,14 @@ export default function AdminDashboard() {
           </h1>
         </header>
 
-        {/*
-          Seven tabs do not fit a phone. The strip scrolls inside itself —
-          bled to the page edges so a half-visible tab signals there is more —
-          rather than wrapping to a second row or overflowing the document.
-        */}
-        <div
-          className="flex gap-2 overflow-x-auto -mx-5 px-5 md:-mx-8 md:px-8 lg:mx-0 lg:px-0 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          role="tablist"
-        >
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+        <div className="flex gap-2 overflow-x-auto -mx-5 px-5 sm:mx-0 sm:px-0 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist">
           {[
-            { key: 'match', label: 'Match to a job' },
-            { key: 'cohort', label: 'Browse cohort' },
-            { key: 'drives', label: 'Drives' },
-            { key: 'placements', label: 'Placements' },
-            { key: 'calendar', label: 'Calendar' },
-            { key: 'companies', label: 'Companies' },
-            { key: 'training', label: 'Training' },
-            { key: 'alumni', label: 'History' },
-            { key: 'announcements', label: 'Announce' },
-            { key: 'insights', label: 'Insights' },
+            { key: 'eligibility', label: 'Eligibility checker' },
+            { key: 'drives', label: 'Drive management' },
+            { key: 'scheduling', label: 'Scheduling & attendance' },
+            { key: 'placements', label: 'Selections & offers' },
+            { key: 'analytics-training', label: 'Analytics → training' },
           ].map((item) => (
             <button
               key={item.key}
@@ -149,16 +149,43 @@ export default function AdminDashboard() {
             </button>
           ))}
         </div>
+          <select
+            aria-label="More placement tools"
+            value={['interventions', 'reviews', 'cohort', 'companies', 'alumni', 'announcements'].includes(tab) ? tab : ''}
+            onChange={(event) => event.target.value && setTab(event.target.value)}
+            className="sm:ml-auto bg-surface-container-lowest border border-outline-variant/60 rounded-full px-4 py-2 text-sm font-bold"
+          >
+            <option value="">More tools</option>
+            <option value="interventions">Student action queue</option>
+            <option value="reviews">Mentor reviews</option>
+            <option value="cohort">Browse cohort</option>
+            <option value="companies">Companies</option>
+            <option value="alumni">Placement history</option>
+            <option value="announcements">Announcements</option>
+          </select>
+        </div>
 
-        {tab === 'match' && <JobMatch />}
+        {tab === 'eligibility' && <JobMatch />}
+        {tab === 'interventions' && <InterventionQueue />}
+        {tab === 'reviews' && <ReviewQueue />}
         {tab === 'drives' && <Drives />}
         {tab === 'placements' && <Placements />}
-        {tab === 'calendar' && <Calendar />}
+        {tab === 'scheduling' && <Calendar />}
         {tab === 'companies' && <Companies />}
-        {tab === 'training' && <Training />}
         {tab === 'alumni' && <Alumni />}
         {tab === 'announcements' && <Announcements />}
-        {tab === 'insights' && <Insights />}
+        {tab === 'analytics-training' && (
+          <div className="space-y-8">
+            <Insights />
+            <section className="space-y-3 pt-2 border-t border-outline-variant/60">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-primary">Act on the gaps</p>
+                <h2 className="font-headline text-xl font-black mt-1">Training programmes and measured impact</h2>
+              </div>
+              <Training />
+            </section>
+          </div>
+        )}
 
         {/* Cohort summary */}
         {tab === 'cohort' && summary && (

@@ -1,13 +1,13 @@
 # Database
 
-MongoDB via Mongoose. 15 collections across 10 model files.
+MongoDB via Mongoose. 28 collections across 22 model files.
 
 ## Connecting
 
-Set `MONGODB_URI` in `server/.env` (gitignored — never commit a real URI):
+Set `MONGO_URI` in `server/.env` (gitignored — never commit a real URI):
 
 ```
-MONGODB_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/student_os?retryWrites=true&w=majority
+MONGO_URI=mongodb+srv://<user>:<password>@<cluster>.mongodb.net/student_os?retryWrites=true&w=majority
 ```
 
 Always include the database name (`/student_os`) before the query string.
@@ -35,7 +35,7 @@ submissions, attempts, profiles — is never touched unless `--fresh` is passed.
 | Collection | Purpose | Key fields |
 |---|---|---|
 | `users` | Account and credentials | `email` (unique), `password` (hashed, `select:false`), `role` (`student`\|`admin`), `refreshTokens[]` |
-| `profiles` | Everything a resume is built from | `user` (unique), `headline`, `bio`, `skills[]`, `projects[]`, `education[]`, `experience[]`, `certifications[]`, `completeness` |
+| `profiles` | Everything a resume and opt-in public profile are built from | `user` (unique), `headline`, `bio`, `skills[]`, `projects[]`, `education[]`, `experience[]`, `certifications[]`, `publicProfile` |
 
 One profile per user, enforced by a unique index on `profile.user`.
 
@@ -92,6 +92,7 @@ live payload and only returned once the session is complete.
 |---|---|---|
 | `resumes` | Saved, tailored versions | `user`, `title`, `snapshot` (frozen profile copy), `atsScore`, `atsChecks[]` |
 | `companies` | Prep hubs | `slug` (unique), `tier`, `difficulty`, `rounds[]`, `insights[]`, `focusAreas[]` |
+| `reviewrequests` | Focused human-feedback workflow | `student`, `kind`, `resourceId`, `note`, `status`, `feedback`, `reviewer`, `reviewedAt` |
 
 `snapshot` is a frozen copy of the profile at save time: a resume already
 sent to an employer must not change when the profile is edited later.
@@ -106,7 +107,8 @@ User ─┬─ Profile              (1:1, unique)
       ├─ QuestionProgress     (1:N) ── Question
       ├─ TestAttempt          (1:N) ── Test, TestQuestion
       ├─ InterviewSession     (1:N) ── InterviewQuestion
-      └─ Resume               (1:N)
+      ├─ Resume               (1:N)
+      └─ ReviewRequest        (1:N) ── User (reviewer, optional)
 
 Question ── Problem   (optional: a PYQ that is practisable)
 TestQuestion ── Test  (N:1)
@@ -123,6 +125,7 @@ patterns that would otherwise scan:
   solve impossible at the database level
 - `problems` / `questions`: `topics`, `companies`, `difficulty` for filters
 - `interviewsessions`: `{user, status}` to find the one open session
+- `reviewrequests`: `{student, kind, resourceId, status}` partial unique while requested, preventing duplicate open work while retaining completed feedback history
 
 ## Readiness score
 

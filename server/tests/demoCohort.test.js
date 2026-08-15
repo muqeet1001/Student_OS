@@ -107,7 +107,7 @@ test('each batch is placed at exactly the rate the constant declares', () => {
 });
 
 test('more offers than placements, so the two are visibly different numbers', () => {
-  const { cohort, offers } = plan();
+  const { offers } = plan();
 
   const placed = new Set(
     offers.filter((o) => ['accepted', 'joined'].includes(o.status)).map((o) => o.student),
@@ -180,7 +180,7 @@ test('generated students and offers satisfy their schemas', () => {
     assert.equal(profileError, undefined, `${student.email}: ${profileError && Object.keys(profileError.errors)}`);
   }
 
-  for (const { graduationYear, ...offer } of offers.slice(0, 10)) {
+  for (const { graduationYear: _graduationYear, ...offer } of offers.slice(0, 10)) {
     const error = new Offer({ ...offer, student: objectId }).validateSync();
     assert.equal(error, undefined, `${offer.company}: ${error && Object.keys(error.errors)}`);
   }

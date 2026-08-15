@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
+import { ErrorBlock } from '../components/StateBlocks.jsx';
 import { api } from '../lib/api.js';
 
 function clock(ms) {

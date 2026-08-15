@@ -218,6 +218,31 @@ describe('authentication', { skip }, () => {
     assert.equal(me.data.user.email, 'integration@studentos.test');
   });
 
+  test('several devices can sign in and rotate sessions concurrently', async () => {
+    const devices = Array.from({ length: 5 }, () => makeClient());
+    const logins = await Promise.all(
+      devices.map((device) =>
+        device.post('/auth/login', {
+          email: 'integration@studentos.test',
+          password: 'testpass123',
+        }),
+      ),
+    );
+
+    assert.deepEqual(
+      logins.map((result) => result.status),
+      [200, 200, 200, 200, 200],
+      'concurrent logins must not race while updating the session list',
+    );
+
+    const refreshes = await Promise.all(devices.map((device) => device.post('/auth/refresh')));
+    assert.deepEqual(
+      refreshes.map((result) => result.status),
+      [200, 200, 200, 200, 200],
+      'concurrent rotations from distinct devices must all succeed',
+    );
+  });
+
   test('refuses protected routes without a token', async () => {
     const anon = makeClient();
     const res = await anon.get('/profile/me');

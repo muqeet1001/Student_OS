@@ -119,4 +119,7 @@ jobs:
           echo "server did not become ready" && exit 1
 
       - run: npm run e2e
+      - run: npm run e2e:journeys
+        env:
+          E2E_BASE_URL: http://127.0.0.1:5099
       - run: npm run e2e:authz

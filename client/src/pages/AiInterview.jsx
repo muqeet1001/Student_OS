@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
 import { api } from '../lib/api.js';
@@ -50,11 +50,14 @@ function ScoreChip({ value }) {
 
 export default function AiInterview() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { data, loading, error, refetch } = useApiResource('/interviews');
 
-  const [round, setRound] = useState('behavioural');
+  const requestedRound = searchParams.get('round');
+  const [round, setRound] = useState(ROUNDS.some((item) => item.value === requestedRound) ? requestedRound : 'behavioural');
   const [difficulty, setDifficulty] = useState('medium');
-  const [role, setRole] = useState('');
+  const [role, setRole] = useState(searchParams.get('role') ?? '');
+  const [jobDescription, setJobDescription] = useState('');
   const [count, setCount] = useState(5);
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState('');
@@ -71,6 +74,7 @@ export default function AiInterview() {
         round,
         difficulty,
         targetRole: role.trim() || undefined,
+        jobDescription: jobDescription.trim() || undefined,
         questionCount: count,
       });
       navigate(`/ai-interview/session/${result.session._id}`);
@@ -118,6 +122,20 @@ export default function AiInterview() {
                 actually asks.
               </p>
             </div>
+
+            <label className="block space-y-1.5">
+              <span className="block text-xs font-bold uppercase tracking-wider text-outline">
+                Job description <span className="normal-case text-outline/70">(optional)</span>
+              </span>
+              <textarea
+                value={jobDescription}
+                onChange={(event) => setJobDescription(event.target.value)}
+                maxLength={5000}
+                rows={4}
+                placeholder="Paste the role requirements to prioritise relevant interview questions."
+                className="w-full bg-surface-container-low border-2 border-transparent rounded-lg px-4 py-3 text-sm placeholder:text-outline/60 focus:outline-none focus:ring-2 focus:ring-primary-container"
+              />
+            </label>
 
             <fieldset>
               <legend className="text-xs font-bold uppercase tracking-wider text-outline mb-3">

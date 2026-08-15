@@ -18,7 +18,7 @@ export default function CompanyHub() {
     );
   }
 
-  const { company, topQuestions } = data;
+  const { company, topQuestions, readiness } = data;
 
   return (
     <div className="bg-background text-on-surface min-h-dvh">
@@ -35,6 +35,17 @@ export default function CompanyHub() {
             {company.name} Prep Hub
           </h1>
         </div>
+
+        <section className="grid grid-cols-1 sm:grid-cols-3 gap-2" aria-label="Company preparation actions">
+          <Link to={`/opportunities?company=${encodeURIComponent(company.name)}`} className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-4 hover:border-primary/40"><p className="text-[10px] font-black uppercase tracking-wider text-primary">Step 1</p><p className="font-bold mt-1">Check eligibility</p><p className="text-xs text-on-surface-variant mt-1">See roles, blockers and deadlines.</p></Link>
+          <Link to={`/pyq-library?company=${encodeURIComponent(company.name)}`} className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-4 hover:border-primary/40"><p className="text-[10px] font-black uppercase tracking-wider text-primary">Step 2</p><p className="font-bold mt-1">Practise reported questions</p><p className="text-xs text-on-surface-variant mt-1">Start with the rounds candidates actually faced.</p></Link>
+          <Link to="/ai-interview?round=behavioural" className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-4 hover:border-primary/40"><p className="text-[10px] font-black uppercase tracking-wider text-primary">Step 3</p><p className="font-bold mt-1">Rehearse out loud</p><p className="text-xs text-on-surface-variant mt-1">Get one strength and one retry focus.</p></Link>
+        </section>
+
+        <section className="rounded-xl bg-inverse-surface text-white p-5 grid md:grid-cols-3 gap-4 items-center">
+          <div><p className="text-4xl font-black">{readiness.score}%</p><p className="text-xs font-bold uppercase tracking-wider opacity-60">{company.name} readiness</p></div>
+          <div className="md:col-span-2"><p className="text-sm opacity-80">Based on required focus areas, coding evidence, interview practice and profile strength.</p><div className="flex flex-wrap gap-2 mt-3">{readiness.requirements.map((item) => <span key={item.name} className={`px-2.5 py-1 rounded-full text-[10px] font-bold ${item.met ? 'bg-green-500/20 text-green-100' : 'bg-white/10 text-white/75'}`}>{item.met ? '✓ ' : 'Gap: '}{item.name}</span>)}</div></div>
+        </section>
 
         {/* Overview + mock CTA */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
@@ -85,7 +96,7 @@ export default function CompanyHub() {
               <span className="material-symbols-outlined text-3xl">videocam</span>
               <h2 className="font-headline text-lg font-bold mt-3">Ready to speak?</h2>
               <p className="text-sm text-white/85 leading-relaxed mt-1.5">
-                Run a mock round tuned to how {company.name} interviews, and get scored on it.
+                Practise a relevant mock round, then use the report to decide what to retry.
               </p>
             </div>
             <Link

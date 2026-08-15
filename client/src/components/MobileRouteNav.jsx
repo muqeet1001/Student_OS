@@ -1,14 +1,18 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { mobileLinks } from '../routes/pageRegistry.js';
+import { useAuth } from '../context/AuthContext.jsx';
+import { adminLinks, mobileLinks } from '../routes/pageRegistry.js';
 
 export default function MobileRouteNav() {
+  const { user } = useAuth();
+  const visibleLinks = user?.role === 'admin' ? adminLinks : mobileLinks;
+
   return (
     <nav
       aria-label="Primary"
       className="lg:hidden fixed inset-x-0 bottom-0 z-40 flex items-stretch gap-1 px-2 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] bg-white/95 backdrop-blur-xl border-t border-outline-variant/30"
     >
-      {mobileLinks.map((link) => (
+      {visibleLinks.map((link) => (
         <NavLink
           key={link.path}
           to={link.path}
