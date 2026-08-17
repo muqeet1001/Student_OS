@@ -31,6 +31,7 @@ import AiInterview from './pages/AiInterview.jsx';
 import InterviewReport from './pages/InterviewReport.jsx';
 import InterviewSession from './pages/InterviewSession.jsx';
 import MyPlan from './pages/MyPlan.jsx';
+import Readiness from './pages/Readiness.jsx';
 import Practice from './pages/Practice.jsx';
 import CareerProfile from './pages/CareerProfile.jsx';
 import Updates from './pages/Updates.jsx';
@@ -61,6 +62,7 @@ export default function App() {
           {/* Screens that share the navigation chrome. */}
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/readiness" element={<Readiness />} />
             <Route path="/my-plan" element={<MyPlan />} />
             <Route path="/practice" element={<Practice />} />
             <Route path="/opportunities" element={<Jobs />} />

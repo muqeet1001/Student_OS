@@ -46,6 +46,7 @@ const ADMIN = { email: 'admin@studentos.com', password: 'demo1234' };
  */
 const STUDENT_ROUTES = [
   { path: '/dashboard', expect: /readiness/i },
+  { path: '/readiness', expect: /priority|readiness|weighted/i },
   { path: '/my-plan', expect: /plan|progress|readiness/i },
   { path: '/practice', expect: /practice|coding|skill/i },
   { path: '/opportunities', expect: /opportunit|engineer|intern/i },

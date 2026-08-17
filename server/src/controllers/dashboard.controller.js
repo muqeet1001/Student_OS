@@ -16,6 +16,9 @@ import { readHistory, recordSnapshot } from '../services/snapshot.service.js';
 import { buildRoadmap } from '../services/roadmap.service.js';
 import { buildAchievements } from '../services/achievements.js';
 import { Application } from '../models/JobPosting.js';
+import { Submission } from '../models/Submission.js';
+import { SkillAttempt } from '../models/SkillAssessment.js';
+import { summarisePreparationActivity } from '../services/preparationActivity.js';
 
 /**
  * Readiness is the product's core number, so it is composed of the five
@@ -127,9 +130,10 @@ export const getDashboard = asyncHandler(async (req, res) => {
     : Math.min(100, skills.length * 10 + verifiedCount * 10);
 
   const codingTarget = roleMatch?.role.codingTarget ?? 60;
+  const codingDenominator = Math.max(1, Math.min(codingTarget, totalAvailable || codingTarget));
   const codingScore = Math.min(
     100,
-    Math.round((totalSolved / Math.max(1, Math.min(codingTarget, totalAvailable || codingTarget))) * 100),
+    Math.round((totalSolved / codingDenominator) * 100),
   );
 
   const projects = profile?.projects ?? [];
@@ -139,11 +143,45 @@ export const getDashboard = asyncHandler(async (req, res) => {
   );
 
   const components = [
-    { key: 'skills', label: 'Skills', value: skillsScore },
-    { key: 'coding', label: 'Coding', value: codingScore },
-    { key: 'resume', label: 'Resume', value: atsReport.score },
-    { key: 'interview', label: 'Interview', value: interviewAverage },
-    { key: 'projects', label: 'Projects', value: projectsScore },
+    {
+      key: 'skills',
+      label: 'Skills',
+      value: skillsScore,
+      weight: WEIGHTS.skills,
+      basis: roleMatch
+        ? `Match against ${roleMatch.role.label}; required skills count twice.`
+        : `${skills.length} skills listed and ${verifiedCount} verified.`,
+    },
+    {
+      key: 'coding',
+      label: 'Coding',
+      value: codingScore,
+      weight: WEIGHTS.coding,
+      basis: `${totalSolved} problems solved toward a ${codingDenominator}-problem target.`,
+    },
+    {
+      key: 'resume',
+      label: 'Resume',
+      value: atsReport.score,
+      weight: WEIGHTS.resume,
+      basis: 'ATS checks across profile content, impact, completeness and formatting.',
+    },
+    {
+      key: 'interview',
+      label: 'Interview',
+      value: interviewAverage,
+      weight: WEIGHTS.interview,
+      basis: interviews.length
+        ? `Average of ${interviews.length} completed mock interview${interviews.length === 1 ? '' : 's'}.`
+        : 'No completed mock interview yet.',
+    },
+    {
+      key: 'projects',
+      label: 'Projects',
+      value: projectsScore,
+      weight: WEIGHTS.projects,
+      basis: `${projects.length} project${projects.length === 1 ? '' : 's'}; detailed descriptions earn additional credit.`,
+    },
   ];
 
   const readiness = Math.round(
@@ -233,6 +271,49 @@ export const getHistory = asyncHandler(async (req, res) => {
           : null,
     },
   });
+});
+
+/** A year of meaningful preparation work for the consistency heatmap. */
+export const getActivity = asyncHandler(async (req, res) => {
+  const days = Math.min(366, Math.max(30, Number(req.query.days) || 365));
+  const since = new Date(Date.now() - days * 86_400_000);
+  const user = req.user._id;
+
+  const [submissions, tests, skillAttempts, interviews, applications] = await Promise.all([
+    Submission.find({ user, verdict: 'accepted', createdAt: { $gte: since } })
+      .select('createdAt')
+      .lean(),
+    TestAttempt.find({
+      user,
+      status: { $in: ['submitted', 'expired', 'disqualified'] },
+      submittedAt: { $gte: since },
+    })
+      .select('submittedAt')
+      .lean(),
+    SkillAttempt.find({
+      user,
+      status: { $in: ['submitted', 'expired', 'disqualified'] },
+      submittedAt: { $gte: since },
+    })
+      .select('submittedAt')
+      .lean(),
+    InterviewSession.find({ user, status: 'completed', completedAt: { $gte: since } })
+      .select('completedAt')
+      .lean(),
+    Application.find({ user, stage: { $ne: 'saved' }, appliedAt: { $gte: since } })
+      .select('appliedAt')
+      .lean(),
+  ]);
+
+  const events = [
+    ...submissions.map((item) => ({ type: 'coding', at: item.createdAt })),
+    ...tests.map((item) => ({ type: 'assessments', at: item.submittedAt })),
+    ...skillAttempts.map((item) => ({ type: 'assessments', at: item.submittedAt })),
+    ...interviews.map((item) => ({ type: 'interviews', at: item.completedAt })),
+    ...applications.map((item) => ({ type: 'applications', at: item.appliedAt })),
+  ];
+
+  res.json({ success: true, data: summarisePreparationActivity(events) });
 });
 
 /** Sets the student's target role, which re-frames every readiness number. */

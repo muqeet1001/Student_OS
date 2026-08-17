@@ -75,7 +75,7 @@ export default function ReadinessCard({ readiness, targetRole, prominent = false
         </div>
         {showReportLink && (
           <Link
-            to="/my-plan#readiness"
+            to="/readiness"
             className="text-xs font-bold text-primary hover:underline whitespace-nowrap shrink-0"
           >
             Full report

@@ -11,6 +11,7 @@ dashboardRoutes.use(requireAuth);
 
 dashboardRoutes.get('/', dashboard.getDashboard);
 dashboardRoutes.get('/history', dashboard.getHistory);
+dashboardRoutes.get('/activity', dashboard.getActivity);
 dashboardRoutes.get('/roadmap', dashboard.getRoadmap);
 dashboardRoutes.get('/achievements', dashboard.getAchievements);
 

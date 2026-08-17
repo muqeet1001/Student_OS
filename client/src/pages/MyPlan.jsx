@@ -32,7 +32,6 @@ export default function MyPlan() {
           readiness={dashboard.data.readiness}
           targetRole={dashboard.data.targetRole}
           prominent
-          showReportLink={false}
         />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">

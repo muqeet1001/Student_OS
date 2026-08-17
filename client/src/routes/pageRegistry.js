@@ -1,6 +1,7 @@
 /** Single source of truth for the sidebar and the mobile bottom bar. */
 export const navLinks = [
   { label: 'Home', path: '/dashboard', icon: 'dashboard', short: 'Home' },
+  { label: 'Readiness', path: '/readiness', icon: 'speed', short: 'Ready' },
   { label: 'My Plan', path: '/my-plan', icon: 'map', short: 'Plan' },
   { label: 'Practice', path: '/practice', icon: 'school', short: 'Practice' },
   { label: 'Opportunities', path: '/opportunities', icon: 'work', short: 'Jobs' },
@@ -15,5 +16,5 @@ export const adminLinks = [
 
 /** The bottom bar only has room for the five most-used destinations. */
 export const mobileLinks = navLinks.filter((link) =>
-  ['/dashboard', '/my-plan', '/practice', '/opportunities', '/updates'].includes(link.path),
+  ['/dashboard', '/readiness', '/my-plan', '/practice', '/opportunities'].includes(link.path),
 );

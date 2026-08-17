@@ -685,6 +685,17 @@ describe('dashboard', { skip }, () => {
     assert.equal(res.status, 200, JSON.stringify(res.body));
     assert.equal(typeof res.data.readiness.score, 'number');
     assert.equal(res.data.readiness.components.length, 5, 'skills, coding, resume, interview, projects');
+    assert.equal(
+      Math.round(
+        res.data.readiness.components.reduce((sum, component) => sum + component.weight, 0) * 100,
+      ),
+      100,
+      'readiness component weights must add up to 100%',
+    );
+    assert.ok(
+      res.data.readiness.components.every((component) => component.basis),
+      'every score component explains the evidence it used',
+    );
 
     // The solved count must match the coding screen exactly — both read
     // SolvedProblem.
