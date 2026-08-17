@@ -24,7 +24,17 @@ export function createApp() {
   // Behind a proxy (Render/Railway/nginx) so rate limiting sees real client IPs.
   app.set('trust proxy', 1);
 
-  app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      // MediaPipe compiles the self-hosted detector WebAssembly in the
+      // browser. `wasm-unsafe-eval` permits only Wasm compilation; ordinary
+      // string eval remains blocked by the rest of Helmet's default policy.
+      contentSecurityPolicy: {
+        directives: { scriptSrc: ["'self'", "'wasm-unsafe-eval'"] },
+      },
+    }),
+  );
   app.use(
     cors({
       origin: config.clientUrl,

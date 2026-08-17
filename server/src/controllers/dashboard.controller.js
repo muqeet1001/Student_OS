@@ -80,7 +80,10 @@ export const getDashboard = asyncHandler(async (req, res) => {
         { $group: { _id: '$difficulty', count: { $sum: 1 } } },
       ]),
 
-      TestAttempt.find({ user: userId, status: { $in: ['submitted', 'expired'] } })
+      TestAttempt.find({
+        user: userId,
+        status: { $in: ['submitted', 'expired', 'disqualified'] },
+      })
         .select('percentage passed submittedAt test')
         .populate('test', 'title slug')
         .sort({ submittedAt: -1 })
@@ -263,7 +266,10 @@ export const getAchievements = asyncHandler(async (req, res) => {
         { $match: { user: userId } },
         { $group: { _id: '$difficulty', count: { $sum: 1 } } },
       ]),
-      TestAttempt.find({ user: userId, status: { $in: ['submitted', 'expired'] } })
+      TestAttempt.find({
+        user: userId,
+        status: { $in: ['submitted', 'expired', 'disqualified'] },
+      })
         .select('passed')
         .lean(),
       InterviewSession.find({ user: userId, status: 'completed' }).select('overallScore').lean(),
@@ -313,7 +319,10 @@ export const getRoadmap = asyncHandler(async (req, res) => {
         { $match: { user: userId } },
         { $group: { _id: '$difficulty', count: { $sum: 1 } } },
       ]),
-      TestAttempt.countDocuments({ user: userId, status: { $in: ['submitted', 'expired'] } }),
+      TestAttempt.countDocuments({
+        user: userId,
+        status: { $in: ['submitted', 'expired', 'disqualified'] },
+      }),
       InterviewSession.find({ user: userId, status: 'completed' }).select('overallScore').lean(),
       Application.countDocuments({ user: userId, stage: { $ne: 'saved' } }),
     ]);

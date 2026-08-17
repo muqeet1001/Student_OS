@@ -99,4 +99,7 @@ test('security headers are applied', async () => {
 
   assert.ok(res.headers.get('x-content-type-options'), 'helmet should set nosniff');
   assert.equal(res.headers.get('x-powered-by'), null, 'Express should not advertise itself');
+  const csp = res.headers.get('content-security-policy') ?? '';
+  assert.match(csp, /'wasm-unsafe-eval'/, 'the self-hosted face detector must be allowed to compile');
+  assert.doesNotMatch(csp, /(?<!wasm-)'unsafe-eval'/, 'ordinary JavaScript eval must stay blocked');
 });

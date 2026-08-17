@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
 import { api } from '../lib/api.js';
+import ProctoringGuard from '../features/proctoring/ProctoringGuard.jsx';
 
 const LEVEL_TONES = {
   advanced: 'bg-green-100 text-green-800',
@@ -110,6 +111,7 @@ export default function Skills() {
   const navigate = useNavigate();
   const { data, loading, error, refetch } = useApiResource('/skills');
   const [starting, setStarting] = useState(false);
+  const [pendingAssessment, setPendingAssessment] = useState(null);
 
   async function start(assessment) {
     setStarting(true);
@@ -119,6 +121,7 @@ export default function Skills() {
     } catch (caught) {
       window.alert(caught.message || 'Could not start that assessment.');
       setStarting(false);
+      setPendingAssessment(null);
     }
   }
 
@@ -140,6 +143,13 @@ export default function Skills() {
 
   return (
     <div className="bg-background text-on-surface min-h-dvh">
+      {pendingAssessment && (
+        <ProctoringGuard
+          active
+          onReady={() => start(pendingAssessment)}
+          onCancel={() => setPendingAssessment(null)}
+        />
+      )}
       <div className="max-w-7xl mx-auto px-5 md:px-8 pt-16 lg:pt-6 pb-10 space-y-4">
         <header>
           <h1 className="font-headline text-xl md:text-2xl font-black tracking-tight">
@@ -169,7 +179,7 @@ export default function Skills() {
               key={assessment._id}
               assessment={assessment}
               attempts={attemptsBySkill.get(assessment.skill) ?? []}
-              onStart={start}
+              onStart={setPendingAssessment}
               starting={starting}
             />
           ))}

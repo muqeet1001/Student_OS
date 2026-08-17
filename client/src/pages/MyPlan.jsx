@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import TodayPlan from '../features/dashboard/TodayPlan.jsx';
 import ProgressChart from '../features/dashboard/ProgressChart.jsx';
+import ReadinessCard from '../features/dashboard/ReadinessCard.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
 
 export default function MyPlan() {
@@ -26,6 +27,13 @@ export default function MyPlan() {
           <h1 className="font-headline text-2xl md:text-3xl font-black tracking-tight mt-1">My placement plan</h1>
           <p className="text-sm text-on-surface-variant mt-1">One achievable plan combining priorities, roadmap progress and professional milestones.</p>
         </header>
+
+        <ReadinessCard
+          readiness={dashboard.data.readiness}
+          targetRole={dashboard.data.targetRole}
+          prominent
+          showReportLink={false}
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <TodayPlan plan={dashboard.data.plan} />

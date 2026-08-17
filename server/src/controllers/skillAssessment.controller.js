@@ -3,6 +3,7 @@ import { Profile } from '../models/Profile.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { canonicalise } from '../services/skillTaxonomy.js';
+import { recordProctoringViolation } from '../services/proctoring.js';
 
 /** Retake window. Long enough that a retest means study, not memorisation. */
 const COOLDOWN_DAYS = 7;
@@ -29,16 +30,20 @@ function levelFor(percentage, thresholds) {
 export const listAssessments = asyncHandler(async (req, res) => {
   const [assessments, attempts, profile] = await Promise.all([
     SkillAssessment.find({ active: true }).select('-questions').sort({ skill: 1 }).lean(),
-    SkillAttempt.find({ user: req.user._id, status: 'submitted' })
-      .select('skill percentage level submittedAt')
+    SkillAttempt.find({ user: req.user._id, status: { $in: ['submitted', 'disqualified'] } })
+      .select('skill percentage level status submittedAt proctoring.reason')
       .sort({ submittedAt: -1 })
       .lean(),
     Profile.findOne({ user: req.user._id }).select('skills').lean(),
   ]);
 
   const latestBySkill = new Map();
+  const mostRecentBySkill = new Map();
   for (const attempt of attempts) {
-    if (!latestBySkill.has(attempt.skill)) latestBySkill.set(attempt.skill, attempt);
+    if (!mostRecentBySkill.has(attempt.skill)) mostRecentBySkill.set(attempt.skill, attempt);
+    if (attempt.status === 'submitted' && !latestBySkill.has(attempt.skill)) {
+      latestBySkill.set(attempt.skill, attempt);
+    }
   }
 
   const declared = new Set((profile?.skills ?? []).map((skill) => canonicalise(skill.name)));
@@ -48,7 +53,10 @@ export const listAssessments = asyncHandler(async (req, res) => {
     data: {
       assessments: assessments.map((assessment) => {
         const latest = latestBySkill.get(assessment.skill) ?? null;
-        const since = latest ? Date.now() - new Date(latest.submittedAt).getTime() : Infinity;
+        const mostRecent = mostRecentBySkill.get(assessment.skill) ?? null;
+        const since = mostRecent
+          ? Date.now() - new Date(mostRecent.submittedAt).getTime()
+          : Infinity;
         const cooldownRemaining = Math.max(0, COOLDOWN_MS - since);
 
         return {
@@ -91,12 +99,17 @@ export const startAttempt = asyncHandler(async (req, res) => {
         skill: assessment.skill,
         durationMinutes: assessment.durationMinutes,
         expiresAt: open.expiresAt,
+        proctoring: { warningCount: open.proctoring?.warningCount ?? 0 },
         questions: assessment.questions.map(maskQuestion),
       },
     });
   }
 
-  const last = await SkillAttempt.findOne({ user: req.user._id, skill, status: 'submitted' })
+  const last = await SkillAttempt.findOne({
+    user: req.user._id,
+    skill,
+    status: { $in: ['submitted', 'disqualified'] },
+  })
     .sort({ submittedAt: -1 })
     .lean();
 
@@ -127,6 +140,7 @@ export const startAttempt = asyncHandler(async (req, res) => {
       skill: assessment.skill,
       durationMinutes: assessment.durationMinutes,
       expiresAt: attempt.expiresAt,
+      proctoring: { warningCount: 0 },
       questions: assessment.questions.map(maskQuestion),
     },
   });
@@ -143,6 +157,23 @@ export const submitAttempt = asyncHandler(async (req, res) => {
   });
 
   if (!attempt) throw new ApiError(404, 'Attempt not found.');
+  if (attempt.status === 'disqualified') {
+    return res.json({
+      success: true,
+      data: {
+        attemptId: attempt._id,
+        score: 0,
+        total: attempt.total,
+        percentage: 0,
+        level: 'beginner',
+        expired: false,
+        verified: false,
+        disqualified: true,
+        proctoringReason: attempt.proctoring?.reason,
+        review: [],
+      },
+    });
+  }
   if (attempt.status !== 'in-progress') throw new ApiError(409, 'This attempt is already finished.');
 
   const assessment = await SkillAssessment.findById(attempt.assessment);
@@ -234,11 +265,47 @@ export const submitAttempt = asyncHandler(async (req, res) => {
   });
 });
 
+export const reportProctoringViolation = asyncHandler(async (req, res) => {
+  const attempt = await SkillAttempt.findOne({
+    _id: req.params.attemptId,
+    user: req.user._id,
+  });
+  if (!attempt) throw new ApiError(404, 'Attempt not found.');
+
+  const outcome = recordProctoringViolation(attempt, req.body);
+  await attempt.save();
+
+  res.json({
+    success: true,
+    data: {
+      ...outcome,
+      result: outcome.disqualified
+        ? {
+            attemptId: attempt._id,
+            score: 0,
+            total: attempt.total,
+            percentage: 0,
+            level: 'beginner',
+            expired: false,
+            verified: false,
+            disqualified: true,
+            proctoringReason: attempt.proctoring.reason,
+            review: [],
+          }
+        : null,
+    },
+  });
+});
+
 /** Attempt history for one skill, oldest first, for the improvement chart. */
 export const skillHistory = asyncHandler(async (req, res) => {
   const skill = canonicalise(req.params.skill);
 
-  const attempts = await SkillAttempt.find({ user: req.user._id, skill, status: 'submitted' })
+  const attempts = await SkillAttempt.find({
+    user: req.user._id,
+    skill,
+    status: { $in: ['submitted', 'disqualified'] },
+  })
     .select('percentage level score total submittedAt')
     .sort({ submittedAt: 1 })
     .lean();

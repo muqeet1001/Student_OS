@@ -3,6 +3,7 @@ import { Test, TestAttempt, TestQuestion } from '../models/Test.js';
 import { Profile } from '../models/Profile.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { recordProctoringViolation } from '../services/proctoring.js';
 
 /** Grace for network latency, so a submit sent just before time is accepted. */
 const SUBMIT_GRACE_MS = 5000;
@@ -22,8 +23,11 @@ function maskQuestion(question) {
 export const listTests = asyncHandler(async (req, res) => {
   const tests = await Test.find({ isPublished: true }).sort({ category: 1, title: 1 }).lean();
 
-  const attempts = await TestAttempt.find({ user: req.user._id, status: 'submitted' })
-    .select('test percentage passed submittedAt')
+  const attempts = await TestAttempt.find({
+    user: req.user._id,
+    status: { $in: ['submitted', 'disqualified'] },
+  })
+    .select('test percentage passed status submittedAt proctoring.reason')
     .sort({ submittedAt: -1 })
     .lean();
 
@@ -88,6 +92,7 @@ export const startAttempt = asyncHandler(async (req, res) => {
         questions: ordered.filter(Boolean).map(maskQuestion),
         answers: existing.answers,
         expiresAt: existing.expiresAt,
+        proctoring: { warningCount: existing.proctoring?.warningCount ?? 0 },
         resumed: true,
       },
     });
@@ -118,6 +123,7 @@ export const startAttempt = asyncHandler(async (req, res) => {
       questions: picked.map(maskQuestion),
       answers: [],
       expiresAt: attempt.expiresAt,
+      proctoring: { warningCount: 0 },
       resumed: false,
     },
   });
@@ -152,6 +158,23 @@ export const saveAnswers = asyncHandler(async (req, res) => {
 export const submitAttempt = asyncHandler(async (req, res) => {
   const attempt = await TestAttempt.findOne({ _id: req.params.attemptId, user: req.user._id });
   if (!attempt) throw ApiError.notFound('That attempt does not exist');
+  if (attempt.status === 'disqualified') {
+    return res.json({
+      success: true,
+      data: {
+        attemptId: attempt._id,
+        score: 0,
+        maxScore: attempt.maxScore,
+        percentage: 0,
+        passed: false,
+        disqualified: true,
+        proctoringReason: attempt.proctoring?.reason,
+        durationSeconds: attempt.durationSeconds,
+        correctCount: 0,
+        totalCount: attempt.questions.length,
+      },
+    });
+  }
   if (attempt.status !== 'in-progress') throw ApiError.badRequest('This attempt is already finished');
 
   const now = new Date();
@@ -244,6 +267,39 @@ export const submitAttempt = asyncHandler(async (req, res) => {
   });
 });
 
+/** Records an on-device detector event and enforces the second-warning zero. */
+export const reportProctoringViolation = asyncHandler(async (req, res) => {
+  const attempt = await TestAttempt.findOne({ _id: req.params.attemptId, user: req.user._id });
+  if (!attempt) throw ApiError.notFound('That attempt does not exist');
+
+  const outcome = recordProctoringViolation(attempt, req.body);
+  if (outcome.disqualified && !attempt.durationSeconds) {
+    attempt.durationSeconds = Math.max(0, Math.round((Date.now() - attempt.startedAt) / 1000));
+  }
+  await attempt.save();
+
+  res.json({
+    success: true,
+    data: {
+      ...outcome,
+      result: outcome.disqualified
+        ? {
+            attemptId: attempt._id,
+            score: 0,
+            maxScore: attempt.maxScore,
+            percentage: 0,
+            passed: false,
+            disqualified: true,
+            proctoringReason: attempt.proctoring.reason,
+            durationSeconds: attempt.durationSeconds,
+            correctCount: 0,
+            totalCount: attempt.questions.length,
+          }
+        : null,
+    },
+  });
+});
+
 /** Full review with correct answers — only available once an attempt is over. */
 export const getAttempt = asyncHandler(async (req, res) => {
   const attempt = await TestAttempt.findOne({ _id: req.params.attemptId, user: req.user._id })
@@ -286,7 +342,7 @@ export const getAttempt = asyncHandler(async (req, res) => {
 export const listAttempts = asyncHandler(async (req, res) => {
   const attempts = await TestAttempt.find({
     user: req.user._id,
-    status: { $in: ['submitted', 'expired'] },
+    status: { $in: ['submitted', 'expired', 'disqualified'] },
   })
     .populate('test', 'title slug category')
     .sort({ submittedAt: -1 })

@@ -67,6 +67,12 @@ would need a join for difficulty and would drift.
 
 ### Skill tests
 
+Test and verified-skill attempts retain an on-device proctoring event ledger.
+No camera frame is stored: only the event id, category and timestamps reach the
+API. The first distinct event is a warning; the second changes the attempt to
+`disqualified` and persists a zero score so dashboard and cohort analytics use
+the enforced result.
+
 | Collection | Purpose | Key fields |
 |---|---|---|
 | `tests` | Test definition | `slug` (unique), `category`, `durationMinutes`, `passPercentage`, `verifies[]` |

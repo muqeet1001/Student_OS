@@ -94,7 +94,15 @@ export default function StudentDetail({ student, onClose }) {
                     key={attempt._id}
                     className="flex items-center justify-between gap-3 text-sm px-3 py-2 bg-surface-container-low rounded-lg"
                   >
-                    <span className="font-bold truncate">{attempt.test?.title}</span>
+                    <span className="min-w-0">
+                      <span className="font-bold truncate block">{attempt.test?.title}</span>
+                      {attempt.status === 'disqualified' && (
+                        <span className="text-[11px] text-error block truncate">
+                          Disqualified after {attempt.proctoring?.warningCount || 2} warnings
+                          {attempt.proctoring?.reason ? ` · ${attempt.proctoring.reason}` : ''}
+                        </span>
+                      )}
+                    </span>
                     <span
                       className={`text-xs font-black shrink-0 ${
                         attempt.passed ? 'text-green-700' : 'text-error'

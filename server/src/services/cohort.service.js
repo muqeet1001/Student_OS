@@ -60,7 +60,12 @@ export async function loadCohort({ search = '', branch = '', graduationYear = ''
     Problem.countDocuments({ isPublished: true }),
 
     TestAttempt.aggregate([
-      { $match: { user: { $in: ids }, status: { $in: ['submitted', 'expired'] } } },
+      {
+        $match: {
+          user: { $in: ids },
+          status: { $in: ['submitted', 'expired', 'disqualified'] },
+        },
+      },
       {
         $group: {
           _id: '$user',

@@ -82,9 +82,33 @@ const skillAttemptSchema = new mongoose.Schema(
     percentage: { type: Number, default: 0 },
     level: { type: String, enum: ['beginner', 'intermediate', 'advanced'], default: 'beginner' },
 
-    status: { type: String, enum: ['in-progress', 'submitted', 'expired'], default: 'in-progress', index: true },
+    status: {
+      type: String,
+      enum: ['in-progress', 'submitted', 'expired', 'disqualified'],
+      default: 'in-progress',
+      index: true,
+    },
     expiresAt: { type: Date, required: true },
     submittedAt: { type: Date },
+
+    proctoring: {
+      warningCount: { type: Number, default: 0, min: 0, max: 2 },
+      violations: {
+        type: [
+          {
+            eventId: { type: String, required: true },
+            type: { type: String, required: true },
+            occurredAt: { type: Date, required: true },
+            receivedAt: { type: Date, default: Date.now },
+            detail: { type: String, default: '', maxlength: 200 },
+            _id: false,
+          },
+        ],
+        default: [],
+      },
+      disqualifiedAt: { type: Date },
+      reason: { type: String, default: '', maxlength: 200 },
+    },
   },
   { timestamps: true },
 );

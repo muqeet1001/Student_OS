@@ -170,7 +170,7 @@ the maps to it rather than serving them.
 - **Six clear destinations** — Home, My Plan, Practice, Opportunities, Profile & Resume, and Updates replace a menu of disconnected tools; every existing tool remains available inside the relevant hub
 - **Eligibility centre** — jobs are separated into recommended, eligible, needs-work, saved and applied views, with the specific blocker shown before a student spends time applying
 - **Coding practice** — live Judge0 execution with real test cases, development-only local fallback, per-problem drafts and streaks
-- **Skill tests** — server-timed, auto-scored; passing verifies a skill on the profile
+- **Skill tests** — server-timed and auto-scored, with consent-first on-device camera proctoring; tab/camera, face-count and sustained movement violations receive one warning, while the second persists a disqualified zero and verifies no skill
 - **PYQ library** — previous-year questions filterable by company, year, round and topic
 - **Company prep** — real round structures, strategy notes, most-asked questions
 - **AI mock interview** — scored on relevance, structure, specificity and delivery, with feedback that names what to fix

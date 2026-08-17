@@ -46,6 +46,7 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) return undefined;
           if (id.includes('codemirror') || id.includes('@lezer')) return 'editor';
+          if (id.includes('@mediapipe/tasks-vision')) return 'proctoring-ai';
           if (id.includes('react-router')) return 'router';
           if (id.includes('/react/') || id.includes('/react-dom/') || id.includes('/scheduler/')) {
             return 'react';

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { ErrorBlock } from '../components/StateBlocks.jsx';
 import { api } from '../lib/api.js';
+import ProctoringGuard from '../features/proctoring/ProctoringGuard.jsx';
 
 function clock(ms) {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -33,6 +34,17 @@ export default function SkillAttempt() {
   const submittedRef = useRef(false);
   const answersRef = useRef(answers);
   answersRef.current = answers;
+
+  const proctoring = session ? (
+    <ProctoringGuard
+      attemptId={attemptId}
+      endpoint={(id) => `/skills/attempts/${id}/proctoring/violations`}
+      initialWarnings={session.proctoring?.warningCount ?? 0}
+      active={!result && !error}
+      onDisqualified={(zeroResult) => setResult(zeroResult)}
+      onCancel={() => navigate('/skills')}
+    />
+  ) : null;
 
   const submit = useCallback(async () => {
     if (submittedRef.current || !session) return;
@@ -84,15 +96,20 @@ export default function SkillAttempt() {
 
   if (error) {
     return (
+      <>
+      {proctoring}
       <div className="min-h-dvh grid place-items-center p-6">
         <ErrorBlock error={error} onRetry={() => setError(null)} />
       </div>
+      </>
     );
   }
 
   // --- Result -------------------------------------------------------------
   if (result) {
     return (
+      <>
+      {proctoring}
       <div className="min-h-dvh bg-background text-on-surface">
         <div className="max-w-2xl mx-auto px-5 py-10 space-y-4">
           <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-6 text-center">
@@ -104,17 +121,29 @@ export default function SkillAttempt() {
             </p>
             <p className="text-sm text-on-surface-variant mt-1">{result.percentage}%</p>
 
-            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 text-green-800">
+            <div
+              className={`mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full ${
+                result.disqualified
+                  ? 'bg-error-container text-on-error-container'
+                  : 'bg-green-100 text-green-800'
+              }`}
+            >
               <span
                 className="material-symbols-outlined text-base"
                 style={{ fontVariationSettings: '"FILL" 1' }}
               >
-                verified
+                {result.disqualified ? 'block' : 'verified'}
               </span>
-              <span className="font-black text-sm capitalize">{result.level}</span>
+              <span className="font-black text-sm capitalize">
+                {result.disqualified ? 'Disqualified' : result.level}
+              </span>
             </div>
 
-            <p className="text-sm text-on-surface-variant mt-3">{LEVEL_COPY[result.level]}</p>
+            <p className="text-sm text-on-surface-variant mt-3">
+              {result.disqualified
+                ? `Two proctoring warnings were confirmed. ${result.proctoringReason || ''} The recorded result is zero and no skill was verified.`
+                : LEVEL_COPY[result.level]}
+            </p>
 
             {result.verified && (
               <p className="text-xs text-green-700 font-bold mt-2">
@@ -190,6 +219,7 @@ export default function SkillAttempt() {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
@@ -199,6 +229,8 @@ export default function SkillAttempt() {
   const low = remaining < 60_000;
 
   return (
+    <>
+    {proctoring}
     <div className="min-h-dvh bg-background text-on-surface flex flex-col">
       <header className="sticky top-0 z-20 bg-background/90 backdrop-blur-md border-b border-outline-variant/60">
         <div className="max-w-2xl mx-auto px-5 py-3">
@@ -308,5 +340,6 @@ export default function SkillAttempt() {
         </div>
       </main>
     </div>
+    </>
   );
 }

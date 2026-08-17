@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 import { ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import { api } from '../lib/api.js';
+import ProctoringGuard from '../features/proctoring/ProctoringGuard.jsx';
 
 function formatClock(ms) {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -21,6 +22,7 @@ export default function TestRunner() {
   const [remaining, setRemaining] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null);
+  const [proctorReady, setProctorReady] = useState(false);
 
   const submittedRef = useRef(false);
   const answersRef = useRef(answers);
@@ -28,6 +30,7 @@ export default function TestRunner() {
 
   // Start (or resume) the attempt once on mount.
   useEffect(() => {
+    if (!proctorReady) return undefined;
     let cancelled = false;
 
     api
@@ -48,7 +51,7 @@ export default function TestRunner() {
     return () => {
       cancelled = true;
     };
-  }, [slug]);
+  }, [proctorReady, slug]);
 
   const submit = useCallback(
     async (auto = false) => {
@@ -122,21 +125,47 @@ export default function TestRunner() {
 
   const questions = session?.questions ?? [];
   const answeredCount = useMemo(() => Object.keys(answers).length, [answers]);
+  const proctoring = (
+    <ProctoringGuard
+      attemptId={session?.attemptId}
+      endpoint={(attemptId) => `/tests/attempts/${attemptId}/proctoring/violations`}
+      initialWarnings={session?.proctoring?.warningCount ?? 0}
+      active={!result && !error}
+      onReady={() => setProctorReady(true)}
+      onDisqualified={(zeroResult) => setResult(zeroResult)}
+      onCancel={() => navigate('/skill-test')}
+    />
+  );
 
   if (error && !session) {
     return (
-      <div className="min-h-screen bg-surface p-6 flex items-center justify-center">
-        <div className="max-w-lg w-full">
-          <ErrorBlock error={error} onRetry={() => navigate('/skill-test')} />
+      <>
+        {proctoring}
+        <div className="min-h-screen bg-surface p-6 flex items-center justify-center">
+          <div className="max-w-lg w-full">
+            <ErrorBlock error={error} onRetry={() => navigate('/skill-test')} />
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 
-  if (!session) return <LoadingBlock label="Preparing your test" className="min-h-screen" />;
+  if (!session) {
+    return (
+      <>
+        {proctoring}
+        <LoadingBlock
+          label={proctorReady ? 'Preparing your test' : 'Waiting for camera check'}
+          className="min-h-screen"
+        />
+      </>
+    );
+  }
 
   if (result) {
     return (
+      <>
+      {proctoring}
       <div className="min-h-screen bg-surface flex items-center justify-center p-6">
         <div className="bg-surface-container-lowest max-w-2xl w-full rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.08)] overflow-hidden">
           <div className="bg-white p-6 text-center border-b border-outline-variant/60">
@@ -155,7 +184,9 @@ export default function TestRunner() {
               {result.percentage}%
             </h2>
             <p className="text-on-surface-variant font-medium text-lg">
-              {result.auto
+              {result.disqualified
+                ? `Disqualified after two proctoring warnings: ${result.proctoringReason || 'assessment rules were broken'}. The recorded score is zero.`
+                : result.auto
                 ? 'Time ran out, so your answers were submitted automatically.'
                 : result.passed
                   ? 'Passed — the related skills are now verified on your profile.'
@@ -196,6 +227,7 @@ export default function TestRunner() {
           </div>
         </div>
       </div>
+      </>
     );
   }
 
@@ -203,6 +235,8 @@ export default function TestRunner() {
   const lowTime = remaining < 60_000;
 
   return (
+    <>
+    {proctoring}
     <div className="min-h-screen bg-surface flex flex-col">
       <header className="sticky top-0 z-30 bg-white/90 backdrop-blur-xl border-b border-outline-variant/60">
         <div className="max-w-4xl mx-auto px-5 py-3 flex items-center justify-between gap-3">
@@ -364,5 +398,6 @@ export default function TestRunner() {
         </div>
       </footer>
     </div>
+    </>
   );
 }

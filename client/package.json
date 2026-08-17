@@ -16,6 +16,7 @@
     "@fontsource-variable/jetbrains-mono": "5.3.0",
     "@fontsource-variable/manrope": "5.3.0",
     "@fontsource-variable/plus-jakarta-sans": "5.3.0",
+    "@mediapipe/tasks-vision": "^1.0.0",
     "@uiw/react-codemirror": "^4.25.11",
     "lucide-react": "^0.468.0",
     "material-symbols": "0.45.10",

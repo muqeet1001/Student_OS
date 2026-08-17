@@ -9,6 +9,9 @@ export default [
       '**/dist/**',
       '**/node_modules/**',
       'client/src/assets/**',
+      // Third-party MediaPipe Emscripten runtime, copied verbatim for offline
+      // production use. It is generated code and is linted by its publisher.
+      'client/public/mediapipe/**',
       'server/uploads/**',
     ],
   },

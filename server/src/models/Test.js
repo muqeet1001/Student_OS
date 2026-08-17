@@ -76,7 +76,11 @@ const attemptSchema = new mongoose.Schema(
     questions: { type: [mongoose.Schema.Types.ObjectId], ref: 'TestQuestion', default: [] },
     answers: { type: [answerSchema], default: [] },
 
-    status: { type: String, enum: ['in-progress', 'submitted', 'expired'], default: 'in-progress' },
+    status: {
+      type: String,
+      enum: ['in-progress', 'submitted', 'expired', 'disqualified'],
+      default: 'in-progress',
+    },
 
     startedAt: { type: Date, default: Date.now },
     // Authoritative deadline, computed server-side from the test duration.
@@ -88,6 +92,27 @@ const attemptSchema = new mongoose.Schema(
     percentage: { type: Number, default: 0 },
     passed: { type: Boolean, default: false },
     durationSeconds: { type: Number, default: 0 },
+
+    // Camera/tab proctoring is evaluated on-device. Only the event ledger is
+    // retained; no photo or video frame leaves the student's browser.
+    proctoring: {
+      warningCount: { type: Number, default: 0, min: 0, max: 2 },
+      violations: {
+        type: [
+          {
+            eventId: { type: String, required: true },
+            type: { type: String, required: true },
+            occurredAt: { type: Date, required: true },
+            receivedAt: { type: Date, default: Date.now },
+            detail: { type: String, default: '', maxlength: 200 },
+            _id: false,
+          },
+        ],
+        default: [],
+      },
+      disqualifiedAt: { type: Date },
+      reason: { type: String, default: '', maxlength: 200 },
+    },
   },
   { timestamps: true },
 );

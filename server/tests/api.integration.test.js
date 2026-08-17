@@ -501,6 +501,44 @@ describe('skill tests', { skip }, () => {
       'the review should show which option was correct',
     );
   });
+
+  test('two distinct proctoring warnings end a new attempt with zero', async () => {
+    const started = await student.post(`/tests/${slug}/start`);
+    assert.equal(started.status, 201, JSON.stringify(started.body));
+
+    const path = `/tests/attempts/${started.data.attemptId}/proctoring/violations`;
+    const firstEvent = {
+      eventId: '10000000-0000-4000-8000-000000000001',
+      type: 'tab-hidden',
+      occurredAt: new Date().toISOString(),
+      detail: 'integration test',
+    };
+    const first = await student.post(path, firstEvent);
+    assert.equal(first.status, 200, JSON.stringify(first.body));
+    assert.equal(first.data.warningCount, 1);
+    assert.equal(first.data.disqualified, false);
+
+    const duplicate = await student.post(path, firstEvent);
+    assert.equal(duplicate.data.duplicate, true);
+    assert.equal(duplicate.data.warningCount, 1);
+
+    const second = await student.post(path, {
+      ...firstEvent,
+      eventId: '10000000-0000-4000-8000-000000000002',
+      type: 'multiple-faces',
+    });
+    assert.equal(second.status, 200, JSON.stringify(second.body));
+    assert.equal(second.data.disqualified, true);
+    assert.equal(second.data.result.score, 0);
+    assert.equal(second.data.result.percentage, 0);
+
+    const submitAfter = await student.post(`/tests/attempts/${started.data.attemptId}/submit`, {
+      answers: [],
+    });
+    assert.equal(submitAfter.status, 200);
+    assert.equal(submitAfter.data.disqualified, true);
+    assert.equal(submitAfter.data.score, 0);
+  });
 });
 
 describe('mock interviews', { skip }, () => {

@@ -88,7 +88,12 @@ export const listStudents = asyncHandler(async (req, res) => {
     Problem.countDocuments({ isPublished: true }),
 
     TestAttempt.aggregate([
-      { $match: { user: { $in: ids }, status: { $in: ['submitted', 'expired'] } } },
+      {
+        $match: {
+          user: { $in: ids },
+          status: { $in: ['submitted', 'expired', 'disqualified'] },
+        },
+      },
       {
         $group: {
           _id: '$user',
@@ -219,8 +224,11 @@ export const getStudent = asyncHandler(async (req, res) => {
 
   const [profile, attempts, interviews, recentSolves] = await Promise.all([
     Profile.findOne({ user: student._id }).lean(),
-    TestAttempt.find({ user: student._id, status: { $in: ['submitted', 'expired'] } })
-      .select('percentage passed submittedAt test')
+    TestAttempt.find({
+      user: student._id,
+      status: { $in: ['submitted', 'expired', 'disqualified'] },
+    })
+      .select('percentage passed submittedAt status test proctoring.warningCount proctoring.reason')
       .populate('test', 'title')
       .sort({ submittedAt: -1 })
       .limit(10)
