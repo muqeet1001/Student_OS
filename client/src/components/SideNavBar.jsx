@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import Avatar from './Avatar.jsx';
 import { adminLinks, navLinks } from '../routes/pageRegistry.js';
@@ -10,6 +10,7 @@ import { adminLinks, navLinks } from '../routes/pageRegistry.js';
  */
 export default function SideNavBar({ open = false, onClose }) {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout } = useAuth();
   const visibleLinks = user?.role === 'admin' ? adminLinks : navLinks;
 
@@ -61,11 +62,14 @@ export default function SideNavBar({ open = false, onClose }) {
           </div>
 
           <nav className="flex flex-col" aria-label="Main navigation">
-            {visibleLinks.map((link) => (
+            {visibleLinks.map((link, index) => (
+              <React.Fragment key={link.path}>
+              {user?.role === 'admin' && link.group && link.group !== visibleLinks[index - 1]?.group && <p className="px-6 pt-3 pb-1 text-[9px] font-black uppercase tracking-[0.18em] text-gray-600">{link.group}</p>}
               <NavLink
                 key={link.path}
-                to={link.path}
+                to={`${link.path}${user?.role === 'admin' && location.search.includes('year=') ? location.search : ''}`}
                 onClick={onClose}
+                end
                 className={({ isActive }) =>
                   `flex items-center gap-3 px-5 py-2.5 rounded-full mx-3 mb-0.5 transition-all duration-200 active:scale-95 ${
                     isActive
@@ -77,6 +81,7 @@ export default function SideNavBar({ open = false, onClose }) {
                 <span className="material-symbols-outlined">{link.icon}</span>
                 <span className="font-medium text-sm tracking-wide">{link.label}</span>
               </NavLink>
+              </React.Fragment>
             ))}
           </nav>
         </div>
@@ -84,7 +89,7 @@ export default function SideNavBar({ open = false, onClose }) {
         <div className="px-4 mt-auto pt-4 border-t border-white/5">
           <div className="flex items-center justify-between p-2 bg-white/5 rounded-2xl mx-2">
             <NavLink
-              to="/profile"
+              to={user?.role === 'admin' ? '/admin/settings' : '/profile'}
               onClick={onClose}
               className="flex items-center gap-3 min-w-0 rounded-xl"
             >
@@ -104,7 +109,7 @@ export default function SideNavBar({ open = false, onClose }) {
               <span className="material-symbols-outlined text-lg">logout</span>
             </button>
             <NavLink
-              to="/settings"
+              to={user?.role === 'admin' ? '/admin/settings' : '/settings'}
               onClick={onClose}
               className="p-2 text-gray-400 hover:text-white transition-colors shrink-0"
               title="Settings"

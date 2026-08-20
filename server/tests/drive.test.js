@@ -79,7 +79,11 @@ test('eligibility requires no blockers and the drive minimum readiness', () => {
       branch: 'Computer Science',
       graduationYear: 2026,
       education: [{ grade: '8.0 CGPA' }],
-      skills: [{ name: 'Java', verified: true }, { name: 'Data Structures', verified: true }],
+      skills: [
+        { name: 'Java', verified: true },
+        { name: 'Data Structures', verified: true },
+        { name: 'DBMS', verified: true },
+      ],
       projects: [],
       ...overrides.profile,
     },

@@ -4,6 +4,7 @@ import * as drives from '../controllers/drive.controller.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import {
+  bulkStageSchema,
   createDriveSchema,
   shortlistEntrySchema,
   shortlistSchema,
@@ -24,6 +25,7 @@ driveRoutes.delete('/:driveId', drives.deleteDrive);
 
 driveRoutes.get('/:driveId/export', drives.exportShortlist);
 driveRoutes.post('/:driveId/shortlist', validate(shortlistSchema), drives.addToShortlist);
+driveRoutes.patch('/:driveId/candidates/stage', validate(bulkStageSchema), drives.bulkUpdateCandidateStage);
 driveRoutes.patch(
   '/:driveId/shortlist/:studentId',
   validate(shortlistEntrySchema),

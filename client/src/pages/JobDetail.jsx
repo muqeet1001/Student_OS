@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
@@ -15,7 +15,19 @@ export default function JobDetail() {
   const { jobId } = useParams();
   const navigate = useNavigate();
   const { data, setData, loading, error, refetch } = useApiResource(`/jobs/${jobId}`);
+  const resumes = useApiResource('/resumes');
   const [busy, setBusy] = useState(false);
+  const [applicationDetails, setApplicationDetails] = useState({ followUpAt: '', contactName: '', contactEmail: '', resumeVersion: '' });
+
+  useEffect(() => {
+    if (!data?.application) return;
+    setApplicationDetails({
+      followUpAt: data.application.followUpAt?.slice(0, 10) ?? '',
+      contactName: data.application.contactName ?? '',
+      contactEmail: data.application.contactEmail ?? '',
+      resumeVersion: data.application.resumeVersion ?? '',
+    });
+  }, [data?.application]);
 
   if (loading && !data) return <LoadingBlock label="Loading role" className="min-h-dvh" />;
   if (error && !data) {
@@ -38,6 +50,20 @@ export default function JobDetail() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function saveApplicationDetails(event) {
+    event.preventDefault(); setBusy(true);
+    try {
+      const result = await api.post(`/jobs/${jobId}/track`, {
+        stage: application?.stage ?? 'saved',
+        ...applicationDetails,
+        followUpAt: applicationDetails.followUpAt || null,
+        resumeVersion: applicationDetails.resumeVersion || null,
+      });
+      setData((current) => ({ ...current, application: result.application }));
+    } catch (caught) { window.alert(caught.message || 'Could not save application plan.'); }
+    finally { setBusy(false); }
   }
 
   const requiredMissing = match?.missing.filter((item) => item.required) ?? [];
@@ -140,6 +166,8 @@ export default function JobDetail() {
             )}
           </div>
         </header>
+
+        {application && <form onSubmit={saveApplicationDetails} className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-5"><div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-on-surface-variant">Application plan</p><h2 className="font-headline text-lg font-black mt-1">Tailor, apply and follow up</h2><p className="text-xs text-on-surface-variant mt-1">The match snapshot stays frozen so later profile edits do not rewrite what was true when you applied.</p></div>{application.tailoredSnapshot && <span className="text-sm font-black text-primary">{application.tailoredSnapshot.score}% → {application.tailoredSnapshot.potential}% potential</span>}</div><div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mt-4"><label className="text-xs font-bold">Resume version<select value={applicationDetails.resumeVersion} onChange={(event) => setApplicationDetails((current) => ({ ...current, resumeVersion: event.target.value }))} className="w-full mt-1 rounded-lg bg-surface-container-low px-3 py-2.5 text-sm"><option value="">Not selected</option>{(resumes.data?.resumes ?? []).map((resume) => <option key={resume._id} value={resume._id}>{resume.name || resume.title || new Date(resume.createdAt).toLocaleDateString()}</option>)}</select></label><label className="text-xs font-bold">Contact name<input value={applicationDetails.contactName} onChange={(event) => setApplicationDetails((current) => ({ ...current, contactName: event.target.value }))} className="w-full mt-1 rounded-lg bg-surface-container-low px-3 py-2.5 text-sm" /></label><label className="text-xs font-bold">Contact email<input type="email" value={applicationDetails.contactEmail} onChange={(event) => setApplicationDetails((current) => ({ ...current, contactEmail: event.target.value }))} className="w-full mt-1 rounded-lg bg-surface-container-low px-3 py-2.5 text-sm" /></label><label className="text-xs font-bold">Follow up on<input type="date" value={applicationDetails.followUpAt} onChange={(event) => setApplicationDetails((current) => ({ ...current, followUpAt: event.target.value }))} className="w-full mt-1 rounded-lg bg-surface-container-low px-3 py-2.5 text-sm" /></label></div><button type="submit" disabled={busy} className="mt-4 px-5 py-2 rounded-full bg-primary text-on-primary text-sm font-bold disabled:opacity-50">Save application plan</button></form>}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           {/* What to do about the gap — the reason this page exists. */}

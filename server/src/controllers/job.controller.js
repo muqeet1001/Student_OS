@@ -141,7 +141,7 @@ export const getJob = asyncHandler(async (req, res) => {
 
 /** Saves or applies. One row per student per job, so this is an upsert. */
 export const trackJob = asyncHandler(async (req, res) => {
-  const { stage = 'saved', notes } = req.body;
+  const { stage = 'saved', notes, followUpAt, contactName, contactEmail, resumeVersion } = req.body;
 
   const job = await JobPosting.findById(req.params.jobId).lean();
   if (!job) throw new ApiError(404, 'Job not found.');
@@ -151,9 +151,31 @@ export const trackJob = asyncHandler(async (req, res) => {
   // The match is recorded the first time a student actually applies, so the
   // tracker keeps what was true then rather than what is true now.
   let matchAtApply = existing?.matchAtApply ?? null;
+  let tailoredSnapshot = existing?.tailoredSnapshot ?? null;
   if (stage !== 'saved' && matchAtApply == null) {
     const me = await loadMe(req.user);
-    if (me) matchAtApply = scoreStudent(me, job.requirements).score;
+    if (me) {
+      const match = scoreStudent(me, job.requirements);
+      matchAtApply = match.score;
+      const withSkills = {
+        ...me,
+        profile: {
+          ...me.profile,
+          skills: [
+            ...(me.profile.skills ?? []),
+            ...match.missing.map((item) => ({ name: item.name, verified: false })),
+          ],
+        },
+      };
+      tailoredSnapshot = {
+        score: match.score,
+        potential: scoreStudent(withSkills, job.requirements).score,
+        matched: match.matched.map((item) => item.name),
+        missing: match.missing.map((item) => item.name),
+        blockers: match.blockers,
+        capturedAt: new Date(),
+      };
+    }
   }
 
   const application = await Application.findOneAndUpdate(
@@ -161,7 +183,12 @@ export const trackJob = asyncHandler(async (req, res) => {
     {
       stage,
       ...(notes !== undefined && { notes }),
+      ...(followUpAt !== undefined && { followUpAt }),
+      ...(contactName !== undefined && { contactName }),
+      ...(contactEmail !== undefined && { contactEmail }),
+      ...(resumeVersion !== undefined && { resumeVersion }),
       ...(matchAtApply != null && { matchAtApply }),
+      ...(tailoredSnapshot && { tailoredSnapshot }),
       ...(stage !== 'saved' && !existing?.appliedAt && { appliedAt: new Date() }),
     },
     { upsert: true, new: true, setDefaultsOnInsert: true },

@@ -1,11 +1,14 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.jsx';
 import { adminLinks, mobileLinks } from '../routes/pageRegistry.js';
 
 export default function MobileRouteNav() {
   const { user } = useAuth();
-  const visibleLinks = user?.role === 'admin' ? adminLinks : mobileLinks;
+  const location = useLocation();
+  const visibleLinks = user?.role === 'admin'
+    ? adminLinks.filter((link) => ['/admin/overview', '/admin/students', '/admin/drives', '/admin/tasks', '/admin/outcomes'].includes(link.path))
+    : mobileLinks;
 
   return (
     <nav
@@ -15,7 +18,7 @@ export default function MobileRouteNav() {
       {visibleLinks.map((link) => (
         <NavLink
           key={link.path}
-          to={link.path}
+          to={`${link.path}${user?.role === 'admin' && location.search.includes('year=') ? location.search : ''}`}
           className={({ isActive }) =>
             `flex-1 min-w-0 flex flex-col items-center justify-center gap-1 py-2 rounded-2xl text-[10px] font-bold transition-colors ${
               isActive ? 'bg-primary-container text-white' : 'text-outline hover:text-on-surface'

@@ -28,6 +28,7 @@ const CHROME = process.env.E2E_CHROME;
 /** Routes every signed-in student can reach. */
 const ROUTES = [
   '/dashboard',
+  '/readiness',
   '/my-plan',
   '/practice',
   '/opportunities',
@@ -43,11 +44,30 @@ const ROUTES = [
   '/achievements',
   '/calendar',
   '/settings',
+  '/documents',
+  '/inbox',
   '/jobs',
   '/tracker',
   '/company-prep',
   '/ai-interview',
   '/career-lab',
+];
+
+const ADMIN_ROUTES = [
+  '/admin/overview',
+  '/admin/students',
+  '/admin/interventions',
+  '/admin/tasks',
+  '/admin/companies',
+  '/admin/drives',
+  '/admin/matching',
+  '/admin/calendar',
+  '/admin/reviews',
+  '/admin/communications',
+  '/admin/training',
+  '/admin/outcomes',
+  '/admin/settings',
+  '/admin/activity',
 ];
 
 const results = [];
@@ -191,31 +211,23 @@ async function main() {
 
   await check('admin lands in and can open every placement-office module', async () => {
     const staff = await browser.newContext({ viewport: { width: 1366, height: 900 } });
-    await signIn(staff, { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, destination: /\/admin$/ });
+    await signIn(staff, {
+      email: ADMIN_EMAIL,
+      password: ADMIN_PASSWORD,
+      destination: /\/admin(?:\/overview)?$/,
+    });
 
     const page = await staff.newPage();
     const problems = watch(page);
-    await page.goto(`${BASE}/admin`, { waitUntil: 'networkidle', timeout: 25000 });
-
-    const tabs = page.getByRole('tab');
-    if ((await tabs.count()) !== 5) problems.push(`expected 5 primary admin workflows, found ${await tabs.count()}`);
-
-    for (let index = 0; index < (await tabs.count()); index += 1) {
-      await tabs.nth(index).click();
+    for (const route of ADMIN_ROUTES) {
+      await page.goto(BASE + route, { waitUntil: 'networkidle', timeout: 25000 });
       await page.waitForTimeout(350);
       const body = await page.locator('body').innerText();
       if (/something went wrong|failed to load|could not load|route not found/i.test(body)) {
-        problems.push(`admin module failed: ${await tabs.nth(index).innerText()}`);
+        problems.push(`admin module failed: ${route}`);
       }
-    }
-
-    const moreTools = page.getByLabel('More placement tools');
-    for (const value of ['interventions', 'reviews', 'cohort', 'companies', 'alumni', 'announcements']) {
-      await moreTools.selectOption(value);
-      await page.waitForTimeout(350);
-      const body = await page.locator('body').innerText();
-      if (/something went wrong|failed to load|could not load|route not found/i.test(body)) {
-        problems.push(`admin tool failed: ${value}`);
+      if ((await page.locator('h1').count()) !== 1) {
+        problems.push(`expected one <h1> on ${route}`);
       }
     }
 

@@ -29,7 +29,7 @@ export function analyseCohort(cohort) {
   if (total === 0) {
     return {
       totals: { students: 0, ready: 0, progressing: 0, atRisk: 0, averageReadiness: 0 },
-      averages: { skills: 0, coding: 0, tests: 0, interview: 0 },
+      averages: { skills: 0, coding: 0, resume: 0, projects: 0, tests: 0, interview: 0 },
       bands: BANDS.map((band) => ({ ...band, count: 0, percentage: 0 })),
       skills: [],
       departments: [],
@@ -92,9 +92,11 @@ export function analyseCohort(cohort) {
     .sort((a, b) => b.averageReadiness - a.averageReadiness);
 
   const averages = {
-    skills: mean((row) => row.components.profile ?? 0),
+    skills: mean((row) => row.components.skills ?? row.components.profile ?? 0),
     coding: mean((row) => row.components.coding ?? 0),
-    tests: mean((row) => row.components.tests ?? 0),
+    resume: mean((row) => row.components.resume ?? row.components.profile ?? 0),
+    projects: mean((row) => row.components.projects ?? 0),
+    tests: mean((row) => row.testAverage ?? row.components.tests ?? 0),
     interview: mean((row) => row.components.interview ?? 0),
   };
 

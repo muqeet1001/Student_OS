@@ -21,6 +21,9 @@ function Section({ title, children }) {
   );
 }
 
+const shortDate = (value) => value ? new Date(value).toLocaleDateString('en-IN') : '—';
+const money = (value) => value ? `₹${(value / 100000).toFixed(1)} LPA` : 'Not reported';
+
 export default function StudentDetail({ student, onClose }) {
   const { data, loading, error, refetch } = useApiResource(`/admin/students/${student._id}`);
 
@@ -60,8 +63,43 @@ export default function StudentDetail({ student, onClose }) {
             <Row label="Headline" value={profile?.headline || '—'} />
             <Row label="Branch" value={profile?.branch || '—'} />
             <Row label="Graduating" value={profile?.graduationYear || '—'} />
+            <Row label="CGPA" value={profile?.cgpa ?? profile?.education?.[0]?.grade ?? '—'} />
             <Row label="Target roles" value={profile?.targetRoles?.join(', ') || '—'} />
             <Row label="Projects" value={profile?.projects?.length ?? 0} />
+            <Row label="Certifications" value={profile?.certifications?.length ?? 0} />
+            <Row label="Profile updated" value={shortDate(profile?.updatedAt)} />
+          </Section>
+
+          <Section title="Verified evidence">
+            <div className="flex flex-wrap gap-1.5">
+              {(profile?.skills ?? []).filter((skill) => skill.verified).map((skill) => <span key={skill._id} className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2.5 py-1 text-xs font-bold text-green-800"><span className="material-symbols-outlined text-sm">verified</span>{skill.name}</span>)}
+              {!(profile?.skills ?? []).some((skill) => skill.verified) && <p className="text-sm text-on-surface-variant">No verified skills yet.</p>}
+            </div>
+            {(profile?.projects ?? []).length > 0 && <ul className="mt-3 space-y-1">{profile.projects.map((project) => <li key={project._id} className="rounded-lg bg-surface-container-low px-3 py-2"><p className="text-sm font-bold">{project.title}</p><p className="text-xs text-on-surface-variant">{project.techStack?.join(' · ') || 'Technology not listed'}</p></li>)}</ul>}
+          </Section>
+
+          <Section title="Resume and documents">
+            <div className="grid sm:grid-cols-2 gap-2">
+              {(data.resumes ?? []).map((resume) => <div key={resume._id} className="rounded-lg bg-surface-container-low p-3"><p className="text-sm font-bold">{resume.title}</p><p className="text-xs text-on-surface-variant mt-1">ATS {resume.atsScore}% · {shortDate(resume.updatedAt)}</p></div>)}
+              {(data.documents ?? []).map((document) => <div key={document._id} className="rounded-lg bg-surface-container-low p-3"><p className="text-sm font-bold">{document.title}</p><p className="text-xs text-on-surface-variant mt-1 capitalize">{document.kind.replace('-', ' ')} · {document.status}</p></div>)}
+            </div>
+            {!data.resumes?.length && !data.documents?.length && <p className="text-sm text-on-surface-variant">No resume versions or documents submitted.</p>}
+          </Section>
+
+          <Section title="Placement pipeline">
+            <div className="space-y-1.5">
+              {(data.pipeline ?? []).map((item) => <div key={item._id} className="flex items-center justify-between gap-3 rounded-lg bg-surface-container-low px-3 py-2"><div className="min-w-0"><p className="text-sm font-bold truncate">{item.company} · {item.role}</p><p className="text-xs text-on-surface-variant">{shortDate(item.driveDate)}</p></div><span className="rounded-full bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase text-primary">{item.candidate?.stage?.replaceAll('-', ' ')}</span></div>)}
+              {(data.applications ?? []).map((item) => <div key={item._id} className="flex items-center justify-between gap-3 rounded-lg bg-surface-container-low px-3 py-2"><p className="text-sm font-bold truncate">{item.job?.company} · {item.job?.title}</p><span className="text-[10px] font-black uppercase text-on-surface-variant">{item.stage}</span></div>)}
+              {!data.pipeline?.length && !data.applications?.length && <p className="text-sm text-on-surface-variant">No active placement pipeline history.</p>}
+            </div>
+          </Section>
+
+          <Section title="Offers and joining">
+            {(data.offers ?? []).length === 0 ? <p className="text-sm text-on-surface-variant">No offers recorded.</p> : <ul className="space-y-1.5">{data.offers.map((offer) => <li key={offer._id} className="flex items-center justify-between gap-3 rounded-lg bg-surface-container-low px-3 py-2"><div><p className="text-sm font-bold">{offer.company} · {offer.role}</p><p className="text-xs text-on-surface-variant">{money(offer.ctc)} · Joining {shortDate(offer.joiningDate)}</p></div><span className="text-[10px] font-black uppercase text-primary">{offer.status}</span></li>)}</ul>}
+          </Section>
+
+          <Section title="Officer actions">
+            {(data.actions ?? []).length === 0 ? <p className="text-sm text-on-surface-variant">No officer actions assigned.</p> : <ul className="space-y-1.5">{data.actions.map((action) => <li key={action._id} className="rounded-lg bg-surface-container-low px-3 py-2"><div className="flex justify-between gap-2"><p className="text-sm font-bold">{action.title}</p><span className="text-[10px] font-black uppercase">{action.status}</span></div><p className="text-xs text-on-surface-variant mt-0.5">{action.staffOwner?.name || action.assignedBy?.name || 'Placement office'} · Due {shortDate(action.dueAt)}</p></li>)}</ul>}
           </Section>
 
           <Section title="Recent accepted solutions">

@@ -8,9 +8,9 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { computeStreak } from '../services/streak.service.js';
 import { buildNotifications } from '../services/notifications.service.js';
 import { filterNotifications } from '../services/notificationPreferences.js';
+import { ROLE_PROFILES } from '../services/roleProfiles.js';
+import { calculateReadinessEvidence, matchTargetRole as matchRole } from '../services/readiness.service.js';
 import { scoreResume } from '../services/atsScore.js';
-import { ROLE_PROFILES, roleByKey } from '../services/roleProfiles.js';
-import { canonicalise } from '../services/skillTaxonomy.js';
 import { buildRecommendations, buildTodayPlan } from '../services/todayPlan.js';
 import { readHistory, recordSnapshot } from '../services/snapshot.service.js';
 import { buildRoadmap } from '../services/roadmap.service.js';
@@ -19,56 +19,17 @@ import { Application } from '../models/JobPosting.js';
 import { Submission } from '../models/Submission.js';
 import { SkillAttempt } from '../models/SkillAssessment.js';
 import { summarisePreparationActivity } from '../services/preparationActivity.js';
+import { InstitutionConfig, StudentJourney } from '../models/StudentJourney.js';
 
 /**
  * Readiness is the product's core number, so it is composed of the five
  * things a recruiter actually evaluates rather than whatever happened to be
  * easy to measure. Coding leads because it is the largest body of evidence.
  */
-const WEIGHTS = { skills: 0.2, coding: 0.3, resume: 0.2, interview: 0.2, projects: 0.1 };
-
-/** Compares the profile against a target role's expected skills. */
-function matchRole(profile, roleKey) {
-  const role = roleByKey(roleKey);
-  if (!role) return null;
-
-  const held = new Set(
-    [
-      ...(profile?.skills ?? []).map((skill) => canonicalise(skill.name)),
-      ...(profile?.projects ?? []).flatMap((project) =>
-        (project.techStack ?? []).map((tech) => canonicalise(tech)),
-      ),
-    ].filter(Boolean),
-  );
-
-  const verified = new Set(
-    (profile?.skills ?? [])
-      .filter((skill) => skill.verified)
-      .map((skill) => canonicalise(skill.name)),
-  );
-
-  const check = (name) => ({ name, has: held.has(name), verified: verified.has(name) });
-
-  const required = role.required.map(check);
-  const preferred = role.preferred.map(check);
-
-  // Required skills count double — a preferred gap is not the same problem.
-  const earned = required.filter((s) => s.has).length * 2 + preferred.filter((s) => s.has).length;
-  const possible = role.required.length * 2 + role.preferred.length;
-
-  return {
-    role: { key: role.key, label: role.label, icon: role.icon, codingTarget: role.codingTarget },
-    score: possible ? Math.round((earned / possible) * 100) : 0,
-    required,
-    preferred,
-    missing: [...required, ...preferred].filter((s) => !s.has).map((s) => s.name),
-  };
-}
-
 export const getDashboard = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
-  const [profile, account, solvedByDifficulty, availableCounts, attempts, interviews, streak] =
+  const [profile, account, solvedByDifficulty, availableCounts, attempts, interviews, streak, institutionConfig] =
     await Promise.all([
       Profile.findOne({ user: userId }).lean(),
       User.findById(userId).select('name email').lean(),
@@ -98,6 +59,7 @@ export const getDashboard = asyncHandler(async (req, res) => {
         .lean(),
 
       computeStreak(userId),
+      InstitutionConfig.findOne({ key: 'default' }).lean(),
     ]);
 
   const empty = { easy: 0, medium: 0, hard: 0 };
@@ -116,38 +78,18 @@ export const getDashboard = asyncHandler(async (req, res) => {
     ? Math.round(interviews.reduce((sum, s) => sum + s.overallScore, 0) / interviews.length)
     : 0;
 
-  const atsReport = profile ? scoreResume({ profile, user: account }) : { score: 0, checks: [] };
   if (profile) profile.completeness = calculateProfileCompleteness(profile);
-  const roleMatch = matchRole(profile, profile?.targetRole);
-
   const skills = profile?.skills ?? [];
-  const verifiedCount = skills.filter((skill) => skill.verified).length;
-
-  // Skills are scored on verification, not on how many were typed in: a
-  // self-declared list is a claim, a passed test is evidence.
-  const skillsScore = roleMatch
-    ? roleMatch.score
-    : Math.min(100, skills.length * 10 + verifiedCount * 10);
-
-  const codingTarget = roleMatch?.role.codingTarget ?? 60;
-  const codingDenominator = Math.max(1, Math.min(codingTarget, totalAvailable || codingTarget));
-  const codingScore = Math.min(
-    100,
-    Math.round((totalSolved / codingDenominator) * 100),
-  );
-
   const projects = profile?.projects ?? [];
-  const projectsScore = Math.min(
-    100,
-    projects.length * 30 + projects.filter((p) => (p.description ?? '').length > 60).length * 10,
-  );
+  const evidence = calculateReadinessEvidence({ profile, user: account, solvedCount: totalSolved, totalProblems: totalAvailable, interviewAverage, configuredWeights: institutionConfig?.readinessWeights });
+  const { atsReport, codingDenominator, codingTarget, readiness, roleMatch, verifiedCount, weights } = evidence;
 
   const components = [
     {
       key: 'skills',
       label: 'Skills',
-      value: skillsScore,
-      weight: WEIGHTS.skills,
+      value: evidence.values.skills,
+      weight: weights.skills,
       basis: roleMatch
         ? `Match against ${roleMatch.role.label}; required skills count twice.`
         : `${skills.length} skills listed and ${verifiedCount} verified.`,
@@ -155,22 +97,22 @@ export const getDashboard = asyncHandler(async (req, res) => {
     {
       key: 'coding',
       label: 'Coding',
-      value: codingScore,
-      weight: WEIGHTS.coding,
+      value: evidence.values.coding,
+      weight: weights.coding,
       basis: `${totalSolved} problems solved toward a ${codingDenominator}-problem target.`,
     },
     {
       key: 'resume',
       label: 'Resume',
-      value: atsReport.score,
-      weight: WEIGHTS.resume,
+      value: evidence.values.resume,
+      weight: weights.resume,
       basis: 'ATS checks across profile content, impact, completeness and formatting.',
     },
     {
       key: 'interview',
       label: 'Interview',
-      value: interviewAverage,
-      weight: WEIGHTS.interview,
+      value: evidence.values.interview,
+      weight: weights.interview,
       basis: interviews.length
         ? `Average of ${interviews.length} completed mock interview${interviews.length === 1 ? '' : 's'}.`
         : 'No completed mock interview yet.',
@@ -178,15 +120,11 @@ export const getDashboard = asyncHandler(async (req, res) => {
     {
       key: 'projects',
       label: 'Projects',
-      value: projectsScore,
-      weight: WEIGHTS.projects,
+      value: evidence.values.projects,
+      weight: weights.projects,
       basis: `${projects.length} project${projects.length === 1 ? '' : 's'}; detailed descriptions earn additional credit.`,
     },
   ];
-
-  const readiness = Math.round(
-    components.reduce((sum, part) => sum + part.value * WEIGHTS[part.key], 0),
-  );
 
   const weakest = [...components].sort((a, b) => a.value - b.value)[0];
 
@@ -196,7 +134,20 @@ export const getDashboard = asyncHandler(async (req, res) => {
 
   const payload = {
     student: { name: account?.name ?? 'there' },
-    readiness: { score: readiness, components, weakest: weakest.key },
+    readiness: {
+      score: readiness,
+      components,
+      weakest: weakest.key,
+      formulaVersion: '2026.1',
+      lastUpdatedAt: new Date(),
+      evidence: {
+        skills: { listed: skills.length, verified: verifiedCount, role: roleMatch?.role?.label ?? null },
+        coding: { solved: totalSolved, target: codingDenominator },
+        resume: { checksPassed: atsReport.checks.filter((check) => check.passed).length, checksTotal: atsReport.checks.length },
+        interview: { completed: interviews.length, average: interviewAverage },
+        projects: { listed: projects.length, detailed: projects.filter((project) => (project.description ?? '').length > 60).length },
+      },
+    },
     coding: { solved, available, totalSolved, totalAvailable, target: codingTarget, streak },
     tests: {
       taken: attempts.length,
@@ -234,6 +185,23 @@ export const getDashboard = asyncHandler(async (req, res) => {
       applications: applicationCount,
     },
   });
+
+  // The first computed score after onboarding is frozen as the student's
+  // baseline, so later progress has an honest starting point.
+  await StudentJourney.updateOne(
+    {
+      user: userId,
+      'onboarding.completedAt': { $ne: null },
+      'onboarding.baseline.capturedAt': null,
+    },
+    {
+      $set: {
+        'onboarding.baseline.capturedAt': new Date(),
+        'onboarding.baseline.score': readiness,
+        'onboarding.baseline.components': Object.fromEntries(components.map((part) => [part.key, part.value])),
+      },
+    },
+  ).catch(() => {});
 
   res.json({
     success: true,

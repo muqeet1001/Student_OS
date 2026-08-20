@@ -38,6 +38,8 @@ const documentSchema = new mongoose.Schema(
     contentType: { type: String, required: true, maxlength: 120 },
     size: { type: Number, required: true, min: 0 },
     checksum: { type: String, required: true, maxlength: 64 },
+    /** Optional validity date for IDs, certificates and other expiring evidence. */
+    expiresAt: { type: Date, default: null, index: true },
 
     /*
      * Verification is a staff action, so it records who and when. A boolean

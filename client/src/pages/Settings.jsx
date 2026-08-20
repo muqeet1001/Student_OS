@@ -334,6 +334,38 @@ function Sessions() {
   );
 }
 
+function JourneyPreferencesForm({ journey, onSaved }) {
+  const [locale, setLocale] = useState(journey.locale);
+  const [channels, setChannels] = useState({
+    inApp: journey.channels?.inApp ?? true,
+    email: journey.channels?.email ?? false,
+    whatsapp: journey.channels?.whatsapp ?? false,
+  });
+  const [saving, setSaving] = useState(false);
+
+  async function save() {
+    setSaving(true);
+    try { await api.patch('/journey/preferences', { locale, channels }); await onSaved(); }
+    catch (error) { window.alert(error.message || 'Could not save communication settings.'); }
+    finally { setSaving(false); }
+  }
+
+  async function changeConsent(key, granted) {
+    try { await api.post('/journey/consents', { key, granted, source: 'settings' }); await onSaved(); }
+    catch (error) { window.alert(error.message || 'Could not record that consent choice.'); }
+  }
+
+  const consents = Object.fromEntries((journey.consents ?? []).map((entry) => [entry.key, entry]));
+  return <div className="space-y-4"><div className="grid sm:grid-cols-2 gap-3"><label className="space-y-1"><span className={labelClass}>Language</span><select value={locale} onChange={(event) => setLocale(event.target.value)} className={field}><option value="en">English</option><option value="hi">हिन्दी</option></select></label><div><p className={labelClass}>Reminder channels</p><div className="flex flex-wrap gap-3 mt-2">{[['inApp', 'In app'], ['email', 'Email'], ['whatsapp', 'WhatsApp']].map(([key, text]) => <label key={key} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={channels[key]} onChange={(event) => setChannels((current) => ({ ...current, [key]: event.target.checked }))} className="accent-primary" />{text}</label>)}</div></div></div><button type="button" disabled={saving} onClick={save} className="px-5 py-2 rounded-full bg-primary text-on-primary text-sm font-bold disabled:opacity-50">{saving ? 'Saving…' : 'Save preferences'}</button><div className="border-t border-outline-variant/60 pt-4"><p className={labelClass}>Consent history</p><div className="grid sm:grid-cols-2 gap-2 mt-2">{[['camera-proctoring', 'Camera proctoring'], ['public-profile', 'Public profile'], ['referrals', 'Referral discovery'], ['data-sharing', 'Readiness calculation']].map(([key, text]) => <label key={key} className="flex items-center justify-between gap-3 rounded-lg bg-surface-container-low p-3 text-sm font-bold"><span>{text}</span><input type="checkbox" checked={Boolean(consents[key]?.granted)} onChange={(event) => changeConsent(key, event.target.checked)} className="accent-primary" /></label>)}</div><details className="mt-3"><summary className="text-xs font-bold text-primary cursor-pointer">View recorded history ({journey.consentHistory?.length ?? 0})</summary><ul className="mt-2 space-y-1">{[...(journey.consentHistory ?? [])].reverse().slice(0, 20).map((entry) => <li key={entry._id} className="text-[11px] text-on-surface-variant">{entry.key}: {entry.granted ? 'granted' : 'declined'} · {new Date(entry.recordedAt).toLocaleString('en-IN')}</li>)}</ul></details></div></div>;
+}
+
+function JourneyPreferences() {
+  const resource = useApiResource('/journey');
+  if (resource.loading && !resource.data) return <LoadingBlock label="Loading privacy choices" />;
+  if (resource.error && !resource.data) return <ErrorBlock error={resource.error} onRetry={resource.refetch} />;
+  return <JourneyPreferencesForm key={resource.data.journey.updatedAt} journey={resource.data.journey} onSaved={() => resource.refetch({ quiet: true })} />;
+}
+
 /** Account, notifications, sessions and help. */
 export default function Settings() {
   const { user, setUser } = useAuth();
@@ -373,6 +405,10 @@ export default function Settings() {
           description="If you do not recognise one of these, change your password."
         >
           <Sessions />
+        </Section>
+
+        <Section title="Language, reminders and consent" description="External channels activate only when your institution connects a provider. Every consent change is retained in your history.">
+          <JourneyPreferences />
         </Section>
 
         <Section title="Help">

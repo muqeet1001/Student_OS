@@ -8,11 +8,11 @@ import FormField from '../components/FormField.jsx';
 /** Mirrors the server's password policy so users get feedback before submit. */
 function scorePassword(password) {
   const checks = [
-    { label: 'At least 8 characters', passed: password.length >= 8 },
-    { label: 'Contains a letter', passed: /[a-zA-Z]/.test(password) },
-    { label: 'Contains a number', passed: /[0-9]/.test(password) },
+    { label: '8+ characters', passed: password.length >= 8 },
+    { label: 'One letter', passed: /[a-zA-Z]/.test(password) },
+    { label: 'One number', passed: /[0-9]/.test(password) },
   ];
-  return { checks, passed: checks.filter((c) => c.passed).length };
+  return { checks, passed: checks.filter((check) => check.passed).length };
 }
 
 export default function Register() {
@@ -60,18 +60,25 @@ export default function Register() {
   }
 
   return (
-    <div className="bg-surface text-on-surface min-h-dvh flex items-center justify-center">
-      <div className="flex w-full min-h-dvh overflow-hidden">
+    <div className="auth-page min-h-dvh bg-[#f2eee8] p-0 text-on-surface sm:p-3 lg:p-4">
+      <div className="auth-frame mx-auto flex min-h-dvh w-full max-w-[154rem] flex-col overflow-hidden bg-white sm:min-h-[calc(100dvh-1.5rem)] sm:rounded-[2rem] lg:min-h-[calc(100dvh-2rem)] lg:flex-row">
         <AuthShowcase />
 
-        <main className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-surface-container-lowest">
-          <div className="w-full max-w-md">
-            <div className="mb-4">
-              <h2 className="text-2xl font-extrabold text-on-surface tracking-tight mb-1.5">
-                Create your account
+        <main className="relative flex w-full flex-1 items-center justify-center bg-white px-6 py-9 sm:px-10 lg:w-[46%] lg:px-12 xl:px-16">
+          <span className="absolute right-7 top-7 hidden font-mono text-[0.65rem] font-bold uppercase tracking-[0.2em] text-outline lg:block">
+            02 / Create
+          </span>
+
+          <div className="w-full max-w-[35rem]">
+            <div className="mb-6">
+              <p className="mb-3 text-[0.7rem] font-extrabold uppercase tracking-[0.24em] text-primary">
+                Build your career system
+              </p>
+              <h2 className="font-headline text-4xl font-black leading-none tracking-[-0.055em] text-on-surface sm:text-5xl">
+                Start moving<span className="text-primary">.</span>
               </h2>
-              <p className="text-on-surface-variant font-medium">
-                Start tracking your placement readiness in minutes.
+              <p className="mt-3 text-sm font-medium leading-relaxed text-on-surface-variant">
+                Create your workspace and turn every week into visible progress.
               </p>
             </div>
 
@@ -79,19 +86,19 @@ export default function Register() {
               {formError && (
                 <div
                   role="alert"
-                  className="flex items-start gap-3 p-4 rounded-lg bg-error-container/15 border border-error/20"
+                  className="flex items-start gap-3 rounded-xl border border-error/20 bg-error-container/20 p-4"
                 >
-                  <span className="material-symbols-outlined text-error text-xl">error</span>
+                  <span className="material-symbols-outlined text-xl text-error">error</span>
                   <p className="text-sm font-bold text-on-error-container">{formError}</p>
                 </div>
               )}
 
               <FormField
-                label="Full Name"
+                label="Full name"
                 name="name"
                 icon="badge"
                 autoComplete="name"
-                placeholder="Arjun Malhotra"
+                placeholder="Your full name"
                 required
                 value={form.name}
                 onChange={update('name')}
@@ -99,12 +106,12 @@ export default function Register() {
               />
 
               <FormField
-                label="Email Address"
+                label="Email address"
                 name="email"
                 type="email"
                 icon="alternate_email"
                 autoComplete="email"
-                placeholder="hello@studentos.com"
+                placeholder="you@college.edu"
                 required
                 value={form.email}
                 onChange={update('email')}
@@ -117,7 +124,7 @@ export default function Register() {
                   name="password"
                   type="password"
                   autoComplete="new-password"
-                  placeholder="••••••••"
+                  placeholder="Create a strong password"
                   required
                   value={form.password}
                   onChange={update('password')}
@@ -125,12 +132,12 @@ export default function Register() {
                 />
 
                 {form.password && (
-                  <ul className="grid gap-1.5 px-1">
+                  <ul className="grid grid-cols-3 gap-2 px-1">
                     {strength.checks.map((check) => (
                       <li
                         key={check.label}
-                        className={`flex items-center gap-2 text-xs font-bold ${
-                          check.passed ? 'text-green-700' : 'text-on-surface-variant'
+                        className={`flex items-center gap-1.5 text-[0.68rem] font-extrabold ${
+                          check.passed ? 'text-primary' : 'text-outline'
                         }`}
                       >
                         <span className="material-symbols-outlined text-sm">
@@ -144,36 +151,38 @@ export default function Register() {
               </div>
 
               <FormField
-                label="Confirm Password"
+                label="Confirm password"
                 name="confirmPassword"
                 type="password"
                 autoComplete="new-password"
-                placeholder="••••••••"
+                placeholder="Repeat your password"
                 required
                 value={form.confirmPassword}
                 onChange={update('confirmPassword')}
                 error={fieldErrors.confirmPassword}
               />
 
-              <div className="pt-1 space-y-4">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full bg-primary-container text-on-primary-container font-bold py-3 px-5 rounded-full text-base shadow-[0_1px_2px_rgba(0,0,0,0.06)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
+              <button
+                type="submit"
+                disabled={submitting}
+                className="group flex w-full items-center justify-between rounded-xl bg-primary px-5 py-4 text-base font-extrabold text-white shadow-[0_12px_30px_rgba(217,74,18,0.22)] transition-all hover:-translate-y-0.5 hover:bg-primary-dim active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span>{submitting ? 'Creating your workspace…' : 'Create my workspace'}</span>
+                <span
+                  className={`material-symbols-outlined transition-transform ${
+                    submitting ? 'animate-spin' : 'group-hover:translate-x-1'
+                  }`}
                 >
-                  {submitting ? 'Creating account…' : 'Create Account'}
-                  <span className="material-symbols-outlined">
-                    {submitting ? 'progress_activity' : 'person_add'}
-                  </span>
-                </button>
+                  {submitting ? 'progress_activity' : 'arrow_forward'}
+                </span>
+              </button>
 
-                <p className="text-center text-on-surface-variant font-medium text-sm">
-                  Already have an account?{' '}
-                  <Link to="/login" className="font-bold text-primary hover:text-primary-dim">
-                    Sign in
-                  </Link>
-                </p>
-              </div>
+              <p className="pt-1 text-center text-sm font-medium text-on-surface-variant">
+                Already have an account?{' '}
+                <Link className="font-extrabold text-primary hover:text-primary-dim" to="/login">
+                  Sign in
+                </Link>
+              </p>
             </form>
           </div>
         </main>

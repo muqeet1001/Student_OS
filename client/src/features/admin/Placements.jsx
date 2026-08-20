@@ -32,8 +32,8 @@ function Metric({ value, label, sub }) {
   );
 }
 
-function RecordOffer({ onSaved, onCancel }) {
-  const { data: students } = useApiResource('/admin/students?limit=100&sort=name');
+function RecordOffer({ onSaved, onCancel, graduationYear }) {
+  const { data: students } = useApiResource(`/admin/students?graduationYear=${graduationYear}&limit=100&sort=name`);
   const [form, setForm] = useState({ student: '', company: '', role: '', ctc: '', status: 'offered' });
   const [saving, setSaving] = useState(false);
 
@@ -138,9 +138,10 @@ function RecordOffer({ onSaved, onCancel }) {
 }
 
 /** Offers and the placement report drawn from them. */
-export default function Placements() {
-  const report = useApiResource('/offers/report');
-  const offers = useApiResource('/offers');
+export default function Placements({ graduationYear = '' }) {
+  const suffix = graduationYear ? `?graduationYear=${graduationYear}` : '';
+  const report = useApiResource(`/offers/report${suffix}`);
+  const offers = useApiResource(`/offers${suffix}`);
   const [recording, setRecording] = useState(false);
 
   if (report.loading && !report.data) return <LoadingBlock label="Building placement report" />;
@@ -194,7 +195,7 @@ export default function Placements() {
       </div>
 
       {recording ? (
-        <RecordOffer onSaved={refreshAll} onCancel={() => setRecording(false)} />
+        <RecordOffer graduationYear={graduationYear} onSaved={refreshAll} onCancel={() => setRecording(false)} />
       ) : (
         <button
           type="button"

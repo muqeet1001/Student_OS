@@ -5,11 +5,29 @@ import { buildPlacementReport } from '../services/placementReport.js';
 import { buildAlumniStats } from '../services/alumniStats.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
+import { recordAudit } from '../services/audit.service.js';
+import { Drive } from '../models/Drive.js';
+
+async function syncDrivePipeline(offer, actor) {
+  if (!offer.drive) return;
+  const drive = await Drive.findById(offer.drive);
+  const entry = drive?.shortlist.find((item) => String(item.student) === String(offer.student?._id ?? offer.student));
+  if (!entry) return;
+  const next = offer.status === 'joined' ? 'joined' : ['offered', 'accepted'].includes(offer.status) ? 'offered' : null;
+  if (!next || entry.stage === next) return;
+  entry.stageHistory.push({ from: entry.stage, to: next, changedBy: actor, note: `Synchronized from offer status: ${offer.status}` });
+  entry.stage = next;
+  await drive.save();
+}
 
 export const listOffers = asyncHandler(async (req, res) => {
   const filter = {};
   if (req.query.status) filter.status = req.query.status;
   if (req.query.company) filter.company = new RegExp(`^${req.query.company}$`, 'i');
+  if (req.query.graduationYear) {
+    const profiles = await Profile.find({ graduationYear: Number(req.query.graduationYear) }).select('user').lean();
+    filter.student = { $in: profiles.map((profile) => profile.user) };
+  }
 
   const offers = await Offer.find(filter)
     .populate('student', 'name email')
@@ -25,7 +43,9 @@ export const createOffer = asyncHandler(async (req, res) => {
   if (!student) throw new ApiError(404, 'Student not found.');
 
   const offer = await Offer.create({ ...req.body, recordedBy: req.user._id });
+  await syncDrivePipeline(offer, req.user._id);
   await offer.populate('student', 'name email');
+  await recordAudit({ actor: req.user._id, action: 'offer.created', entityType: 'offer', entityId: offer._id, summary: `Recorded ${offer.company} offer for ${offer.student?.name || 'a student'}`, metadata: { status: offer.status, ctc: offer.ctc } });
 
   res.status(201).json({ success: true, data: { offer } });
 });
@@ -37,6 +57,8 @@ export const updateOffer = asyncHandler(async (req, res) => {
   }).populate('student', 'name email');
 
   if (!offer) throw new ApiError(404, 'Offer not found.');
+  await syncDrivePipeline(offer, req.user._id);
+  await recordAudit({ actor: req.user._id, action: 'offer.updated', entityType: 'offer', entityId: offer._id, summary: `Updated ${offer.company} offer for ${offer.student?.name || 'a student'}`, metadata: req.body });
   res.json({ success: true, data: { offer } });
 });
 

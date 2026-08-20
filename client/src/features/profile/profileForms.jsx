@@ -54,6 +54,7 @@ export function DetailsForm({ profile, user, onSubmit, onCancel }) {
     phone: profile?.phone ?? '',
     branch: profile?.branch ?? '',
     graduationYear: profile?.graduationYear ?? '',
+    cgpa: profile?.cgpa ?? '',
     track: profile?.track ?? 'undecided',
     targetRoles: profile?.targetRoles ?? [],
     links: {
@@ -76,6 +77,7 @@ export function DetailsForm({ profile, user, onSubmit, onCancel }) {
         handleSubmit(event, {
           ...form,
           graduationYear: form.graduationYear === '' ? undefined : Number(form.graduationYear),
+          cgpa: form.cgpa === '' ? null : Number(form.cgpa),
         })
       }
     >
@@ -109,6 +111,7 @@ export function DetailsForm({ profile, user, onSubmit, onCancel }) {
           onChange={set('graduationYear')}
           error={errors.graduationYear}
         />
+        <Input label="CGPA" type="number" min="0" max="10" step="0.01" value={form.cgpa} onChange={set('cgpa')} error={errors.cgpa} />
         <Input label="Location" value={form.location} onChange={set('location')} error={errors.location} />
         <Input label="Phone" value={form.phone} onChange={set('phone')} error={errors.phone} />
       </div>

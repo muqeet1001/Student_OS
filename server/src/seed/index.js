@@ -37,7 +37,7 @@ import { ReadinessSnapshot } from '../models/ReadinessSnapshot.js';
 import { Drive } from '../models/Drive.js';
 import { Offer } from '../models/Offer.js';
 import { PlacementEvent } from '../models/PlacementEvent.js';
-import { Recruiter } from '../models/Recruiter.js';
+import { Recruiter, RecruiterPortalInvite } from '../models/Recruiter.js';
 import { Training } from '../models/Training.js';
 import { StudentDocument } from '../models/Document.js';
 import { Announcement } from '../models/Announcement.js';
@@ -49,6 +49,8 @@ import { TestAttempt } from '../models/Test.js';
 import { InterviewSession } from '../models/InterviewSession.js';
 import { Resume } from '../models/Resume.js';
 import { ReviewRequest } from '../models/ReviewRequest.js';
+import { ActionItem, InstitutionConfig, MentorAppointment, StudentJourney } from '../models/StudentJourney.js';
+import { SavedCohortView } from '../models/SavedCohortView.js';
 
 import { seedDemoCohort } from './demo.js';
 
@@ -181,6 +183,8 @@ async function syncIndexes() {
     Resume, Company, JobPosting, Application,
     SkillAssessment, SkillAttempt, ReadinessSnapshot, Drive, Offer, PlacementEvent, Recruiter, Training,
     StudentDocument, Announcement, ReviewRequest,
+    StudentJourney, ActionItem, MentorAppointment, InstitutionConfig, RecruiterPortalInvite,
+    SavedCohortView,
   ];
 
   for (const model of models) {

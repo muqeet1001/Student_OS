@@ -6,13 +6,13 @@
  * being rewritten per endpoint.
  */
 import { User } from '../models/User.js';
-import { calculateProfileCompleteness, Profile } from '../models/Profile.js';
+import { Profile } from '../models/Profile.js';
 import { Problem } from '../models/Problem.js';
 import { SolvedProblem } from '../models/Submission.js';
 import { TestAttempt } from '../models/Test.js';
 import { InterviewSession } from '../models/InterviewSession.js';
-
-export const WEIGHTS = { profile: 0.2, coding: 0.35, tests: 0.25, interview: 0.2 };
+import { InstitutionConfig } from '../models/StudentJourney.js';
+import { calculateReadinessEvidence } from './readiness.service.js';
 
 export const BANDS = [
   { key: 'ready', label: 'Ready', min: 75 },
@@ -49,7 +49,7 @@ export async function loadCohort({ search = '', branch = '', graduationYear = ''
 
   if (ids.length === 0) return [];
 
-  const [profiles, solved, totalProblems, attempts, interviews] = await Promise.all([
+  const [profiles, solved, totalProblems, attempts, interviews, institutionConfig] = await Promise.all([
     Profile.find({ user: { $in: ids } }).lean(),
 
     SolvedProblem.aggregate([
@@ -81,6 +81,7 @@ export async function loadCohort({ search = '', branch = '', graduationYear = ''
       { $match: { user: { $in: ids }, status: 'completed' } },
       { $group: { _id: '$user', completed: { $sum: 1 }, average: { $avg: '$overallScore' } } },
     ]),
+    InstitutionConfig.findOne({ key: 'default' }).lean(),
   ]);
 
   const profileBy = new Map(profiles.map((item) => [String(item.user), item]));
@@ -95,16 +96,16 @@ export async function loadCohort({ search = '', branch = '', graduationYear = ''
     const test = testsBy.get(key);
     const interview = interviewBy.get(key);
 
-    const components = {
-      profile: calculateProfileCompleteness(profile),
-      coding: totalProblems ? Math.round((solvedCount / totalProblems) * 100) : 0,
-      tests: Math.round(test?.average ?? 0),
-      interview: Math.round(interview?.average ?? 0),
-    };
-
-    const readiness = Math.round(
-      Object.entries(components).reduce((sum, [key2, value]) => sum + value * WEIGHTS[key2], 0),
-    );
+    const evidence = calculateReadinessEvidence({
+      profile,
+      user: student,
+      solvedCount,
+      totalProblems,
+      interviewAverage: interview?.average,
+      configuredWeights: institutionConfig?.readinessWeights,
+    });
+    const components = evidence.values;
+    const readiness = evidence.readiness;
 
     return {
       _id: student._id,
@@ -114,6 +115,7 @@ export async function loadCohort({ search = '', branch = '', graduationYear = ''
       profile,
       branch: profile.branch ?? '',
       graduationYear: profile.graduationYear ?? null,
+      cgpa: profile.cgpa ?? null,
       headline: profile.headline ?? '',
       targetRoles: profile.targetRoles ?? [],
       skillCount: profile.skills?.length ?? 0,
@@ -121,7 +123,7 @@ export async function loadCohort({ search = '', branch = '', graduationYear = ''
       solved: solvedCount,
       testsTaken: test?.taken ?? 0,
       testsPassed: test?.passed ?? 0,
-      testAverage: components.tests,
+      testAverage: Math.round(test?.average ?? 0),
       interviewsCompleted: interview?.completed ?? 0,
       interviewAverage: components.interview,
       lastActiveAt: test?.lastAt ?? null,

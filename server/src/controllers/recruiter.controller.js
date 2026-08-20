@@ -1,4 +1,5 @@
-import { Recruiter, FEEDBACK_TAGS } from '../models/Recruiter.js';
+import crypto from 'node:crypto';
+import { Recruiter, RecruiterPortalInvite, FEEDBACK_TAGS } from '../models/Recruiter.js';
 import { Drive } from '../models/Drive.js';
 import { Offer } from '../models/Offer.js';
 import { ApiError } from '../utils/ApiError.js';
@@ -8,6 +9,7 @@ import {
   relationshipHealth,
   summariseFeedback,
 } from '../services/recruiterInsights.js';
+import { recordAudit } from '../services/audit.service.js';
 
 /** Case-insensitive exact match, so "infosys" finds the "Infosys" drives. */
 const sameCompany = (name) => new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
@@ -103,6 +105,7 @@ export const createRecruiter = asyncHandler(async (req, res) => {
   if (existing) throw new ApiError(409, 'A record for that company already exists.');
 
   const recruiter = await Recruiter.create({ ...req.body, ownedBy: req.user._id });
+  await recordAudit({ actor: req.user._id, action: 'company.created', entityType: 'company', entityId: recruiter._id, summary: `Created company relationship for ${recruiter.name}`, metadata: { status: recruiter.status } });
   res.status(201).json({ success: true, data: { recruiter } });
 });
 
@@ -112,6 +115,7 @@ export const updateRecruiter = asyncHandler(async (req, res) => {
 
   Object.assign(recruiter, req.body);
   await recruiter.save();
+  await recordAudit({ actor: req.user._id, action: 'company.updated', entityType: 'company', entityId: recruiter._id, summary: `Updated ${recruiter.name}`, metadata: req.body });
 
   res.json({ success: true, data: { recruiter } });
 });
@@ -124,27 +128,28 @@ export const deleteRecruiter = asyncHandler(async (req, res) => {
 });
 
 /** Appends to one of the recruiter's sub-collections. */
-function appendTo(field, decorate = (body) => body) {
+function appendTo(field, decorate = (body) => body, action = field) {
   return asyncHandler(async (req, res) => {
     const recruiter = await Recruiter.findById(req.params.recruiterId);
     if (!recruiter) throw new ApiError(404, 'Company not found.');
 
     recruiter[field].push(decorate(req.body, req));
     await recruiter.save();
+    await recordAudit({ actor: req.user._id, action: `company.${action}.added`, entityType: 'company', entityId: recruiter._id, summary: `Added ${action} for ${recruiter.name}`, metadata: req.body });
 
     res.status(201).json({ success: true, data: { recruiter } });
   });
 }
 
-export const addContact = appendTo('contacts');
+export const addContact = appendTo('contacts', (body) => body, 'contact');
 export const addFeedback = appendTo('feedback', (body, req) => ({
   ...body,
   recordedBy: req.user._id,
-}));
+}), 'feedback');
 export const addInteraction = appendTo('interactions', (body, req) => ({
   ...body,
   recordedBy: req.user._id,
-}));
+}), 'interaction');
 
 /** Removes one entry from a sub-collection. */
 function removeFrom(field) {
@@ -164,3 +169,46 @@ function removeFrom(field) {
 
 export const removeContact = removeFrom('contacts');
 export const removeFeedback = removeFrom('feedback');
+
+const portalHash = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+export const createPortalInvite = asyncHandler(async (req, res) => {
+  const recruiter = await Recruiter.findById(req.params.recruiterId).select('name').lean();
+  if (!recruiter) throw ApiError.notFound('Company not found.');
+  const token = crypto.randomBytes(32).toString('base64url');
+  const expiresAt = new Date(Date.now() + 14 * 86_400_000);
+  await RecruiterPortalInvite.create({ recruiter: recruiter._id, tokenHash: portalHash(token), expiresAt, createdBy: req.user._id });
+  res.status(201).json({ success: true, data: { path: `/recruiter-feedback/${token}`, expiresAt, company: recruiter.name } });
+});
+
+async function portalInvite(token) {
+  return RecruiterPortalInvite.findOne({ tokenHash: portalHash(token), expiresAt: { $gt: new Date() }, usedAt: null }).select('+tokenHash');
+}
+
+export const viewPortal = asyncHandler(async (req, res) => {
+  const invite = await portalInvite(req.params.token);
+  if (!invite) throw ApiError.notFound('This feedback link is invalid or has expired.');
+  const recruiter = await Recruiter.findById(invite.recruiter).select('name').lean();
+  if (!recruiter) throw ApiError.notFound('Company not found.');
+  res.json({ success: true, data: { company: recruiter.name, tags: FEEDBACK_TAGS, expiresAt: invite.expiresAt } });
+});
+
+export const submitPortalFeedback = asyncHandler(async (req, res) => {
+  const usedAt = new Date();
+  const invite = await RecruiterPortalInvite.findOneAndUpdate(
+    { tokenHash: portalHash(req.params.token), expiresAt: { $gt: usedAt }, usedAt: null },
+    { $set: { usedAt } },
+    { new: true },
+  );
+  if (!invite) throw ApiError.notFound('This feedback link is invalid or has expired.');
+  const recruiter = await Recruiter.findById(invite.recruiter);
+  if (!recruiter) throw ApiError.notFound('Company not found.');
+  recruiter.feedback.push({ ...req.body, givenAt: new Date() });
+  try {
+    await recruiter.save();
+  } catch (error) {
+    await RecruiterPortalInvite.updateOne({ _id: invite._id, usedAt }, { $set: { usedAt: null } }).catch(() => {});
+    throw error;
+  }
+  res.status(201).json({ success: true, data: { message: 'Thank you. Your feedback was shared with the placement office.' } });
+});

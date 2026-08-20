@@ -58,7 +58,12 @@ export function parseJobDescription(text) {
 
   // Sentence-level scan, so "required" in one bullet does not mark every
   // skill in the document as required.
-  const sentences = raw.split(/[\n.;•·]+/).map((s) => s.trim()).filter(Boolean);
+  // Split at real sentence boundaries without breaking dotted technology
+  // names such as Node.js, Next.js and .NET into phantom skills.
+  const sentences = raw
+    .split(/[\n;•·]+|[.!?](?=\s+[A-Z])/)
+    .map((s) => s.trim())
+    .filter(Boolean);
 
   const required = new Set();
   const preferred = new Set();
@@ -191,7 +196,11 @@ export function scoreStudent(student, requirements) {
   // Hard filters are reported rather than silently dropping a student — a
   // placement officer needs to see a near-miss and decide.
   const blockers = [];
-  const grade = parseGrade(profile.education);
+  const grade = profile.cgpa ?? parseGrade(profile.education);
+
+  for (const skill of missing.filter((item) => item.required)) {
+    blockers.push(`Missing required skill: ${skill.name}`);
+  }
 
   if (requirements.minCgpa != null && grade != null && grade < requirements.minCgpa) {
     blockers.push(`CGPA ${grade} is below the required ${requirements.minCgpa}`);

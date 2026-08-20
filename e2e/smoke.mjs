@@ -73,7 +73,32 @@ const STUDENT_ROUTES = [
   { path: '/ai-interview', expect: /interview/i },
 ];
 
-const ADMIN_ROUTES = [{ path: '/admin', expect: /student|cohort|placement/i }];
+// Every placement-office destination is a separate operational surface even
+// though React renders them through one route component. Keep all of them in
+// the production smoke suite so a broken lazy panel or endpoint cannot hide
+// behind a passing `/admin` redirect.
+const ADMIN_ROUTES = [
+  { path: '/admin/overview', expect: /priorit|placement health|today/i },
+  { path: '/admin/students', expect: /student|cohort/i },
+  { path: '/admin/interventions', expect: /intervention|student cases/i },
+  { path: '/admin/tasks', expect: /task|assigned action/i },
+  { path: '/admin/companies', expect: /compan|recruiter/i },
+  { path: '/admin/drives', expect: /opportunit|drive|hiring pipeline/i },
+  { path: '/admin/matching', expect: /eligibility|matching|shortlist/i },
+  { path: '/admin/calendar', expect: /calendar|attendance|interview/i },
+  { path: '/admin/reviews', expect: /review|mentor/i },
+  { path: '/admin/communications', expect: /communication|announcement/i },
+  { path: '/admin/training', expect: /training|skill gap|programme/i },
+  { path: '/admin/outcomes', expect: /outcome|placement rate|offer/i },
+  { path: '/admin/settings', expect: /setting|scoring|institution/i },
+  { path: '/admin/activity', expect: /activity|audit|timeline/i },
+];
+
+const ADMIN_REDIRECT_ROUTES = [
+  { path: '/dashboard', redirectTo: '/admin/overview', expect: /priorit|placement health|today/i },
+  { path: '/readiness', redirectTo: '/admin/overview', expect: /priorit|placement health|today/i },
+  { path: '/my-plan', redirectTo: '/admin/overview', expect: /priorit|placement health|today/i },
+];
 
 /** Phrases that mean the screen failed even though it rendered. */
 const FAILURE_TEXT = [
@@ -102,7 +127,7 @@ async function main() {
 
   for (const [role, account, routes] of [
     ['student', STUDENT, STUDENT_ROUTES],
-    ['admin', ADMIN, [...ADMIN_ROUTES, ...STUDENT_ROUTES.slice(0, 3)]],
+    ['admin', ADMIN, [...ADMIN_ROUTES, ...ADMIN_REDIRECT_ROUTES]],
   ]) {
     const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
     const page = await context.newPage();
@@ -135,6 +160,12 @@ async function main() {
 
       const body = await page.textContent('body');
       const label = `[${role}] ${route.path}`;
+
+      if (route.redirectTo && new URL(page.url()).pathname !== route.redirectTo) {
+        failures.push(
+          `${label}: expected redirect to ${route.redirectTo}, landed on ${new URL(page.url()).pathname}`,
+        );
+      }
 
       for (const pattern of FAILURE_TEXT) {
         if (pattern.test(body)) failures.push(`${label}: shows "${pattern.source}"`);

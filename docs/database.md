@@ -1,6 +1,6 @@
 # Database
 
-MongoDB via Mongoose. 28 collections across 22 model files.
+MongoDB via Mongoose. 33 collections across 23 model files.
 
 ## Connecting
 
@@ -36,6 +36,10 @@ submissions, attempts, profiles — is never touched unless `--fresh` is passed.
 |---|---|---|
 | `users` | Account and credentials | `email` (unique), `password` (hashed, `select:false`), `role` (`student`\|`admin`), `refreshTokens[]` |
 | `profiles` | Everything a resume and opt-in public profile are built from | `user` (unique), `headline`, `bio`, `skills[]`, `projects[]`, `education[]`, `experience[]`, `certifications[]`, `publicProfile` |
+| `studentjourneys` | Onboarding, baseline, locale, delivery channels, integrations and append-only consent history | `user` (unique), `onboarding`, `channels`, `consentHistory[]` |
+| `actionitems` | Personal, staff and system actions with ownership and conversation | `owner`, `source`, `category`, `dueAt`, `status`, `messages[]` |
+| `mentorappointments` | Student mentoring requests and scheduled sessions | `student`, `mentor`, `topic`, `startsAt`, `status` |
+| `institutionconfigs` | College-specific scoring, taxonomy, languages and provider capabilities | `key` (unique), `readinessWeights`, `skillTaxonomy`, `enabledLocales`, `providers` |
 
 One profile per user, enforced by a unique index on `profile.user`.
 
@@ -99,6 +103,7 @@ live payload and only returned once the session is complete.
 | `resumes` | Saved, tailored versions | `user`, `title`, `snapshot` (frozen profile copy), `atsScore`, `atsChecks[]` |
 | `companies` | Prep hubs | `slug` (unique), `tier`, `difficulty`, `rounds[]`, `insights[]`, `focusAreas[]` |
 | `reviewrequests` | Focused human-feedback workflow | `student`, `kind`, `resourceId`, `note`, `status`, `feedback`, `reviewer`, `reviewedAt` |
+| `recruiterportalinvites` | Hashed, expiring and one-use links for external recruiter feedback | `recruiter`, `tokenHash`, `expiresAt`, `usedAt`, `createdBy` |
 
 `snapshot` is a frozen copy of the profile at save time: a resume already
 sent to an employer must not change when the profile is edited later.
@@ -107,6 +112,9 @@ sent to an employer must not change when the profile is edited later.
 
 ```
 User ─┬─ Profile              (1:1, unique)
+      ├─ StudentJourney       (1:1, unique)
+      ├─ ActionItem           (1:N) ── User (assignedBy, optional)
+      ├─ MentorAppointment    (1:N) ── User (mentor, optional)
       ├─ Submission           (1:N) ── Problem
       ├─ SolvedProblem        (1:N) ── Problem   [unique per user+problem]
       ├─ Bookmark             (1:N) ── Problem
@@ -132,17 +140,23 @@ patterns that would otherwise scan:
 - `problems` / `questions`: `topics`, `companies`, `difficulty` for filters
 - `interviewsessions`: `{user, status}` to find the one open session
 - `reviewrequests`: `{student, kind, resourceId, status}` partial unique while requested, preventing duplicate open work while retaining completed feedback history
+- `actionitems`: `{owner, status, dueAt}` for the chronological action centre
+- `recruiterportalinvites`: TTL on `expiresAt`; only a SHA-256 token hash is stored
 
 ## Readiness score
 
 Computed server-side in `dashboard.controller.js`, weighted:
 
-| Component | Weight | Source |
+| Component | Default weight | Source |
 |---|---|---|
-| Coding | 35% | `solvedproblems` ÷ published problems |
-| Tests | 25% | mean `testattempts.percentage` |
-| Interview | 20% | mean `interviewsessions.overallScore` |
-| Profile | 20% | `profiles.completeness` |
+| Skills | 20% | Match to target role; required skills count twice |
+| Coding | 30% | `solvedproblems` toward the target role's problem target |
+| Resume | 20% | Transparent ATS checks over profile evidence |
+| Interview | 20% | Mean completed `interviewsessions.overallScore` |
+| Projects | 10% | Number and evidence depth of profile projects |
 
-The admin cohort view uses the same weights, so a student and a staff member
-always see the same number.
+Staff can configure weights in `institutionconfigs`, where validation requires
+them to total 100. Dashboard, cohort, eligibility and benchmark consumers all
+call the same readiness service, so a student and a staff member see the same
+number. Dashboard responses also include the formula version, calculation time
+and evidence ledger used to produce it.

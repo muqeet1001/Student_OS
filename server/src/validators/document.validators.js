@@ -8,6 +8,7 @@ export const uploadDocumentSchema = z.object({
   title: z.string().trim().max(160).optional(),
   // Present only when staff file a document on a student's behalf.
   owner: objectId.optional(),
+  expiresAt: z.coerce.date().optional(),
 });
 
 export const reviewDocumentSchema = z.object({

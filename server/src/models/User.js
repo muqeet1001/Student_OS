@@ -54,8 +54,9 @@ const userSchema = new mongoose.Schema(
      * absent here is treated as on, so adding a new one does not require
      * backfilling every existing user.
      *
-     * There are no email preferences because there is no email — offering a
-     * toggle that does nothing is worse than not offering it.
+     * Journey-level delivery channels live on StudentJourney because those
+     * preferences also carry explicit consent history. These settings only
+     * control which categories appear in the in-app notification feed.
      */
     settings: {
       notifications: {

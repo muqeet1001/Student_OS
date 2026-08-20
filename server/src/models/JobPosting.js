@@ -83,6 +83,19 @@ const applicationSchema = new mongoose.Schema(
     matchAtApply: { type: Number, default: null },
     notes: { type: String, default: '', maxlength: 2000 },
     appliedAt: { type: Date },
+    followUpAt: { type: Date, default: null, index: true },
+    contactName: { type: String, default: '', maxlength: 120 },
+    contactEmail: { type: String, default: '', maxlength: 200 },
+    resumeVersion: { type: mongoose.Schema.Types.ObjectId, ref: 'Resume', default: null },
+    /** Frozen explanation of the gap when this application was prepared. */
+    tailoredSnapshot: {
+      score: { type: Number, default: null },
+      potential: { type: Number, default: null },
+      matched: { type: [String], default: [] },
+      missing: { type: [String], default: [] },
+      blockers: { type: [String], default: [] },
+      capturedAt: { type: Date, default: null },
+    },
   },
   { timestamps: true },
 );

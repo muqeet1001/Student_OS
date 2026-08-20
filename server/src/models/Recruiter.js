@@ -109,6 +109,8 @@ const recruiterSchema = new mongoose.Schema(
 
     notes: { type: String, default: '', maxlength: 4000 },
     ownedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    nextAction: { type: String, default: '', trim: true, maxlength: 300 },
+    nextFollowUpAt: { type: Date, default: null, index: true },
   },
   { timestamps: true },
 );
@@ -138,3 +140,13 @@ recruiterSchema.virtual('primaryContact').get(function primaryContact() {
 withVirtuals(recruiterSchema);
 
 export const Recruiter = mongoose.model('Recruiter', recruiterSchema);
+
+const recruiterPortalInviteSchema = new mongoose.Schema({
+  recruiter: { type: mongoose.Schema.Types.ObjectId, ref: 'Recruiter', required: true, index: true },
+  tokenHash: { type: String, required: true, unique: true, select: false },
+  expiresAt: { type: Date, required: true, index: { expires: 0 } },
+  usedAt: { type: Date, default: null },
+  createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+}, { timestamps: true });
+
+export const RecruiterPortalInvite = mongoose.model('RecruiterPortalInvite', recruiterPortalInviteSchema);

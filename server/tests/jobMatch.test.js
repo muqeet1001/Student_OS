@@ -119,6 +119,10 @@ test('reports what a student is missing rather than only a number', () => {
     result.missing.some((item) => item.name === 'Node.js'),
     'the student should be told which required skills are absent',
   );
+  assert.ok(
+    result.blockers.some((item) => item === 'Missing required skill: Node.js'),
+    'a missing required skill must affect eligibility, not only ranking',
+  );
 });
 
 test('surfaces hard-filter failures instead of hiding the student', () => {

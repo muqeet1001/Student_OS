@@ -61,6 +61,11 @@ export const config = {
     from: process.env.SMTP_FROM || 'Student OS <no-reply@studentos.local>',
   },
 
+  whatsapp: {
+    webhookUrl: process.env.WHATSAPP_WEBHOOK_URL || '',
+    token: process.env.WHATSAPP_WEBHOOK_TOKEN || '',
+  },
+
   ai: {
     baseUrl: (process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, ''),
     apiKey: process.env.AI_API_KEY || '',

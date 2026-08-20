@@ -11,7 +11,20 @@ export const navLinks = [
 
 /** Shown only to admins, appended after the student links. */
 export const adminLinks = [
-  { label: 'Placement Office', path: '/admin', icon: 'groups', short: 'Office' },
+  { label: 'Today', path: '/admin/overview', icon: 'space_dashboard', short: 'Today', group: 'Workspace' },
+  { label: 'Students', path: '/admin/students', icon: 'groups', short: 'Students', group: 'Workspace' },
+  { label: 'Interventions', path: '/admin/interventions', icon: 'support_agent', short: 'Support', group: 'Workspace' },
+  { label: 'Tasks', path: '/admin/tasks', icon: 'task_alt', short: 'Tasks', group: 'Workspace' },
+  { label: 'Companies', path: '/admin/companies', icon: 'domain', short: 'Companies', group: 'Recruitment' },
+  { label: 'Drives', path: '/admin/drives', icon: 'business_center', short: 'Drives', group: 'Recruitment' },
+  { label: 'Matching', path: '/admin/matching', icon: 'person_search', short: 'Match', group: 'Recruitment' },
+  { label: 'Calendar', path: '/admin/calendar', icon: 'calendar_month', short: 'Calendar', group: 'Operations' },
+  { label: 'Reviews', path: '/admin/reviews', icon: 'rate_review', short: 'Reviews', group: 'Operations' },
+  { label: 'Communications', path: '/admin/communications', icon: 'campaign', short: 'Updates', group: 'Operations' },
+  { label: 'Training', path: '/admin/training', icon: 'school', short: 'Training', group: 'Intelligence' },
+  { label: 'Outcomes', path: '/admin/outcomes', icon: 'monitoring', short: 'Outcomes', group: 'Intelligence' },
+  { label: 'Settings', path: '/admin/settings', icon: 'tune', short: 'Settings', group: 'System' },
+  { label: 'Activity', path: '/admin/activity', icon: 'history', short: 'Activity', group: 'System' },
 ];
 
 /** The bottom bar only has room for the five most-used destinations. */

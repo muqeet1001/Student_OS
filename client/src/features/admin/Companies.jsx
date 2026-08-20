@@ -23,7 +23,7 @@ const field =
 const labelClass = 'text-xs font-bold uppercase tracking-wider text-outline';
 
 function NewCompany({ onSaved, onCancel }) {
-  const [form, setForm] = useState({ name: '', industry: '', location: '', status: 'prospect' });
+  const [form, setForm] = useState({ name: '', industry: '', location: '', status: 'prospect', contactName: '', designation: '', email: '', phone: '', nextAction: '', nextFollowUpAt: '' });
   const [saving, setSaving] = useState(false);
 
   const update = (key) => (event) =>
@@ -33,7 +33,17 @@ function NewCompany({ onSaved, onCancel }) {
     event.preventDefault();
     setSaving(true);
     try {
-      await api.post('/recruiters', form);
+      const { contactName, designation, email, phone, nextFollowUpAt, ...company } = form;
+      const result = await api.post('/recruiters', { ...company, nextFollowUpAt: nextFollowUpAt || null });
+      if (contactName.trim()) {
+        await api.post(`/recruiters/${result.recruiter._id}/contacts`, {
+          name: contactName,
+          designation,
+          email,
+          phone,
+          primary: true,
+        });
+      }
       onSaved();
     } catch (caught) {
       window.alert(caught.message || 'Could not add that company.');
@@ -77,6 +87,10 @@ function NewCompany({ onSaved, onCancel }) {
           </select>
         </label>
       </div>
+
+      <div className="pt-3 border-t border-outline-variant/60"><p className="text-[10px] font-black uppercase tracking-wider text-primary mb-3">Primary contact</p><div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3"><label className="space-y-1"><span className={labelClass}>Name</span><input value={form.contactName} onChange={update('contactName')} className={field} /></label><label className="space-y-1"><span className={labelClass}>Designation</span><input value={form.designation} onChange={update('designation')} className={field} /></label><label className="space-y-1"><span className={labelClass}>Email</span><input type="email" value={form.email} onChange={update('email')} className={field} /></label><label className="space-y-1"><span className={labelClass}>Phone</span><input value={form.phone} onChange={update('phone')} className={field} /></label></div></div>
+
+      <div className="grid sm:grid-cols-[1fr_12rem] gap-3"><label className="space-y-1"><span className={labelClass}>First next action</span><input value={form.nextAction} onChange={update('nextAction')} placeholder="Send placement brochure" className={field} /></label><label className="space-y-1"><span className={labelClass}>Follow-up date</span><input type="date" value={form.nextFollowUpAt} onChange={update('nextFollowUpAt')} className={field} /></label></div>
 
       <div className="flex gap-2">
         <button
@@ -218,6 +232,14 @@ function RecordFeedback({ recruiter, tags, onSaved, onCancel }) {
 
 function CompanyCard({ recruiter, tags, onChanged }) {
   const [giving, setGiving] = useState(false);
+  const [logging, setLogging] = useState(false);
+  const [followUp, setFollowUp] = useState({
+    type: 'call',
+    summary: '',
+    nextAction: recruiter.nextAction || '',
+    nextFollowUpAt: recruiter.nextFollowUpAt ? new Date(recruiter.nextFollowUpAt).toISOString().slice(0, 10) : '',
+  });
+  const [savingTouchpoint, setSavingTouchpoint] = useState(false);
   const { health } = recruiter;
 
   async function setStatus(status) {
@@ -227,6 +249,33 @@ function CompanyCard({ recruiter, tags, onChanged }) {
     } catch (caught) {
       window.alert(caught.message || 'Could not update that company.');
     }
+  }
+
+  async function createFeedbackLink() {
+    try {
+      const result = await api.post(`/recruiters/${recruiter._id}/portal-invite`, {});
+      const url = `${window.location.origin}${result.path}`;
+      await navigator.clipboard.writeText(url);
+      window.alert(`Recruiter feedback link copied. It expires ${new Date(result.expiresAt).toLocaleDateString('en-IN')}.`);
+    } catch (caught) { window.alert(caught.message || 'Could not create a feedback link.'); }
+  }
+
+  async function logTouchpoint(event) {
+    event.preventDefault();
+    setSavingTouchpoint(true);
+    try {
+      await api.post(`/recruiters/${recruiter._id}/interactions`, {
+        type: followUp.type,
+        summary: followUp.summary,
+      });
+      await api.patch(`/recruiters/${recruiter._id}`, {
+        nextAction: followUp.nextAction,
+        nextFollowUpAt: followUp.nextFollowUpAt || null,
+      });
+      setLogging(false);
+      onChanged();
+    } catch (caught) { window.alert(caught.message || 'Could not save that touchpoint.'); }
+    finally { setSavingTouchpoint(false); }
   }
 
   return (
@@ -298,7 +347,16 @@ function CompanyCard({ recruiter, tags, onChanged }) {
         ))}
       </div>
 
+      <div className="mt-3 rounded-lg bg-surface-container-low px-3 py-2.5 flex items-start gap-2">
+        <span className="material-symbols-outlined text-primary text-base mt-0.5">event_upcoming</span>
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold">{recruiter.nextAction || 'No next action set'}</p>
+          <p className="text-[10px] text-on-surface-variant mt-0.5">{recruiter.nextFollowUpAt ? `Follow up ${new Date(recruiter.nextFollowUpAt).toLocaleDateString('en-IN')}` : 'Keep the relationship moving with a dated follow-up.'}</p>
+        </div>
+      </div>
+
       <div className="flex items-center gap-3 mt-3">
+        <button type="button" onClick={() => setLogging((value) => !value)} className="text-xs font-bold text-primary hover:underline">Log touchpoint</button>
         <button
           type="button"
           onClick={() => setGiving((value) => !value)}
@@ -306,6 +364,7 @@ function CompanyCard({ recruiter, tags, onChanged }) {
         >
           Record feedback
         </button>
+        <button type="button" onClick={createFeedbackLink} className="text-xs font-bold text-primary hover:underline">Copy recruiter portal link</button>
         {recruiter.feedback?.length > 0 && (
           <span className="text-xs text-on-surface-variant">
             {recruiter.feedback.length} on file · last rated{' '}
@@ -313,6 +372,12 @@ function CompanyCard({ recruiter, tags, onChanged }) {
           </span>
         )}
       </div>
+
+      {logging && <form onSubmit={logTouchpoint} className="mt-3 pt-3 border-t border-outline-variant/60 space-y-3">
+        <div className="grid sm:grid-cols-[8rem_1fr] gap-3"><label className="space-y-1"><span className={labelClass}>Type</span><select value={followUp.type} onChange={(event) => setFollowUp({ ...followUp, type: event.target.value })} className={field}><option value="call">Call</option><option value="email">Email</option><option value="meeting">Meeting</option><option value="visit">Visit</option><option value="other">Other</option></select></label><label className="space-y-1"><span className={labelClass}>What happened</span><input required value={followUp.summary} onChange={(event) => setFollowUp({ ...followUp, summary: event.target.value })} className={field} placeholder="Spoke with campus hiring lead…" /></label></div>
+        <div className="grid sm:grid-cols-2 gap-3"><label className="space-y-1"><span className={labelClass}>Next action</span><input value={followUp.nextAction} onChange={(event) => setFollowUp({ ...followUp, nextAction: event.target.value })} className={field} placeholder="Send student availability" /></label><label className="space-y-1"><span className={labelClass}>Follow-up date</span><input type="date" value={followUp.nextFollowUpAt} onChange={(event) => setFollowUp({ ...followUp, nextFollowUpAt: event.target.value })} className={field} /></label></div>
+        <div className="flex gap-2"><button type="submit" disabled={savingTouchpoint} className="px-4 py-2 rounded-lg bg-primary text-on-primary text-xs font-black disabled:opacity-50">{savingTouchpoint ? 'Saving…' : 'Save touchpoint'}</button><button type="button" onClick={() => setLogging(false)} className="px-3 py-2 text-xs font-bold">Cancel</button></div>
+      </form>}
 
       {giving && (
         <RecordFeedback
@@ -333,11 +398,17 @@ function CompanyCard({ recruiter, tags, onChanged }) {
 export default function Companies() {
   const { data, loading, error, refetch } = useApiResource('/recruiters');
   const [adding, setAdding] = useState(false);
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('all');
 
   if (loading && !data) return <LoadingBlock label="Loading companies" />;
   if (error) return <ErrorBlock error={error} onRetry={refetch} />;
 
   const { recruiters, summary, recommendations, tags, totals } = data;
+  const visibleRecruiters = recruiters.filter((recruiter) =>
+    (status === 'all' || recruiter.status === status)
+    && `${recruiter.name} ${recruiter.industry} ${recruiter.location}`.toLowerCase().includes(search.toLowerCase()),
+  );
 
   const refresh = () => {
     setAdding(false);
@@ -445,13 +516,7 @@ export default function Companies() {
       {adding ? (
         <NewCompany onSaved={refresh} onCancel={() => setAdding(false)} />
       ) : (
-        <button
-          type="button"
-          onClick={() => setAdding(true)}
-          className="px-6 py-2.5 rounded-lg bg-primary text-on-primary font-bold text-sm"
-        >
-          Add a company
-        </button>
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center"><div className="flex-1 flex items-center gap-2 bg-surface-container-low rounded-xl px-4 py-2.5"><span className="material-symbols-outlined text-outline">search</span><input type="search" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search company, industry or location" className="w-full bg-transparent outline-none text-sm" /></div><select value={status} onChange={(event) => setStatus(event.target.value)} className="rounded-xl border border-outline-variant bg-transparent px-3 py-2.5 text-sm font-bold"><option value="all">All relationships</option>{STATUSES.map((item) => <option key={item} value={item}>{item}</option>)}</select><button type="button" onClick={() => setAdding(true)} className="px-6 py-2.5 rounded-xl bg-primary text-on-primary font-bold text-sm">Add a company</button></div>
       )}
 
       {recruiters.length === 0 ? (
@@ -462,7 +527,7 @@ export default function Companies() {
         />
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-          {recruiters.map((recruiter) => (
+          {visibleRecruiters.map((recruiter) => (
             <CompanyCard
               key={recruiter._id}
               recruiter={recruiter}

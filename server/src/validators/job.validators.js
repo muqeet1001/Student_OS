@@ -18,4 +18,8 @@ export const updateJobSchema = createJobSchema.partial();
 export const trackJobSchema = z.object({
   stage: z.enum(['saved', 'applied', 'assessment', 'interview', 'offer', 'rejected']).default('saved'),
   notes: z.string().max(2000).optional(),
+  followUpAt: z.coerce.date().nullable().optional(),
+  contactName: z.string().trim().max(120).optional(),
+  contactEmail: z.string().trim().email().max(200).optional().or(z.literal('')),
+  resumeVersion: z.string().regex(/^[a-f\d]{24}$/i, 'Invalid resume version').nullable().optional(),
 });

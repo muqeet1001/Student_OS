@@ -8,8 +8,9 @@ import { useApiResource } from '../../hooks/useApiResource.js';
  * page never wait for a model. If the narrative is slow, missing or refused,
  * everything else on the Insights tab is already on screen and correct.
  */
-export default function PlacementInsight() {
-  const { data, loading, error } = useApiResource('/admin/analytics/insight');
+export default function PlacementInsight({ graduationYear = '' }) {
+  const suffix = graduationYear ? `?graduationYear=${graduationYear}` : '';
+  const { data, loading, error } = useApiResource(`/admin/analytics/insight${suffix}`);
 
   if (loading && !data) {
     return (
@@ -24,20 +25,9 @@ export default function PlacementInsight() {
   // paragraph.
   if (error) return null;
 
-  const { insight, error: reason, ai } = data;
+  const { insight, ai } = data;
 
-  if (!insight) {
-    return (
-      <section className="bg-surface-container-low rounded-xl border border-outline-variant/60 p-4">
-        <p className="text-xs text-on-surface-variant">
-          {reason ?? ai.reason ?? 'No written summary is available.'}
-        </p>
-        <p className="text-[11px] text-outline mt-1">
-          Every figure on this page is computed without it.
-        </p>
-      </section>
-    );
-  }
+  if (!insight) return null;
 
   return (
     <section className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-5">

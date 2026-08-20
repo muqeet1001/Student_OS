@@ -7,6 +7,7 @@ import ReadinessMethodology from '../features/dashboard/ReadinessMethodology.jsx
 import TargetRole from '../features/dashboard/TargetRole.jsx';
 import ActivityHeatmap from '../features/dashboard/ActivityHeatmap.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
+import { api } from '../lib/api.js';
 
 const ACTIONS = {
   skills: '/skills',
@@ -135,8 +136,19 @@ function ImprovementActions({ readiness, recommendations }) {
   );
 }
 
+function EvidenceLedger({ readiness }) {
+  async function dispute() {
+    const note = window.prompt('What evidence or score appears incorrect?');
+    if (!note?.trim()) return;
+    try { await api.post('/reviews', { kind: 'readiness', note: note.trim() }); window.alert('Your readiness review was sent to the placement office.'); }
+    catch (error) { window.alert(error.message || 'Could not request a readiness review.'); }
+  }
+  return <section className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-5 md:p-6"><div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-on-surface-variant">Evidence ledger</p><h2 className="font-headline text-lg font-black mt-1">Why this score is {readiness.score}</h2><p className="text-xs text-on-surface-variant mt-1">Formula {readiness.formulaVersion} · Updated {new Date(readiness.lastUpdatedAt).toLocaleString('en-IN')}</p></div><button type="button" onClick={dispute} className="px-4 py-2 rounded-full bg-surface-container text-sm font-bold">Report incorrect evidence</button></div><div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-2 mt-4">{readiness.components.map((component) => <article key={component.key} className="rounded-lg bg-surface-container-low p-3"><div className="flex justify-between gap-2"><p className="text-sm font-bold">{component.label}</p><span className="font-black text-sm">{component.value}%</span></div><p className="text-[11px] text-on-surface-variant mt-2 leading-relaxed">{component.basis}</p></article>)}</div></section>;
+}
+
 export default function Readiness() {
   const dashboard = useApiResource('/dashboard');
+  const benchmarks = useApiResource('/journey/benchmarks');
   const [roleOverride, setRoleOverride] = useState(undefined);
 
   if (dashboard.loading && !dashboard.data) return <LoadingBlock label="Calculating readiness" className="min-h-dvh" />;
@@ -170,6 +182,8 @@ export default function Readiness() {
         </div>
 
         <ImprovementActions readiness={readiness} recommendations={recommendations} />
+        <EvidenceLedger readiness={readiness} />
+        {benchmarks.data && <section className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-5"><div><p className="text-xs font-bold uppercase tracking-[0.14em] text-on-surface-variant">Cohort context</p><h2 className="font-headline text-lg font-black mt-1">Benchmark, not a ranking</h2></div><div className="grid grid-cols-2 md:grid-cols-4 gap-2 mt-4">{[[`${readiness.score}%`, 'Your readiness'], [`${benchmarks.data.comparableAverage}%`, `${benchmarks.data.context?.branch || 'Similar'} ${benchmarks.data.context?.graduationYear || ''}`], [`${benchmarks.data.institutionAverage}%`, 'Institution average'], [`${benchmarks.data.percentile ?? 0}th`, 'Institution percentile']].map(([value, label]) => <div key={label} className="rounded-lg bg-surface-container-low p-3"><p className="text-xl font-black">{value}</p><p className="text-[10px] uppercase tracking-wider text-on-surface-variant">{label}</p></div>)}</div><p className="text-xs text-on-surface-variant mt-3">{benchmarks.data.note}</p></section>}
         <ActivityHeatmap />
         <ReadinessMethodology readiness={readiness} />
         <ProjectionSimulator readiness={readiness} />

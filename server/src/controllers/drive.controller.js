@@ -4,12 +4,13 @@ import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { loadCohort } from '../services/cohort.service.js';
 import { parseJobDescription, rankStudents } from '../services/jobMatch.js';
+import { recordAudit } from '../services/audit.service.js';
 
 export const listDrives = asyncHandler(async (req, res) => {
   const filter = req.query.status ? { status: req.query.status } : {};
 
   const drives = await Drive.find(filter)
-    .select('company role package location driveDate status shortlist requirements')
+    .select('company role package location driveDate applicationDeadline status shortlist requirements nextAction nextActionDueAt ownedBy')
     .sort({ driveDate: -1, createdAt: -1 })
     .lean({ virtuals: true });
 
@@ -26,11 +27,14 @@ export const listDrives = asyncHandler(async (req, res) => {
 });
 
 export const createDrive = asyncHandler(async (req, res) => {
+  const parsedRequirements = parseJobDescription(req.body.description);
   const drive = await Drive.create({
     ...req.body,
-    requirements: parseJobDescription(req.body.description),
+    requirements: { ...parsedRequirements, ...(req.body.requirements ?? {}) },
     createdBy: req.user._id,
+    ownedBy: req.user._id,
   });
+  await recordAudit({ actor: req.user._id, action: 'drive.created', entityType: 'drive', entityId: drive._id, summary: `Created ${drive.company} — ${drive.role}`, metadata: { status: drive.status, driveDate: drive.driveDate } });
 
   res.status(201).json({ success: true, data: { drive } });
 });
@@ -91,7 +95,7 @@ export const getDrive = asyncHandler(async (req, res) => {
  * time — and idempotent, so re-running a selection does not duplicate rows.
  */
 export const addToShortlist = asyncHandler(async (req, res) => {
-  const { studentIds } = req.body;
+  const { studentIds, stage = 'shortlisted' } = req.body;
 
   const drive = await Drive.findById(req.params.driveId);
   if (!drive) throw new ApiError(404, 'Drive not found.');
@@ -110,9 +114,12 @@ export const addToShortlist = asyncHandler(async (req, res) => {
       ...toAdd.map((student) => ({
         student,
         matchAtShortlist: scoreById.get(String(student)) ?? null,
+        stage,
+        stageHistory: [{ from: '', to: stage, changedBy: req.user._id, note: 'Added to drive pipeline' }],
       })),
     );
     await drive.save();
+    await recordAudit({ actor: req.user._id, action: 'drive.shortlist.updated', entityType: 'drive', entityId: drive._id, summary: `Added ${toAdd.length} candidate${toAdd.length === 1 ? '' : 's'} to ${drive.company} — ${drive.role}`, metadata: { added: toAdd } });
   }
 
   res.json({
@@ -129,6 +136,7 @@ export const removeFromShortlist = asyncHandler(async (req, res) => {
     (entry) => String(entry.student) !== String(req.params.studentId),
   );
   await drive.save();
+  await recordAudit({ actor: req.user._id, action: 'drive.shortlist.removed', entityType: 'drive', entityId: drive._id, summary: `Removed a candidate from ${drive.company} — ${drive.role}`, metadata: { student: req.params.studentId } });
 
   res.json({ success: true, data: { shortlistCount: drive.shortlist.length } });
 });
@@ -145,16 +153,52 @@ export const updateShortlistEntry = asyncHandler(async (req, res) => {
   );
   if (!entry) throw new ApiError(404, 'That student is not on this shortlist.');
 
-  if (stage) entry.stage = stage;
+  if (stage && stage !== entry.stage) {
+    entry.stageHistory.push({ from: entry.stage, to: stage, changedBy: req.user._id, note: notes || '' });
+    entry.stage = stage;
+  }
   if (notes !== undefined) entry.notes = notes;
   await drive.save();
+  await recordAudit({ actor: req.user._id, action: 'drive.candidate-stage.updated', entityType: 'drive', entityId: drive._id, summary: `Moved a candidate to ${entry.stage} for ${drive.company} — ${drive.role}`, metadata: { student: req.params.studentId, stage: entry.stage } });
 
   res.json({ success: true, data: { entry } });
 });
 
+/** Moves a filtered candidate set in one audited operation. */
+export const bulkUpdateCandidateStage = asyncHandler(async (req, res) => {
+  const { studentIds, stage, note = '' } = req.body;
+  const drive = await Drive.findById(req.params.driveId);
+  if (!drive) throw new ApiError(404, 'Drive not found.');
+
+  const wanted = new Set(studentIds.map(String));
+  let updated = 0;
+  for (const entry of drive.shortlist) {
+    if (!wanted.has(String(entry.student)) || entry.stage === stage) continue;
+    entry.stageHistory.push({ from: entry.stage, to: stage, changedBy: req.user._id, note });
+    entry.stage = stage;
+    if (note) entry.notes = note;
+    updated += 1;
+  }
+
+  if (!updated) throw new ApiError(400, 'None of those students are available for this stage change.');
+  await drive.save();
+  await recordAudit({
+    actor: req.user._id,
+    action: 'drive.candidate-stage.bulk-updated',
+    entityType: 'drive',
+    entityId: drive._id,
+    summary: `Moved ${updated} candidates to ${stage} for ${drive.company} — ${drive.role}`,
+    metadata: { students: studentIds, stage, note },
+  });
+
+  res.json({ success: true, data: { updated, stage } });
+});
+
 export const updateDrive = asyncHandler(async (req, res) => {
   const update = { ...req.body };
-  if (req.body.description) update.requirements = parseJobDescription(req.body.description);
+  if (req.body.description) {
+    update.requirements = { ...parseJobDescription(req.body.description), ...(req.body.requirements ?? {}) };
+  }
 
   const drive = await Drive.findByIdAndUpdate(req.params.driveId, update, {
     new: true,
@@ -162,6 +206,7 @@ export const updateDrive = asyncHandler(async (req, res) => {
   });
 
   if (!drive) throw new ApiError(404, 'Drive not found.');
+  await recordAudit({ actor: req.user._id, action: 'drive.updated', entityType: 'drive', entityId: drive._id, summary: `Updated ${drive.company} — ${drive.role}`, metadata: req.body });
   res.json({ success: true, data: { drive } });
 });
 

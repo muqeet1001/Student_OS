@@ -3,10 +3,11 @@ import { EmptyBlock, ErrorBlock, LoadingBlock } from '../../components/StateBloc
 import { api } from '../../lib/api.js';
 import { useApiResource } from '../../hooks/useApiResource.js';
 
-const LABELS = { profile: 'Career profile', resume: 'Resume', interview: 'Interview answer', project: 'Project description' };
+const LABELS = { profile: 'Career profile', resume: 'Resume', interview: 'Interview answer', project: 'Project description', readiness: 'Readiness evidence' };
 
-export default function ReviewQueue() {
-  const { data, loading, error, refetch } = useApiResource('/reviews/queue');
+export default function ReviewQueue({ graduationYear = '' }) {
+  const suffix = graduationYear ? `?graduationYear=${graduationYear}` : '';
+  const { data, loading, error, refetch } = useApiResource(`/reviews/queue${suffix}`);
   async function review(item) {
     const feedback = window.prompt(`Actionable feedback for ${item.student?.name}`, 'The strongest part is… The one change I recommend is…');
     if (!feedback?.trim()) return;

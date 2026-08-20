@@ -64,7 +64,7 @@ export const listDocuments = asyncHandler(async (req, res) => {
 export const uploadDocument = asyncHandler(async (req, res) => {
   if (!req.file) throw new ApiError(400, 'No file was uploaded.');
 
-  const { kind, title } = req.body;
+  const { kind, title, expiresAt } = req.body;
 
   /*
    * A student uploads for themselves. Staff may upload on a student's
@@ -102,6 +102,7 @@ export const uploadDocument = asyncHandler(async (req, res) => {
       contentType: req.file.detectedMime,
       size: stored.size,
       checksum: stored.checksum,
+      expiresAt: expiresAt ?? null,
     });
   } catch (error) {
     await deleteFile(stored.fileId);

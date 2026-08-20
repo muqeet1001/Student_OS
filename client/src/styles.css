@@ -210,6 +210,55 @@
    Components
    -------------------------------------------------------------------------- */
 
+.auth-frame {
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 24px 80px rgba(69, 39, 21, 0.13);
+}
+
+.auth-showcase-video {
+  filter: saturate(0.55) contrast(1.08) brightness(0.82);
+  transform: scale(1.015);
+}
+
+.auth-showcase-wash {
+  background:
+    linear-gradient(180deg, rgba(66, 20, 4, 0.2) 0%, rgba(142, 39, 4, 0.22) 42%, rgba(116, 31, 3, 0.78) 100%),
+    linear-gradient(105deg, rgba(234, 88, 12, 0.74) 0%, rgba(234, 88, 12, 0.25) 58%, rgba(255, 255, 255, 0.06) 100%);
+  background-blend-mode: multiply, normal;
+}
+
+.auth-showcase-grain {
+  background-image:
+    repeating-linear-gradient(47deg, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(133deg, rgba(0, 0, 0, 0.09) 0 1px, transparent 1px 5px);
+  background-size: 5px 5px, 7px 7px;
+}
+
+.student-loader-bar {
+  animation: student-loader-sweep 1.35s cubic-bezier(0.65, 0, 0.35, 1) infinite alternate;
+}
+
+@keyframes student-loader-sweep {
+  from {
+    transform: translateX(-12%);
+  }
+  to {
+    transform: translateX(162%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-showcase-video {
+    display: none;
+  }
+
+  .student-loader-bar {
+    animation: none;
+    transform: translateX(75%);
+  }
+}
+
 /*
  * Material Symbols renders its glyphs from ligature text, so until the font
  * is confirmed loaded every icon would show as a raw word ("arrow_forward").

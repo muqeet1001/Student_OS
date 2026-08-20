@@ -18,6 +18,7 @@ const shortDate = (value) =>
 function UploadForm({ kinds, onUploaded, onCancel }) {
   const [kind, setKind] = useState(kinds[0]?.key ?? 'other');
   const [title, setTitle] = useState('');
+  const [expiresAt, setExpiresAt] = useState('');
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef(null);
 
@@ -33,6 +34,7 @@ function UploadForm({ kinds, onUploaded, onCancel }) {
       body.append('file', file);
       body.append('kind', kind);
       if (title) body.append('title', title);
+      if (expiresAt) body.append('expiresAt', expiresAt);
 
       await api.post('/documents', body);
       onUploaded();
@@ -54,7 +56,17 @@ function UploadForm({ kinds, onUploaded, onCancel }) {
     >
       <h3 className="font-headline text-base font-bold">Upload a document</h3>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+        <label className="space-y-1">
+          <span className={label}>Expires (optional)</span>
+          <input
+            value={expiresAt}
+            onChange={(event) => setExpiresAt(event.target.value)}
+            type="date"
+            className={field}
+          />
+        </label>
+
         <label className="space-y-1">
           <span className={label}>Type</span>
           <select

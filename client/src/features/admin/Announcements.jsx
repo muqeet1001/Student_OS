@@ -17,9 +17,9 @@ const shortDate = (value) =>
  * wrong group cannot be undone, so the officer sees the count and a few real
  * names before the button that commits.
  */
-function Composer({ audienceTypes, filters, onSent, onCancel }) {
+function Composer({ audienceTypes, filters, onSent, onCancel, defaultYear }) {
   const [form, setForm] = useState({ subject: '', body: '' });
-  const [audience, setAudience] = useState({ type: 'all' });
+  const [audience, setAudience] = useState(defaultYear ? { type: 'year', graduationYear: defaultYear } : { type: 'all' });
   const [preview, setPreview] = useState(null);
   const [busy, setBusy] = useState(false);
 
@@ -207,7 +207,7 @@ function Composer({ audienceTypes, filters, onSent, onCancel }) {
 }
 
 /** Announcements the office has sent, and what happened to them. */
-export default function Announcements() {
+export default function Announcements({ graduationYear = '' }) {
   const { data, loading, error, refetch } = useApiResource('/announcements');
   const { data: filters } = useApiResource('/admin/students/filters');
   const [composing, setComposing] = useState(false);
@@ -235,6 +235,7 @@ export default function Announcements() {
         <Composer
           audienceTypes={audienceTypes}
           filters={filters}
+          defaultYear={graduationYear}
           onSent={() => {
             setComposing(false);
             refetch({ quiet: true });

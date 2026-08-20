@@ -39,8 +39,14 @@ function ReadinessSimulator({ readiness }) {
 
 function AlumniNetwork({ data }) {
   const alumni = data?.alumni ?? [];
+  async function request(person) {
+    const topic = window.prompt(`What would you like to discuss with ${person.name}?`, 'Preparing for my first placement interview');
+    if (!topic?.trim()) return;
+    try { await api.post('/journey/mentoring', { mentor: person.userId, mentorName: person.name, topic: topic.trim() }); window.alert('Mentoring request sent to the placement office for scheduling.'); }
+    catch (error) { window.alert(error.message || 'Could not request mentoring.'); }
+  }
   if (!alumni.length) return <div className="rounded-xl bg-surface-container-low p-5"><h3 className="font-bold">No alumni are currently open to referrals</h3><p className="text-sm text-on-surface-variant mt-1">Profiles appear only when placed alumni explicitly publish their profile and opt in to referrals.</p></div>;
-  return <div className="grid md:grid-cols-2 gap-3">{alumni.map((person) => <article key={person.userId} className="rounded-xl bg-surface-container-low p-5"><p className="text-xs font-bold uppercase tracking-wider text-primary">{person.company}</p><h3 className="font-headline text-lg font-black mt-1">{person.name}</h3><p className="text-sm text-on-surface-variant">{person.role} · {person.branch}</p><div className="flex flex-wrap gap-1 mt-3">{person.skills.map((skill) => <span key={skill} className="px-2 py-1 rounded-full bg-green-100 text-green-800 text-[10px] font-bold">{skill}</span>)}</div><div className="flex gap-3 mt-4"><Link to={`/public/${person.userId}`} className="text-sm font-bold text-primary">View profile</Link>{person.linkedin && <a href={person.linkedin} target="_blank" rel="noreferrer" className="text-sm font-bold">LinkedIn</a>}</div></article>)}</div>;
+  return <div className="grid md:grid-cols-2 gap-3">{alumni.map((person) => <article key={person.userId} className="rounded-xl bg-surface-container-low p-5"><p className="text-xs font-bold uppercase tracking-wider text-primary">{person.company}</p><h3 className="font-headline text-lg font-black mt-1">{person.name}</h3><p className="text-sm text-on-surface-variant">{person.role} · {person.branch}</p><div className="flex flex-wrap gap-1 mt-3">{person.skills.map((skill) => <span key={skill} className="px-2 py-1 rounded-full bg-green-100 text-green-800 text-[10px] font-bold">{skill}</span>)}</div><div className="flex flex-wrap gap-3 mt-4"><Link to={`/public/${person.userId}`} className="text-sm font-bold text-primary">View profile</Link>{person.linkedin && <a href={person.linkedin} target="_blank" rel="noreferrer" className="text-sm font-bold">LinkedIn</a>}<button type="button" onClick={() => request(person)} className="text-sm font-bold text-primary">Request mentoring</button></div></article>)}</div>;
 }
 
 export default function CareerLab() {

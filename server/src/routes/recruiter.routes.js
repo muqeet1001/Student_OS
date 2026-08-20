@@ -12,6 +12,10 @@ import {
 } from '../validators/recruiter.validators.js';
 
 export const recruiterRoutes = Router();
+export const recruiterPortalRoutes = Router();
+
+recruiterPortalRoutes.get('/:token', recruiters.viewPortal);
+recruiterPortalRoutes.post('/:token', validate(feedbackSchema), recruiters.submitPortalFeedback);
 
 // The whole CRM — contacts, private notes, recruiter opinions of the cohort —
 // is staff only. None of it is meant for students.
@@ -27,6 +31,7 @@ recruiterRoutes.patch(
   recruiters.updateRecruiter,
 );
 recruiterRoutes.delete('/:recruiterId', recruiters.deleteRecruiter);
+recruiterRoutes.post('/:recruiterId/portal-invite', recruiters.createPortalInvite);
 
 recruiterRoutes.post(
   '/:recruiterId/contacts',

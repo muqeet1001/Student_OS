@@ -29,7 +29,6 @@ export default function Login() {
 
     try {
       const signedInUser = await login(form);
-      // Send the visitor back to whatever they were trying to reach.
       const target =
         location.state?.from?.pathname || (signedInUser.role === 'admin' ? '/admin' : '/dashboard');
       navigate(target, { replace: true });
@@ -46,53 +45,46 @@ export default function Login() {
   }
 
   return (
-    <div className="bg-surface text-on-surface selection:bg-primary-container selection:text-on-primary-container min-h-dvh flex items-center justify-center">
-      <div className="flex w-full min-h-dvh overflow-hidden">
+    <div className="auth-page min-h-dvh bg-[#f2eee8] p-0 text-on-surface sm:p-3 lg:p-4">
+      <div className="auth-frame mx-auto flex min-h-dvh w-full max-w-[154rem] flex-col overflow-hidden bg-white sm:min-h-[calc(100dvh-1.5rem)] sm:rounded-[2rem] lg:min-h-[calc(100dvh-2rem)] lg:flex-row">
         <AuthShowcase />
 
-        <main className="w-full lg:w-1/2 flex items-center justify-center p-6 bg-surface-container-lowest">
-          <div className="w-full max-w-md">
-            <header className="mb-4 lg:hidden">
-              <div className="flex items-center gap-2 mb-4">
-                <span className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-on-primary">
-                  <span
-                    className="material-symbols-outlined text-sm"
-                    style={{ fontVariationSettings: '"FILL" 1' }}
-                  >
-                    rocket_launch
-                  </span>
-                </span>
-                <span className="text-xl font-black tracking-tighter text-on-surface font-headline">
-                  Student OS
-                </span>
-              </div>
-            </header>
+        <main className="relative flex w-full flex-1 items-center justify-center bg-white px-6 py-10 sm:px-10 lg:w-[46%] lg:px-12 xl:px-16">
+          <span className="absolute right-7 top-7 hidden font-mono text-[0.65rem] font-bold uppercase tracking-[0.2em] text-outline lg:block">
+            01 / Access
+          </span>
 
-            <div className="mb-4">
-              <h2 className="text-2xl font-extrabold text-on-surface tracking-tight mb-1.5">Welcome Back</h2>
-              <p className="text-on-surface-variant font-medium">
-                Enter your credentials to access your workspace.
+          <div className="w-full max-w-[35rem]">
+            <div className="mb-8">
+              <p className="mb-3 text-[0.7rem] font-extrabold uppercase tracking-[0.24em] text-primary">
+                Your workspace is ready
+              </p>
+              <h2 className="font-headline text-4xl font-black leading-none tracking-[-0.055em] text-on-surface sm:text-5xl">
+                Welcome back<span className="text-primary">.</span>
+              </h2>
+              <p className="mt-4 max-w-[30rem] text-sm font-medium leading-relaxed text-on-surface-variant sm:text-base">
+                Sign in to keep building momentum toward your next opportunity.
               </p>
             </div>
 
-            <form className="space-y-4" onSubmit={handleSubmit} noValidate>
+            <form className="space-y-5" onSubmit={handleSubmit} noValidate>
               {formError && (
                 <div
                   role="alert"
-                  className="flex items-start gap-3 p-4 rounded-lg bg-error-container/15 border border-error/20"
+                  className="flex items-start gap-3 rounded-xl border border-error/20 bg-error-container/20 p-4"
                 >
-                  <span className="material-symbols-outlined text-error text-xl">error</span>
+                  <span className="material-symbols-outlined text-xl text-error">error</span>
                   <p className="text-sm font-bold text-on-error-container">{formError}</p>
                 </div>
               )}
 
               <FormField
-                label="Email Address"
+                label="Email address"
                 name="email"
                 type="email"
                 icon="alternate_email"
                 autoComplete="email"
-                placeholder="hello@studentos.com"
+                placeholder="you@college.edu"
                 required
                 value={form.email}
                 onChange={update('email')}
@@ -104,54 +96,63 @@ export default function Login() {
                 name="password"
                 type="password"
                 autoComplete="current-password"
-                placeholder="••••••••"
+                placeholder="Enter your password"
                 required
                 value={form.password}
                 onChange={update('password')}
                 error={fieldErrors.password}
               />
 
-              <div className="pt-1 space-y-4">
-                <button
-                  type="submit"
-                  disabled={submitting}
-                  className="w-full bg-primary-container text-on-primary-container font-bold py-3 px-5 rounded-full text-base shadow-[0_1px_2px_rgba(0,0,0,0.06)] hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed disabled:hover:scale-100"
-                >
-                  {submitting ? 'Signing in…' : 'Enter Workspace'}
-                  <span className="material-symbols-outlined">
-                    {submitting ? 'progress_activity' : 'arrow_forward'}
-                  </span>
-                </button>
+              <label className="flex w-fit cursor-pointer items-center gap-3 text-sm font-semibold text-on-surface-variant">
+                <input
+                  type="checkbox"
+                  name="remember"
+                  className="h-4 w-4 rounded border-outline-variant accent-primary"
+                />
+                Keep me signed in on this device
+              </label>
 
-                <div className="relative flex items-center py-2">
-                  <div className="flex-grow border-t border-surface-container-highest" />
-                  <span className="flex-shrink mx-4 text-outline text-xs font-bold uppercase tracking-widest">
-                    New here?
-                  </span>
-                  <div className="flex-grow border-t border-surface-container-highest" />
-                </div>
-
-                <Link
-                  to="/register"
-                  className="w-full flex items-center justify-center py-3 px-5 rounded-full border-2 border-outline-variant/30 text-on-surface font-bold hover:bg-surface-container transition-colors group"
+              <button
+                type="submit"
+                disabled={submitting}
+                className="group flex w-full items-center justify-between rounded-xl bg-primary px-5 py-4 text-base font-extrabold text-white shadow-[0_12px_30px_rgba(217,74,18,0.22)] transition-all hover:-translate-y-0.5 hover:bg-primary-dim hover:shadow-[0_16px_36px_rgba(217,74,18,0.28)] active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <span>{submitting ? 'Opening workspace…' : 'Enter workspace'}</span>
+                <span
+                  className={`material-symbols-outlined transition-transform ${
+                    submitting ? 'animate-spin' : 'group-hover:translate-x-1'
+                  }`}
                 >
-                  Create Account
-                  <span className="material-symbols-outlined ml-2 group-hover:translate-x-1 transition-transform">
-                    person_add
-                  </span>
-                </Link>
-              </div>
+                  {submitting ? 'progress_activity' : 'arrow_forward'}
+                </span>
+              </button>
             </form>
 
-            <footer className="mt-8 text-center">
-              <p className="text-on-surface-variant text-sm font-medium">
-                By continuing, you agree to our{' '}
-                <a className="underline text-on-surface hover:text-primary transition-colors" href="#terms">
-                  Terms of Service
-                </a>
-                .
-              </p>
-            </footer>
+            <div className="my-7 flex items-center gap-4">
+              <div className="h-px flex-1 bg-outline-variant/70" />
+              <span className="text-[0.65rem] font-extrabold uppercase tracking-[0.2em] text-outline">
+                New to Student OS?
+              </span>
+              <div className="h-px flex-1 bg-outline-variant/70" />
+            </div>
+
+            <Link
+              to="/register"
+              className="group flex w-full items-center justify-between rounded-xl border border-outline-variant bg-white px-5 py-4 text-base font-extrabold text-on-surface transition-all hover:border-primary/40 hover:bg-[#fff8f4]"
+            >
+              <span>Create your account</span>
+              <span className="material-symbols-outlined text-primary transition-transform group-hover:rotate-12">
+                person_add
+              </span>
+            </Link>
+
+            <p className="mt-7 text-center text-xs font-medium leading-relaxed text-outline">
+              By continuing, you agree to our{' '}
+              <a className="underline decoration-outline-variant underline-offset-4 hover:text-primary" href="#terms">
+                Terms of Service
+              </a>
+              .
+            </p>
           </div>
         </main>
       </div>

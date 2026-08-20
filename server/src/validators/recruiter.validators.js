@@ -13,6 +13,8 @@ export const createRecruiterSchema = z.object({
   status: z.enum(['prospect', 'active', 'dormant', 'lost']).default('prospect'),
   typicalCtc: z.coerce.number().min(0).max(100_000_000).optional(),
   notes: z.string().max(4000).optional(),
+  nextAction: z.string().trim().max(300).optional(),
+  nextFollowUpAt: z.coerce.date().nullable().optional(),
 });
 
 export const updateRecruiterSchema = createRecruiterSchema.partial();

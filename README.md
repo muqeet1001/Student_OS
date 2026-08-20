@@ -70,7 +70,7 @@ both fail this. Bind-mount a real one:
 | `npm run dev` | Client and API together, both with hot reload |
 | `npm run build` | Production client build into `client/dist` |
 | `npm start` | Production API, which also serves the built client |
-| `npm test` | 470 tests — judge sandbox, interview scoring, seed integrity, production serving |
+| `npm test` | Unit and real-database integration suites — judge sandbox, journey authorization, interview scoring, seed integrity, production serving |
 | `npm run seed` | Upsert reference data (safe to re-run) |
 | `npm run seed:demo` | Also create the demo account and a full demo placement office |
 | `npm run seed:fresh` | Wipe reference data first (leaves student data alone) |
@@ -176,19 +176,24 @@ the maps to it rather than serving them.
 - **AI mock interview** — scored on relevance, structure, specificity and delivery, with feedback that names what to fix
 - **Resume builder** — generated from the profile, transparent ATS score, print to PDF, saved versions frozen at save time
 - **Dashboard** — one weighted readiness score and what to do next
+- **Guided onboarding** — role, graduation context, placement timeline, weekly commitment and consent are captured before recommendations begin; the first score becomes a baseline
+- **Transparent readiness** — an evidence ledger names every input, formula version and update time, with a review path when the evidence is wrong and privacy-safe cohort benchmarks for context
 - **Roadmap** — a four-week plan whose items complete themselves from evidence, never from a checkbox
 - **Achievements** — tiered badges and levels derived from work already recorded elsewhere
 - **Calendar** — drives, tests and interviews, showing *your* slot time rather than the event's, with clashes flagged
-- **Applications** — saved and applied roles live with opportunities, with stage tracking from application through offer
+- **Applications** — saved and applied roles live with opportunities, with a frozen match snapshot, tailored resume version, contact, deadline and follow-up tracking from application through offer
 - **Human review** — students can request focused profile, resume or project feedback and receive the placement officer's response in the same workspace
 - **Career Lab** — a job skill-gap simulator, evidence-grounded AI career mentor, live GitHub repository analyzer, placement-readiness simulator, and opt-in alumni/referral network
 - **Public profiles** — students explicitly choose whether to publish their verified skills, projects, education and accomplishments; phone and email remain private, and referral discovery requires a second opt-in
 - **Progress analytics** — 90-day readiness, coding, verified-skill, ATS and interview trends are shown together in My Plan
 - **Settings** — notification categories, signed-in devices, and help
+- **Action centre** — deadlines, personal and staff tasks, application follow-ups, calendar events, expiring documents and placement-office messages share one chronological workspace with `.ics` export
+- **Mentoring and consent** — students can request an alumni mentor, select language and reminder channels, and inspect or revoke consent without support intervention
 
 **For placement staff**
 
 - **Action queue** — students are prioritised by concrete intervention signals such as no applications, incomplete profiles, repeated assessment failures, no interview practice or unverified skills
+- **Journey operations** — staff assign owned actions, schedule mentoring requests and configure institution name, readiness weights, local skill taxonomy, languages and integration capabilities
 - **Review queue** — focused student requests can be answered and closed without moving the conversation to email
 - **Cohort view** — every student's readiness, filterable by branch, graduation year and risk band, with a per-student drill-down
 - **Job matcher** — paste a JD, get a ranked shortlist with the reason for every score
@@ -197,6 +202,7 @@ the maps to it rather than serving them.
 - **Placement calendar** — interview slots generated across parallel panels, with cross-event double-bookings surfaced
 - **QR attendance** — rotating check-in codes for events and training sessions
 - **Company CRM** — contacts, visit history derived from drives, and recruiter feedback aggregated into fundable themes
+- **Recruiter feedback portal** — expiring one-use links collect structured external feedback without giving recruiters access to student or staff accounts
 - **Training** — sessions, attendance, and effectiveness measured against a comparison group rather than against nothing
 - **Insights** — cohort-wide gaps turned into training recommendations that name a headcount
 
@@ -211,7 +217,7 @@ client/                 React 19 + Vite + Tailwind v4
   src/context/          AuthContext — access token in memory, refresh in cookie
 
 server/                 Express + Mongoose
-  src/models/           28 collections — see docs/database.md
+  src/models/           33 collections — see docs/database.md
   src/controllers/      Route handlers
   src/services/         codeRunner (VM sandbox), answerAnalyzer, atsScore,
                         streak, notifications, token

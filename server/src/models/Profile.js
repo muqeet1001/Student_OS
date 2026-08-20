@@ -81,8 +81,10 @@ const profileSchema = new mongoose.Schema(
     headline: { type: String, default: '', maxlength: 160 },
     bio: { type: String, default: '', maxlength: 1000 },
     phone: { type: String, default: '', maxlength: 32 },
+    externalStudentId: { type: String, default: '', trim: true, maxlength: 80 },
     location: { type: String, default: '', maxlength: 120 },
     graduationYear: { type: Number, min: 1950, max: 2100 },
+    cgpa: { type: Number, min: 0, max: 10, default: null },
     branch: { type: String, default: '', maxlength: 120 },
     track: {
       type: String,
@@ -117,6 +119,16 @@ const profileSchema = new mongoose.Schema(
     experience: { type: [experienceSchema], default: [] },
   },
   { timestamps: true },
+);
+
+profileSchema.index(
+  { externalStudentId: 1 },
+  // `$ne` is not supported in Atlas partial indexes (it is normalised to
+  // `$not: {$eq: ...}`), which made model initialisation fail and prevented
+  // every real-database integration suite from running. Student IDs are
+  // trimmed and non-empty, so `$gt: ''` selects exactly the values that must
+  // be unique while allowing any number of profiles without an assigned ID.
+  { unique: true, partialFilterExpression: { externalStudentId: { $gt: '' } } },
 );
 
 /** Returns the caller's profile, creating an empty one on first access. */

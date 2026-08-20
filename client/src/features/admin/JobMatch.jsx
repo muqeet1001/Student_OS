@@ -125,7 +125,7 @@ function CandidateRow({ student, rank }) {
  * The parsed requirements are shown back so staff can see what was
  * understood — a silent mis-parse would quietly produce the wrong shortlist.
  */
-export default function JobMatch() {
+export default function JobMatch({ graduationYear = '' }) {
   const [description, setDescription] = useState('');
   const [limit, setLimit] = useState(10);
   const [result, setResult] = useState(null);
@@ -138,7 +138,7 @@ export default function JobMatch() {
     setError(null);
 
     try {
-      setResult(await api.post('/admin/match', { description, limit }));
+      setResult(await api.post('/admin/match', { description, limit, ...(graduationYear && { graduationYear }) }));
     } catch (caught) {
       setError(caught);
     } finally {

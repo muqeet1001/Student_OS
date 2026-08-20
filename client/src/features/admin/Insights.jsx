@@ -27,8 +27,9 @@ function Metric({ value, label, sub }) {
  * Structured around the decision an officer actually has to make — which
  * training to run — rather than around the data that happens to exist.
  */
-export default function Insights() {
-  const { data, loading, error, refetch } = useApiResource('/admin/analytics');
+export default function Insights({ graduationYear = '' }) {
+  const suffix = graduationYear ? `?graduationYear=${graduationYear}` : '';
+  const { data, loading, error, refetch } = useApiResource(`/admin/analytics${suffix}`);
 
   if (loading && !data) return <LoadingBlock label="Analysing cohort" />;
   if (error) return <ErrorBlock error={error} onRetry={refetch} />;
@@ -61,7 +62,7 @@ export default function Insights() {
       </div>
 
       {/* What to run — the actionable half of the page. */}
-      <PlacementInsight />
+      <PlacementInsight graduationYear={graduationYear} />
 
       {recommendations.length > 0 && (
         <section className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-5">
