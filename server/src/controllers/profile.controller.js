@@ -3,6 +3,7 @@ import { User } from '../models/User.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { publicUrlFor, removeUpload } from '../middleware/upload.js';
+import { storeFile } from '../services/fileStore.js';
 
 function serialize(profile) {
   return { ...profile.toJSON(), completeness: profile.completeness() };
@@ -25,15 +26,11 @@ export const updateMyProfile = asyncHandler(async (req, res) => {
   // `links` is a nested path, so merge field by field to keep any link the
   // client did not send.
   if (links) {
-    for (const [key, value] of Object.entries(links)) {
-      profile.links[key] = value;
-    }
+    profile.links = { ...profile.links, ...links };
   }
 
   if (publicProfile) {
-    for (const [key, value] of Object.entries(publicProfile)) {
-      profile.publicProfile[key] = value;
-    }
+    profile.publicProfile = { ...profile.publicProfile, ...publicProfile };
     if (!profile.publicProfile.enabled) profile.publicProfile.openToReferrals = false;
   }
 
@@ -52,10 +49,17 @@ export const updateMyAccount = asyncHandler(async (req, res) => {
 export const uploadMyAvatar = asyncHandler(async (req, res) => {
   if (!req.file) throw ApiError.badRequest('No image was uploaded');
 
+  const { fileId } = await storeFile({
+    buffer: req.file.buffer,
+    filename: req.file.originalname || 'avatar.png',
+    contentType: req.file.mimetype,
+    metadata: { userId: req.user._id, kind: 'avatar' },
+  });
+
   const user = await User.findById(req.user._id);
   const previous = user.avatarUrl;
 
-  user.avatarUrl = publicUrlFor('avatars', req.file.filename);
+  user.avatarUrl = publicUrlFor(fileId);
   await user.save({ validateBeforeSave: false });
 
   // Only discard the old file once the new one is safely recorded.
@@ -119,8 +123,15 @@ export const uploadCertificateFile = asyncHandler(async (req, res) => {
   const item = profile.certifications.id(req.params.itemId);
   if (!item) throw ApiError.notFound('That certification does not exist');
 
+  const { fileId } = await storeFile({
+    buffer: req.file.buffer,
+    filename: req.file.originalname || 'certificate.pdf',
+    contentType: req.file.mimetype,
+    metadata: { userId: req.user._id, certificationId: item._id, kind: 'certificate' },
+  });
+
   const previous = item.fileUrl;
-  item.fileUrl = publicUrlFor('certificates', req.file.filename);
+  item.fileUrl = publicUrlFor(fileId);
   await profile.save();
   removeUpload(previous);
 

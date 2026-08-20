@@ -21,10 +21,12 @@ import { resumeRoutes } from './resume.routes.js';
 import { testRoutes } from './test.routes.js';
 import { reviewRoutes } from './review.routes.js';
 import { careerRoutes } from './career.routes.js';
+import { mediaRoutes } from './media.routes.js';
 
 export const routes = Router();
 
 routes.use('/auth', authRoutes);
+routes.use('/media', mediaRoutes);
 routes.use('/profile', profileRoutes);
 routes.use('/problems', problemRoutes);
 routes.use('/questions', questionRoutes);

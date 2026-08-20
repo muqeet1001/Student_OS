@@ -28,9 +28,14 @@ export function verifyRefreshToken(token) {
   return jwt.verify(token, config.jwt.refreshSecret);
 }
 
-/** Refresh tokens are persisted as SHA-256 hashes, never in plaintext. */
+/** Refresh tokens and one-time verification/reset tokens are persisted as SHA-256 hashes, never in plaintext. */
 export function hashToken(token) {
-  return crypto.createHash('sha256').update(token).digest('hex');
+  return crypto.createHash('sha256').update(String(token)).digest('hex');
+}
+
+/** Generates a cryptographically secure random hex token for one-time verification or password reset links. */
+export function generateRandomToken(bytes = 32) {
+  return crypto.randomBytes(bytes).toString('hex');
 }
 
 export function refreshCookieOptions() {

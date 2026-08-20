@@ -116,6 +116,40 @@ export async function sendBulkEmail({ recipients, subject, text, html }) {
   return results;
 }
 
+/**
+ * Sends a single transactional email (e.g., verification or password reset).
+ * Never throws — logs gracefully and returns status.
+ */
+export async function sendEmail({ to, subject, text, html }) {
+  const status = mailerStatus();
+
+  if (!status.available) {
+    logger.info(`[Mailer] (SMTP unavailable - email skipped) To: ${to} | Subject: ${subject}`);
+    return { sent: false, status: 'skipped', reason: status.reason };
+  }
+
+  const mailer = await getTransport();
+  if (!mailer) {
+    logger.warn(`[Mailer] Transport unavailable. To: ${to} | Subject: ${subject}`);
+    return { sent: false, status: 'skipped', reason: mailerStatus().reason };
+  }
+
+  try {
+    await mailer.sendMail({
+      from: config.smtp.from,
+      to,
+      subject,
+      text,
+      html,
+    });
+    logger.info(`[Mailer] Sent email to ${to} | Subject: ${subject}`);
+    return { sent: true, status: 'sent' };
+  } catch (error) {
+    logger.error(`[Mailer] Failed to send email to ${to}:`, error.message);
+    return { sent: false, status: 'failed', error: error.message };
+  }
+}
+
 /** Counts a delivery report into the three states that matter. */
 export function summariseDelivery(results) {
   const count = (status) => results.filter((result) => result.status === status).length;

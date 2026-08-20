@@ -46,6 +46,11 @@ const userSchema = new mongoose.Schema(
     avatarUrl: { type: String, default: '' },
     headline: { type: String, default: '', maxlength: 120 },
     isActive: { type: Boolean, default: true },
+    isVerified: { type: Boolean, default: false },
+    emailVerificationTokenHash: { type: String, select: false },
+    emailVerificationExpiresAt: { type: Date, select: false },
+    passwordResetTokenHash: { type: String, select: false },
+    passwordResetExpiresAt: { type: Date, select: false },
     lastLoginAt: { type: Date },
     refreshTokens: { type: [refreshTokenSchema], default: [], select: false },
 
@@ -53,9 +58,6 @@ const userSchema = new mongoose.Schema(
      * Notification categories the student wants. Stored sparsely: a category
      * absent here is treated as on, so adding a new one does not require
      * backfilling every existing user.
-     *
-     * There are no email preferences because there is no email — offering a
-     * toggle that does nothing is worse than not offering it.
      */
     settings: {
       notifications: {
@@ -71,6 +73,10 @@ const userSchema = new mongoose.Schema(
       transform(_doc, ret) {
         delete ret.password;
         delete ret.refreshTokens;
+        delete ret.emailVerificationTokenHash;
+        delete ret.emailVerificationExpiresAt;
+        delete ret.passwordResetTokenHash;
+        delete ret.passwordResetExpiresAt;
         delete ret.__v;
         return ret;
       },

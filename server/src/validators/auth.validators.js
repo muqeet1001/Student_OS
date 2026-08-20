@@ -29,3 +29,23 @@ export const updateSettingsSchema = z.object({
   // unrecognised one is dropped rather than written to the document.
   notifications: z.record(z.string(), z.boolean()).default({}),
 });
+
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Please provide a valid email address'),
+});
+
+export const resetPasswordSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Please provide a valid email address'),
+  token: z.string().min(1, 'Reset token is required'),
+  newPassword: password,
+});
+
+export const verifyEmailSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Please provide a valid email address'),
+  token: z.string().min(1, 'Verification token is required'),
+});
+
+export const resendVerificationSchema = z.object({
+  email: z.string().trim().toLowerCase().email('Please provide a valid email address').optional(),
+});
+

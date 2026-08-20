@@ -99,3 +99,15 @@ export async function fileExists(fileId) {
     return false;
   }
 }
+
+export async function getFileInfo(fileId) {
+  try {
+    const files = await bucket()
+      .find({ _id: new mongoose.Types.ObjectId(String(fileId)) })
+      .limit(1)
+      .toArray();
+    return files[0] || null;
+  } catch {
+    return null;
+  }
+}

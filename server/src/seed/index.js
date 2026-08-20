@@ -212,6 +212,7 @@ async function seedDemoAdmin() {
     email,
     password: 'demo1234',
     role: 'admin',
+    isVerified: true,
   });
 
   logger.info(`Created demo admin — ${email} / demo1234`);
@@ -233,6 +234,7 @@ async function seedDemoUser() {
     email,
     password: 'demo1234',
     role: 'student',
+    isVerified: true,
   });
 
   await Profile.create({

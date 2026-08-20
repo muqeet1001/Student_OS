@@ -1,8 +1,10 @@
+import { config } from '../config/env.js';
 import { User } from '../models/User.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import {
   REFRESH_COOKIE,
+  generateRandomToken,
   hashToken,
   refreshCookieOptions,
   signAccessToken,
@@ -10,6 +12,7 @@ import {
   verifyRefreshToken,
 } from '../services/token.service.js';
 import { describeUserAgent } from '../services/userAgent.js';
+import { sendEmail } from '../services/mailer.js';
 import {
   NOTIFICATION_CATEGORIES,
   defaultPreferences,
@@ -61,15 +64,185 @@ export const register = asyncHandler(async (req, res) => {
     throw ApiError.conflict('An account with that email already exists');
   }
 
+  const verificationToken = generateRandomToken();
+  const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
   // Role is deliberately not taken from the request: self-service signup can
   // only ever create a student. Admins are seeded or promoted by an admin.
-  const user = await User.create({ name, email, password, role: 'student' });
+  const user = await User.create({
+    name,
+    email,
+    password,
+    role: 'student',
+    isVerified: false,
+    emailVerificationTokenHash: hashToken(verificationToken),
+    emailVerificationExpiresAt: verificationExpires,
+  });
+
   const accessToken = await issueSession(user, req, res);
+
+  const verifyUrl = `${config.clientUrl}/verify-email?token=${verificationToken}&email=${encodeURIComponent(user.email)}`;
+  await sendEmail({
+    to: user.email,
+    subject: 'Verify your Student OS account',
+    text: `Hello ${user.name},\n\nPlease verify your Student OS account by visiting this link:\n${verifyUrl}\n\nThis link is valid for 24 hours.\n\nStudent OS Team`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1e1e1e;">
+        <h2 style="color: #a83206;">Welcome to Student OS</h2>
+        <p>Hi ${user.name},</p>
+        <p>Thank you for joining Student OS. Please verify your email address to confirm your account.</p>
+        <p style="margin: 25px 0;">
+          <a href="${verifyUrl}" style="background-color: #a83206; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 9999px; font-weight: bold; display: inline-block;">
+            Verify Email Address
+          </a>
+        </p>
+        <p style="font-size: 13px; color: #666;">Or copy and paste this link into your browser:<br/><a href="${verifyUrl}" style="color: #a83206;">${verifyUrl}</a></p>
+        <p style="font-size: 12px; color: #999; margin-top: 30px;">This link will expire in 24 hours. If you didn't create this account, you can safely ignore this email.</p>
+      </div>
+    `,
+  });
 
   res.status(201).json({
     success: true,
     data: { user: user.toJSON(), accessToken },
   });
+});
+
+export const verifyEmail = asyncHandler(async (req, res) => {
+  const { email, token } = req.body;
+  const user = await User.findOne({ email }).select('+emailVerificationTokenHash +emailVerificationExpiresAt');
+
+  if (!user) {
+    throw ApiError.badRequest('Invalid or expired verification link');
+  }
+
+  if (user.isVerified) {
+    return res.json({ success: true, data: { message: 'Email is already verified', isVerified: true } });
+  }
+
+  const presentedHash = hashToken(token);
+  const isValid =
+    user.emailVerificationTokenHash === presentedHash &&
+    user.emailVerificationExpiresAt &&
+    user.emailVerificationExpiresAt > new Date();
+
+  if (!isValid) {
+    throw ApiError.badRequest('Invalid or expired verification link');
+  }
+
+  user.isVerified = true;
+  user.emailVerificationTokenHash = undefined;
+  user.emailVerificationExpiresAt = undefined;
+  await user.save({ validateBeforeSave: false });
+
+  res.json({ success: true, data: { message: 'Email verified successfully', isVerified: true } });
+});
+
+export const resendVerification = asyncHandler(async (req, res) => {
+  const email = req.user ? req.user.email : req.body.email;
+  if (!email) throw ApiError.badRequest('Email is required');
+
+  const user = await User.findOne({ email }).select('+emailVerificationTokenHash +emailVerificationExpiresAt');
+  if (!user) {
+    return res.json({ success: true, data: { message: 'If that account exists and is unverified, a new link has been sent.' } });
+  }
+
+  if (user.isVerified) {
+    return res.json({ success: true, data: { message: 'Email is already verified.' } });
+  }
+
+  const verificationToken = generateRandomToken();
+  user.emailVerificationTokenHash = hashToken(verificationToken);
+  user.emailVerificationExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  await user.save({ validateBeforeSave: false });
+
+  const verifyUrl = `${config.clientUrl}/verify-email?token=${verificationToken}&email=${encodeURIComponent(user.email)}`;
+  await sendEmail({
+    to: user.email,
+    subject: 'Verify your Student OS account',
+    text: `Hello ${user.name},\n\nPlease verify your Student OS account by visiting this link:\n${verifyUrl}\n\nThis link is valid for 24 hours.\n\nStudent OS Team`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1e1e1e;">
+        <h2 style="color: #a83206;">Verify Your Email Address</h2>
+        <p>Hi ${user.name},</p>
+        <p>You requested a new verification link for your Student OS account.</p>
+        <p style="margin: 25px 0;">
+          <a href="${verifyUrl}" style="background-color: #a83206; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 9999px; font-weight: bold; display: inline-block;">
+            Verify Email Address
+          </a>
+        </p>
+        <p style="font-size: 13px; color: #666;">Or copy and paste this link into your browser:<br/><a href="${verifyUrl}" style="color: #a83206;">${verifyUrl}</a></p>
+        <p style="font-size: 12px; color: #999; margin-top: 30px;">This link will expire in 24 hours.</p>
+      </div>
+    `,
+  });
+
+  res.json({ success: true, data: { message: 'Verification link sent.' } });
+});
+
+export const forgotPassword = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email }).select('+passwordResetTokenHash +passwordResetExpiresAt');
+
+  if (user && user.isActive) {
+    const resetToken = generateRandomToken();
+    user.passwordResetTokenHash = hashToken(resetToken);
+    user.passwordResetExpiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await user.save({ validateBeforeSave: false });
+
+    const resetUrl = `${config.clientUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(user.email)}`;
+    await sendEmail({
+      to: user.email,
+      subject: 'Reset your Student OS password',
+      text: `Hello ${user.name},\n\nYou requested a password reset for your Student OS account. Click the link below to set a new password:\n${resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you did not request this, you can safely ignore this email.\n\nStudent OS Team`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #1e1e1e;">
+          <h2 style="color: #a83206;">Password Reset Request</h2>
+          <p>Hi ${user.name},</p>
+          <p>We received a request to reset your Student OS password. Click the button below to choose a new password:</p>
+          <p style="margin: 25px 0;">
+            <a href="${resetUrl}" style="background-color: #a83206; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 9999px; font-weight: bold; display: inline-block;">
+              Reset Password
+            </a>
+          </p>
+          <p style="font-size: 13px; color: #666;">Or copy and paste this link into your browser:<br/><a href="${resetUrl}" style="color: #a83206;">${resetUrl}</a></p>
+          <p style="font-size: 12px; color: #999; margin-top: 30px;">This link will expire in 1 hour. If you didn't request a password reset, you can safely ignore this email.</p>
+        </div>
+      `,
+    });
+  }
+
+  res.json({
+    success: true,
+    data: { message: 'If an account with that email exists, password reset instructions have been sent.' },
+  });
+});
+
+export const resetPassword = asyncHandler(async (req, res) => {
+  const { email, token, newPassword } = req.body;
+  const user = await User.findOne({ email }).select('+password +refreshTokens +passwordResetTokenHash +passwordResetExpiresAt');
+
+  if (!user || !user.isActive) {
+    throw ApiError.badRequest('Invalid or expired password reset link');
+  }
+
+  const presentedHash = hashToken(token);
+  const isValid =
+    user.passwordResetTokenHash === presentedHash &&
+    user.passwordResetExpiresAt &&
+    user.passwordResetExpiresAt > new Date();
+
+  if (!isValid) {
+    throw ApiError.badRequest('Invalid or expired password reset link');
+  }
+
+  user.password = newPassword;
+  user.passwordResetTokenHash = undefined;
+  user.passwordResetExpiresAt = undefined;
+  user.refreshTokens = [];
+  await user.save();
+
+  res.json({ success: true, data: { message: 'Password has been reset successfully. You may now sign in.' } });
 });
 
 export const login = asyncHandler(async (req, res) => {
@@ -253,3 +426,4 @@ export const updatePassword = asyncHandler(async (req, res) => {
   const accessToken = await issueSession(user, req, res);
   res.json({ success: true, data: { accessToken, message: 'Password updated' } });
 });
+

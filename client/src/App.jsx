@@ -15,6 +15,9 @@ import Dashboard from './pages/Dashboard.jsx';
 import JobDetail from './pages/JobDetail.jsx';
 import Jobs from './pages/Jobs.jsx';
 import Login from './pages/Login.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
+import ResetPassword from './pages/ResetPassword.jsx';
+import VerifyEmail from './pages/VerifyEmail.jsx';
 import NotFound from './pages/NotFound.jsx';
 import Profile from './pages/Profile.jsx';
 import Roadmap from './pages/Roadmap.jsx';
@@ -54,8 +57,11 @@ export default function App() {
         <Route element={<PublicOnlyRoute />}>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Route>
 
+        <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/public/:userId" element={<PublicProfile />} />
 
         <Route element={<ProtectedRoute />}>
