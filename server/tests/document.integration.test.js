@@ -23,6 +23,8 @@ const stamp = Date.now();
 let documentId;
 let studentId;
 
+const PNG = Buffer.from('89504e470d0a1a0a00000000', 'hex');
+
 /** A small but genuine PDF, so the content type is not a lie. */
 const PDF = Buffer.from(
   '%PDF-1.4\n1 0 obj<</Type/Catalog>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n',
@@ -57,6 +59,87 @@ describe('document vault', { skip }, () => {
       email: `docstaff${stamp}@studentos.test`,
       role: 'admin',
     });
+  });
+
+  test('an avatar is byte-validated, persisted and served with safe headers', async () => {
+    const form = new FormData();
+    form.append('avatar', new Blob([PNG], { type: 'image/png' }), 'avatar.html');
+
+    const uploadResponse = await fetch(`${harness.base}/profile/me/avatar`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${student.state.token}` },
+      body: form,
+    });
+    const uploadBody = await uploadResponse.json();
+
+    assert.equal(uploadResponse.status, 200, JSON.stringify(uploadBody));
+    assert.match(uploadBody.data.user.avatarUrl, /^\/api\/profile\/assets\/[a-f\d]{24}$/i);
+    assert.doesNotMatch(uploadBody.data.user.avatarUrl, /\.html$/i);
+
+    const origin = harness.base.replace(/\/api$/, '');
+    const assetResponse = await fetch(origin + uploadBody.data.user.avatarUrl);
+    assert.equal(assetResponse.status, 200);
+    assert.equal(assetResponse.headers.get('content-type'), 'image/png');
+    assert.match(assetResponse.headers.get('content-disposition'), /^inline;/);
+    assert.equal(assetResponse.headers.get('x-content-type-options'), 'nosniff');
+    assert.deepEqual(Buffer.from(await assetResponse.arrayBuffer()), PNG);
+  });
+
+  test('an avatar cannot disguise active content with an image MIME header', async () => {
+    const form = new FormData();
+    form.append(
+      'avatar',
+      new Blob(['<script src="/attack.js"></script>'], { type: 'image/png' }),
+      'avatar.png',
+    );
+
+    const response = await fetch(`${harness.base}/profile/me/avatar`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${student.state.token}` },
+      body: form,
+    });
+    assert.equal(response.status, 400);
+  });
+
+  test('certificate evidence is durable and private to its owner', async () => {
+    const created = await student.post('/profile/me/certifications', {
+      kind: 'certificate',
+      title: 'Secure uploads',
+    });
+    assert.equal(created.status, 201, JSON.stringify(created.body));
+
+    const certificationId = created.data.item._id;
+    const form = new FormData();
+    form.append('file', new Blob([PDF], { type: 'application/pdf' }), 'certificate.html');
+
+    const uploaded = await fetch(
+      `${harness.base}/profile/me/certifications/${certificationId}/file`,
+      {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${student.state.token}` },
+        body: form,
+      },
+    );
+    const uploadedBody = await uploaded.json();
+    assert.equal(uploaded.status, 200, JSON.stringify(uploadedBody));
+
+    const fileUrl = uploadedBody.data.item.fileUrl;
+    assert.match(fileUrl, /\/download$/);
+    assert.doesNotMatch(fileUrl, /\.html/i);
+
+    const origin = harness.base.replace(/\/api$/, '');
+    const ownerDownload = await fetch(origin + fileUrl, {
+      headers: { Authorization: `Bearer ${student.state.token}` },
+    });
+    assert.equal(ownerDownload.status, 200);
+    assert.equal(ownerDownload.headers.get('content-type'), 'application/pdf');
+    assert.match(ownerDownload.headers.get('content-disposition'), /^attachment;/);
+    assert.equal(ownerDownload.headers.get('cache-control'), 'private, no-store');
+
+    const otherDownload = await fetch(origin + fileUrl, {
+      headers: { Authorization: `Bearer ${other.state.token}` },
+    });
+    assert.equal(otherDownload.status, 404);
   });
 
   test('a student uploads a document and it is stored', async () => {
@@ -104,6 +187,24 @@ describe('document vault', { skip }, () => {
   test('rejects a file type outside the allow-list', async () => {
     const form = new FormData();
     form.append('file', new Blob(['#!/bin/sh\nrm -rf /\n'], { type: 'text/x-sh' }), 'evil.sh');
+    form.append('kind', 'other');
+
+    const res = await fetch(`${harness.base}/documents`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${student.state.token}` },
+      body: form,
+    });
+
+    assert.equal(res.status, 400);
+  });
+
+  test('rejects active content even when its multipart type claims PDF', async () => {
+    const form = new FormData();
+    form.append(
+      'file',
+      new Blob(['<script src="/uploads/attack.js"></script>'], { type: 'application/pdf' }),
+      'proof.pdf',
+    );
     form.append('kind', 'other');
 
     const res = await fetch(`${harness.base}/documents`, {

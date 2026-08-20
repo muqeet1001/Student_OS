@@ -3,32 +3,43 @@ import { User } from '../models/User.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { deleteFile, openDownloadStream, safeFilename, storeFile } from '../services/fileStore.js';
+import { validated } from '../middleware/validate.js';
 
 /** What a student is expected to have on file. */
 const REQUIRED_KINDS = DOCUMENT_KINDS.filter((kind) => kind.required);
 
 /** Staff see anyone's; a student sees only their own. */
 function scopeFor(req) {
-  if (req.user.role === 'admin' && req.query.student) return { owner: req.query.student };
-  if (req.user.role === 'admin' && req.query.all === 'true') return {};
+  const query = validated(req, 'query');
+  if (req.user.role === 'admin' && query.student) return { owner: query.student };
+  if (req.user.role === 'admin' && query.all === 'true') return {};
   return { owner: req.user._id };
 }
 
 export const listDocuments = asyncHandler(async (req, res) => {
-  const filter = scopeFor(req);
-  if (req.query.kind) filter.kind = req.query.kind;
-  if (req.query.status) filter.status = req.query.status;
+  const query = validated(req, 'query');
+  const scope = scopeFor(req);
+  const filter = { ...scope };
+  if (query.kind) filter.kind = query.kind;
+  if (query.status) filter.status = query.status;
 
-  const documents = await StudentDocument.find(filter)
-    .populate('owner', 'name email')
-    .populate('reviewedBy', 'name')
-    .sort({ createdAt: -1 })
-    .lean();
+  const [documents, total, pending, heldKinds] = await Promise.all([
+    StudentDocument.find(filter)
+      .populate('owner', 'name email')
+      .populate('reviewedBy', 'name')
+      .sort({ createdAt: -1 })
+      .skip((query.page - 1) * query.limit)
+      .limit(query.limit)
+      .lean(),
+    StudentDocument.countDocuments(filter),
+    StudentDocument.countDocuments({ ...filter, status: 'pending' }),
+    StudentDocument.distinct('kind', scope),
+  ]);
 
   // Only meaningful for one student's own vault, so it is computed there and
   // left off a cohort-wide listing where it would be nonsense.
   const single = Boolean(filter.owner);
-  const held = new Set(documents.map((document) => document.kind));
+  const held = new Set(heldKinds);
 
   res.json({
     success: true,
@@ -37,8 +48,14 @@ export const listDocuments = asyncHandler(async (req, res) => {
       kinds: DOCUMENT_KINDS,
       missing: single ? REQUIRED_KINDS.filter((kind) => !held.has(kind.key)) : [],
       totals: {
-        documents: documents.length,
-        pending: documents.filter((document) => document.status === 'pending').length,
+        documents: total,
+        pending,
+      },
+      pagination: {
+        page: query.page,
+        limit: query.limit,
+        total,
+        pages: Math.ceil(total / query.limit) || 1,
       },
     },
   });
@@ -69,23 +86,27 @@ export const uploadDocument = asyncHandler(async (req, res) => {
 
   const stored = await storeFile({
     buffer: req.file.buffer,
-    filename: req.file.originalname,
-    // The client's declared type is not trusted; multer's filter already
-    // checked it against the allow-list before we got here.
-    contentType: req.file.mimetype,
+    filename: req.file.safeName,
+    contentType: req.file.detectedMime,
     metadata: { owner: String(owner), kind },
   });
 
-  const document = await StudentDocument.create({
-    owner,
-    kind,
-    title: title || safeFilename(req.file.originalname),
-    file: stored.fileId,
-    filename: safeFilename(req.file.originalname),
-    contentType: req.file.mimetype,
-    size: stored.size,
-    checksum: stored.checksum,
-  });
+  let document;
+  try {
+    document = await StudentDocument.create({
+      owner,
+      kind,
+      title: title || req.file.safeName,
+      file: stored.fileId,
+      filename: req.file.safeName,
+      contentType: req.file.detectedMime,
+      size: stored.size,
+      checksum: stored.checksum,
+    });
+  } catch (error) {
+    await deleteFile(stored.fileId);
+    throw error;
+  }
 
   res.status(201).json({ success: true, data: { document } });
 });
@@ -136,8 +157,8 @@ export const deleteDocument = asyncHandler(async (req, res) => {
     throw new ApiError(403, 'A verified document can only be removed by the placement office.');
   }
 
-  await deleteFile(document.file);
   await document.deleteOne();
+  await deleteFile(document.file);
 
   res.json({ success: true, data: { message: 'Document deleted.' } });
 });

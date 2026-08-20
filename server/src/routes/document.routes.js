@@ -5,6 +5,7 @@ import { requireAuth, requireRole } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import { uploadDocumentFile } from '../middleware/upload.js';
 import {
+  listDocumentsSchema,
   reviewDocumentSchema,
   uploadDocumentSchema,
 } from '../validators/document.validators.js';
@@ -13,7 +14,7 @@ export const documentRoutes = Router();
 
 documentRoutes.use(requireAuth);
 
-documentRoutes.get('/', documents.listDocuments);
+documentRoutes.get('/', validate(listDocumentsSchema, 'query'), documents.listDocuments);
 
 // The multipart parse has to run before validation, or the body is empty.
 documentRoutes.post(

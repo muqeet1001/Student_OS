@@ -14,3 +14,12 @@ export const reviewDocumentSchema = z.object({
   status: z.enum(['pending', 'verified', 'rejected']),
   reviewNote: z.string().max(1000).optional(),
 });
+
+export const listDocumentsSchema = z.object({
+  student: objectId.optional(),
+  all: z.enum(['true', 'false']).optional(),
+  kind: z.enum(DOCUMENT_KINDS.map((kind) => kind.key)).optional(),
+  status: z.enum(['pending', 'verified', 'rejected']).optional(),
+  page: z.coerce.number().int().min(1).default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(50),
+});

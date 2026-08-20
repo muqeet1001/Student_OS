@@ -1,70 +1,100 @@
-import crypto from 'node:crypto';
 import path from 'node:path';
-import fs from 'node:fs';
 import multer from 'multer';
-import { config } from '../config/env.js';
 import { ApiError } from '../utils/ApiError.js';
 
-const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+const TYPES = {
+  'image/png': {
+    extension: '.png',
+    matches: (buffer) =>
+      buffer.length >= 8 && buffer.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex')),
+  },
+  'image/jpeg': {
+    extension: '.jpg',
+    matches: (buffer) =>
+      buffer.length >= 3 && buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff,
+  },
+  'image/gif': {
+    extension: '.gif',
+    matches: (buffer) =>
+      ['GIF87a', 'GIF89a'].includes(buffer.subarray(0, 6).toString('ascii')),
+  },
+  'image/webp': {
+    extension: '.webp',
+    matches: (buffer) =>
+      buffer.length >= 12 &&
+      buffer.subarray(0, 4).toString('ascii') === 'RIFF' &&
+      buffer.subarray(8, 12).toString('ascii') === 'WEBP',
+  },
+  'application/pdf': {
+    extension: '.pdf',
+    matches: (buffer) =>
+      buffer.length >= 5 && buffer.subarray(0, 5).toString('ascii') === '%PDF-',
+  },
+};
+
+const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
 const DOCUMENT_TYPES = new Set([...IMAGE_TYPES, 'application/pdf']);
 
-function storageFor(folder) {
-  const destination = path.join(config.uploadsDir, folder);
-  fs.mkdirSync(destination, { recursive: true });
-
-  return multer.diskStorage({
-    destination: (_req, _file, cb) => cb(null, destination),
-    filename: (_req, file, cb) => {
-      // Never trust the client filename — derive a random one and keep only
-      // the extension, so nothing can be written outside the uploads folder.
-      const ext = path.extname(file.originalname).toLowerCase().slice(0, 10);
-      cb(null, `${crypto.randomUUID()}${ext}`);
-    },
-  });
+/** Detects supported formats from bytes instead of trusting multipart headers. */
+export function detectUploadType(buffer, allowed = DOCUMENT_TYPES) {
+  for (const [mime, definition] of Object.entries(TYPES)) {
+    if (allowed.has(mime) && definition.matches(buffer)) {
+      return { mime, extension: definition.extension };
+    }
+  }
+  return null;
 }
 
-function filterFor(allowed) {
-  return (_req, file, cb) => {
-    if (!allowed.has(file.mimetype)) {
-      return cb(ApiError.badRequest(`Unsupported file type: ${file.mimetype}`));
-    }
-    return cb(null, true);
+/** Replaces a user-controlled extension with the one proved by the bytes. */
+export function canonicalUploadName(originalname, extension) {
+  const supplied = String(originalname || 'upload');
+  const base = path
+    .basename(supplied, path.extname(supplied))
+    .replace(/[^a-zA-Z0-9._ -]/g, '')
+    .trim()
+    .slice(0, 100) || 'upload';
+  return `${base}${extension}`;
+}
+
+function secureUpload({ allowed, fileSize, fieldName }) {
+  const parse = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize, files: 1 },
+  }).single(fieldName);
+
+  return (req, res, next) => {
+    parse(req, res, (error) => {
+      if (error) return next(error);
+      if (!req.file) return next();
+
+      const detected = detectUploadType(req.file.buffer, allowed);
+      if (!detected) {
+        return next(
+          ApiError.badRequest('The uploaded file contents are not a supported format'),
+        );
+      }
+
+      req.file.detectedMime = detected.mime;
+      req.file.safeName = canonicalUploadName(req.file.originalname, detected.extension);
+      return next();
+    });
   };
 }
 
-export const uploadAvatar = multer({
-  storage: storageFor('avatars'),
-  limits: { fileSize: 2 * 1024 * 1024, files: 1 },
-  fileFilter: filterFor(IMAGE_TYPES),
-}).single('avatar');
+export const uploadAvatar = secureUpload({
+  allowed: IMAGE_TYPES,
+  fileSize: 2 * 1024 * 1024,
+  fieldName: 'avatar',
+});
 
-export const uploadCertificate = multer({
-  storage: storageFor('certificates'),
-  limits: { fileSize: 5 * 1024 * 1024, files: 1 },
-  fileFilter: filterFor(DOCUMENT_TYPES),
-}).single('file');
+export const uploadCertificate = secureUpload({
+  allowed: DOCUMENT_TYPES,
+  fileSize: 5 * 1024 * 1024,
+  fieldName: 'file',
+});
 
-/** Public URL for a stored upload, relative to the API origin. */
-export function publicUrlFor(folder, filename) {
-  return `/uploads/${folder}/${filename}`;
-}
-
-/** Best-effort removal of a previously stored upload. */
-export function removeUpload(publicUrl) {
-  if (!publicUrl?.startsWith('/uploads/')) return;
-  const target = path.join(config.uploadsDir, publicUrl.replace('/uploads/', ''));
-  // Guard against traversal via a crafted stored value.
-  if (!target.startsWith(config.uploadsDir)) return;
-  fs.rm(target, { force: true }, () => {});
-}
-
-/**
- * Documents go to MongoDB via GridFS, so they are held in memory only long
- * enough to be written — never to the container's filesystem, which is
- * ephemeral on every platform this is likely to be deployed to.
- */
-export const uploadDocumentFile = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 10 * 1024 * 1024, files: 1 },
-  fileFilter: filterFor(DOCUMENT_TYPES),
-}).single('file');
+export const uploadDocumentFile = secureUpload({
+  allowed: DOCUMENT_TYPES,
+  fileSize: 10 * 1024 * 1024,
+  fieldName: 'file',
+});

@@ -17,8 +17,11 @@ import {
 export const profileRoutes = Router();
 
 profileRoutes.get('/public/:userId', profile.getPublicProfile);
+profileRoutes.get('/assets/:assetId', profile.getAvatarAsset);
 
 profileRoutes.use(requireAuth);
+
+profileRoutes.get('/assets/:assetId/download', profile.downloadCertificateAsset);
 
 profileRoutes.get('/me', profile.getMyProfile);
 profileRoutes.patch('/me', validate(updateProfileSchema), profile.updateMyProfile);

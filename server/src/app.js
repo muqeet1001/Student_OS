@@ -74,7 +74,9 @@ export function createApp() {
     }),
   );
 
-  app.use('/uploads', express.static(config.uploadsDir, { maxAge: '7d' }));
+  // Legacy disk uploads are deliberately not exposed. Their client-controlled
+  // extensions made this origin an active-content host. New profile assets
+  // are byte-validated, stored in GridFS and served by the profile routes.
 
   /*
    * Liveness and readiness are deliberately separate endpoints.

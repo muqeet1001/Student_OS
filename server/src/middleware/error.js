@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import multer from 'multer';
 import { ZodError } from 'zod';
 import { ApiError } from '../utils/ApiError.js';
 import { config } from '../config/env.js';
@@ -22,6 +23,10 @@ export function errorHandler(err, _req, res, _next) {
         message: issue.message,
       })),
     });
+  } else if (error instanceof multer.MulterError) {
+    error = ApiError.badRequest(
+      error.code === 'LIMIT_FILE_SIZE' ? 'The uploaded file is too large' : error.message,
+    );
   } else if (error instanceof mongoose.Error.ValidationError) {
     error = ApiError.badRequest('Validation failed', {
       fields: Object.values(error.errors).map((e) => ({

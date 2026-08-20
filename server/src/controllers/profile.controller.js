@@ -2,7 +2,24 @@ import { Profile } from '../models/Profile.js';
 import { User } from '../models/User.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
-import { publicUrlFor, removeUpload } from '../middleware/upload.js';
+import {
+  deleteFile,
+  getFileInfo,
+  openDownloadStream,
+  safeFilename,
+  storeFile,
+} from '../services/fileStore.js';
+
+const ASSET_URL = /^\/api\/profile\/assets\/([a-f\d]{24})(?:\/download)?$/i;
+
+function assetIdFromUrl(url) {
+  return String(url || '').match(ASSET_URL)?.[1] ?? null;
+}
+
+async function removeAsset(url) {
+  const id = assetIdFromUrl(url);
+  return id ? deleteFile(id) : false;
+}
 
 function serialize(profile) {
   return { ...profile.toJSON(), completeness: profile.completeness() };
@@ -55,11 +72,23 @@ export const uploadMyAvatar = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
   const previous = user.avatarUrl;
 
-  user.avatarUrl = publicUrlFor('avatars', req.file.filename);
-  await user.save({ validateBeforeSave: false });
+  const stored = await storeFile({
+    buffer: req.file.buffer,
+    filename: req.file.safeName,
+    contentType: req.file.detectedMime,
+    metadata: { owner: String(user._id), purpose: 'avatar' },
+  });
+
+  user.avatarUrl = `/api/profile/assets/${stored.fileId}`;
+  try {
+    await user.save({ validateBeforeSave: false });
+  } catch (error) {
+    await deleteFile(stored.fileId);
+    throw error;
+  }
 
   // Only discard the old file once the new one is safely recorded.
-  removeUpload(previous);
+  await removeAsset(previous);
 
   res.json({ success: true, data: { user: user.toJSON() } });
 });
@@ -95,12 +124,11 @@ function sectionHandlers(section) {
       const item = profile[section].id(req.params.itemId);
       if (!item) throw ApiError.notFound(`That ${section.replace(/s$/, '')} does not exist`);
 
-      if (section === 'certifications' && item.fileUrl) {
-        removeUpload(item.fileUrl);
-      }
+      const removedAsset = section === 'certifications' ? item.fileUrl : null;
 
       item.deleteOne();
       await profile.save();
+      await removeAsset(removedAsset);
       res.json({ success: true, data: { profile: serialize(profile) } });
     }),
   };
@@ -120,12 +148,74 @@ export const uploadCertificateFile = asyncHandler(async (req, res) => {
   if (!item) throw ApiError.notFound('That certification does not exist');
 
   const previous = item.fileUrl;
-  item.fileUrl = publicUrlFor('certificates', req.file.filename);
-  await profile.save();
-  removeUpload(previous);
+  const stored = await storeFile({
+    buffer: req.file.buffer,
+    filename: req.file.safeName,
+    contentType: req.file.detectedMime,
+    metadata: { owner: String(req.user._id), purpose: 'certificate' },
+  });
+
+  item.fileUrl = `/api/profile/assets/${stored.fileId}/download`;
+  try {
+    await profile.save();
+  } catch (error) {
+    await deleteFile(stored.fileId);
+    throw error;
+  }
+  await removeAsset(previous);
 
   res.json({ success: true, data: { profile: serialize(profile), item } });
 });
+
+async function streamProfileAsset(req, res, { purpose, disposition, cacheControl }) {
+  const info = await getFileInfo(req.params.assetId);
+  if (!info || info.metadata?.purpose !== purpose) {
+    throw ApiError.notFound('Asset not found');
+  }
+
+  if (purpose === 'avatar' && !String(info.contentType).startsWith('image/')) {
+    throw ApiError.notFound('Asset not found');
+  }
+
+  if (
+    purpose === 'certificate' &&
+    req.user.role !== 'admin' &&
+    String(info.metadata.owner) !== String(req.user._id)
+  ) {
+    throw ApiError.notFound('Asset not found');
+  }
+
+  res.setHeader('Content-Type', info.contentType);
+  res.setHeader('Content-Length', info.length);
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Cache-Control', cacheControl);
+  res.setHeader(
+    'Content-Disposition',
+    `${disposition}; filename="${safeFilename(info.filename)}"`,
+  );
+
+  const stream = openDownloadStream(info._id);
+  stream.on('error', () => (res.headersSent ? res.destroy() : res.status(404).end()));
+  stream.pipe(res);
+}
+
+/** Avatars are public, but only validated image bytes can reach this route. */
+export const getAvatarAsset = asyncHandler((req, res) =>
+  streamProfileAsset(req, res, {
+    purpose: 'avatar',
+    disposition: 'inline',
+    cacheControl: 'public, max-age=604800, immutable',
+  }),
+);
+
+/** Certificate evidence is private to its owner and placement-office staff. */
+export const downloadCertificateAsset = asyncHandler((req, res) =>
+  streamProfileAsset(req, res, {
+    purpose: 'certificate',
+    disposition: 'attachment',
+    cacheControl: 'private, no-store',
+  }),
+);
 
 /** Read-only view of another student's profile. */
 export const getPublicProfile = asyncHandler(async (req, res) => {

@@ -17,6 +17,7 @@
     "seed": "npm run seed --workspace server",
     "lint": "eslint client server e2e eslint.config.js --max-warnings=0",
     "test": "npm run test --workspaces --if-present",
+    "test:fast": "npm run test:fast --workspace server",
     "seed:demo": "npm run seed --workspace server -- --demo",
     "seed:fresh": "npm run seed --workspace server -- --fresh",
     "seed:demo:fresh": "npm run seed --workspace server -- --demo --fresh",

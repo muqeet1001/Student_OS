@@ -73,6 +73,19 @@ export function openDownloadStream(fileId) {
   return bucket().openDownloadStream(new mongoose.Types.ObjectId(String(fileId)));
 }
 
+/** Metadata needed to serve a stored asset with authoritative safe headers. */
+export async function getFileInfo(fileId) {
+  try {
+    const [file] = await bucket()
+      .find({ _id: new mongoose.Types.ObjectId(String(fileId)) })
+      .limit(1)
+      .toArray();
+    return file ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Deletes a stored file.
  *

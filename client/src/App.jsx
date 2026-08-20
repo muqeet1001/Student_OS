@@ -1,50 +1,49 @@
 import React, { Suspense, lazy } from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
-import Achievements from './pages/Achievements.jsx';
-import Calendar from './pages/Calendar.jsx';
-import Settings from './pages/Settings.jsx';
-import CheckIn from './pages/CheckIn.jsx';
-import Documents from './pages/Documents.jsx';
-import Inbox from './pages/Inbox.jsx';
-import AdminDashboard from './pages/AdminDashboard.jsx';
-import CodingPractice from './pages/CodingPractice.jsx';
-import CompanyHub from './pages/CompanyHub.jsx';
-import CompanyPrep from './pages/CompanyPrep.jsx';
-import Dashboard from './pages/Dashboard.jsx';
-import JobDetail from './pages/JobDetail.jsx';
-import Jobs from './pages/Jobs.jsx';
-import Login from './pages/Login.jsx';
-import NotFound from './pages/NotFound.jsx';
-import Profile from './pages/Profile.jsx';
-import Roadmap from './pages/Roadmap.jsx';
-import PyqLibrary from './pages/PyqLibrary.jsx';
-import Register from './pages/Register.jsx';
-import ResumeBuilder from './pages/ResumeBuilder.jsx';
-import SkillAttempt from './pages/SkillAttempt.jsx';
-import SkillTest from './pages/SkillTest.jsx';
-import Skills from './pages/Skills.jsx';
-import TestReview from './pages/TestReview.jsx';
-import Tracker from './pages/Tracker.jsx';
-import TestRunner from './pages/TestRunner.jsx';
-import AiInterview from './pages/AiInterview.jsx';
-import InterviewReport from './pages/InterviewReport.jsx';
-import InterviewSession from './pages/InterviewSession.jsx';
-import MyPlan from './pages/MyPlan.jsx';
-import Readiness from './pages/Readiness.jsx';
-import Practice from './pages/Practice.jsx';
-import CareerProfile from './pages/CareerProfile.jsx';
-import Updates from './pages/Updates.jsx';
-import CareerLab from './pages/CareerLab.jsx';
-import PublicProfile from './pages/PublicProfile.jsx';
-
 import AppLayout from './components/AppLayout.jsx';
 import ProtectedRoute from './components/ProtectedRoute.jsx';
 import PublicOnlyRoute from './components/PublicOnlyRoute.jsx';
 import FullPageLoader from './components/FullPageLoader.jsx';
 
-// The editor pulls in CodeMirror, which is larger than the rest of the app
-// combined. Loading it on demand keeps the initial bundle small.
+// Pages are route chunks: students should not download the placement-office,
+// proctoring, interview and editor code just to see the dashboard.
+const Achievements = lazy(() => import('./pages/Achievements.jsx'));
+const Calendar = lazy(() => import('./pages/Calendar.jsx'));
+const Settings = lazy(() => import('./pages/Settings.jsx'));
+const CheckIn = lazy(() => import('./pages/CheckIn.jsx'));
+const Documents = lazy(() => import('./pages/Documents.jsx'));
+const Inbox = lazy(() => import('./pages/Inbox.jsx'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard.jsx'));
+const CodingPractice = lazy(() => import('./pages/CodingPractice.jsx'));
+const CompanyHub = lazy(() => import('./pages/CompanyHub.jsx'));
+const CompanyPrep = lazy(() => import('./pages/CompanyPrep.jsx'));
+const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
+const JobDetail = lazy(() => import('./pages/JobDetail.jsx'));
+const Jobs = lazy(() => import('./pages/Jobs.jsx'));
+const Login = lazy(() => import('./pages/Login.jsx'));
+const NotFound = lazy(() => import('./pages/NotFound.jsx'));
+const Profile = lazy(() => import('./pages/Profile.jsx'));
+const Roadmap = lazy(() => import('./pages/Roadmap.jsx'));
+const PyqLibrary = lazy(() => import('./pages/PyqLibrary.jsx'));
+const Register = lazy(() => import('./pages/Register.jsx'));
+const ResumeBuilder = lazy(() => import('./pages/ResumeBuilder.jsx'));
+const SkillAttempt = lazy(() => import('./pages/SkillAttempt.jsx'));
+const SkillTest = lazy(() => import('./pages/SkillTest.jsx'));
+const Skills = lazy(() => import('./pages/Skills.jsx'));
+const TestReview = lazy(() => import('./pages/TestReview.jsx'));
+const Tracker = lazy(() => import('./pages/Tracker.jsx'));
+const TestRunner = lazy(() => import('./pages/TestRunner.jsx'));
+const AiInterview = lazy(() => import('./pages/AiInterview.jsx'));
+const InterviewReport = lazy(() => import('./pages/InterviewReport.jsx'));
+const InterviewSession = lazy(() => import('./pages/InterviewSession.jsx'));
+const MyPlan = lazy(() => import('./pages/MyPlan.jsx'));
+const Readiness = lazy(() => import('./pages/Readiness.jsx'));
+const Practice = lazy(() => import('./pages/Practice.jsx'));
+const CareerProfile = lazy(() => import('./pages/CareerProfile.jsx'));
+const Updates = lazy(() => import('./pages/Updates.jsx'));
+const CareerLab = lazy(() => import('./pages/CareerLab.jsx'));
+const PublicProfile = lazy(() => import('./pages/PublicProfile.jsx'));
 const ProblemWorkspace = lazy(() => import('./pages/ProblemWorkspace.jsx'));
 
 export default function App() {
