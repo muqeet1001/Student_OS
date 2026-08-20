@@ -336,6 +336,7 @@ async function insertStudents(cohort) {
       email: student.email,
       password: passwordHash,
       role: 'student',
+      isVerified: true,
       headline: `${student.branch} • Batch of ${student.graduationYear}`,
     })),
   );

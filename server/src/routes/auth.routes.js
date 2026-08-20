@@ -5,10 +5,14 @@ import * as authController from '../controllers/auth.controller.js';
 import { requireAuth } from '../middleware/auth.js';
 import { validate } from '../middleware/validate.js';
 import {
+  forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  resendVerificationSchema,
+  resetPasswordSchema,
   updatePasswordSchema,
   updateSettingsSchema,
+  verifyEmailSchema,
 } from '../validators/auth.validators.js';
 
 export const authRoutes = Router();
@@ -27,6 +31,11 @@ authRoutes.post('/register', credentialLimiter, validate(registerSchema), authCo
 authRoutes.post('/login', credentialLimiter, validate(loginSchema), authController.login);
 authRoutes.post('/refresh', authController.refresh);
 authRoutes.post('/logout', authController.logout);
+
+authRoutes.post('/verify-email', credentialLimiter, validate(verifyEmailSchema), authController.verifyEmail);
+authRoutes.post('/resend-verification', credentialLimiter, validate(resendVerificationSchema), authController.resendVerification);
+authRoutes.post('/forgot-password', credentialLimiter, validate(forgotPasswordSchema), authController.forgotPassword);
+authRoutes.post('/reset-password', credentialLimiter, validate(resetPasswordSchema), authController.resetPassword);
 
 authRoutes.get('/me', requireAuth, authController.me);
 
@@ -47,3 +56,4 @@ authRoutes.patch(
   validate(updatePasswordSchema),
   authController.updatePassword,
 );
+

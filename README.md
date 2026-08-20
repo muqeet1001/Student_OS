@@ -261,22 +261,22 @@ Set `NODE_ENV=production`, `MONGO_URI` and both JWT secrets in the host's
 environment. The server refuses to boot in production without them rather than
 falling back to insecure defaults.
 
-Uploaded avatars and certificates are written to `server/uploads`; mount a
-persistent volume there on hosts with ephemeral filesystems. Student vault
-documents are stored in MongoDB GridFS, so their metadata and bytes are backed
-up together and survive application redeploys.
+Uploaded avatars, certificate media, and student vault documents are stored
+in MongoDB GridFS, so their metadata and bytes are backed up together and
+survive application redeploys with zero reliance on container filesystems.
 
 ## Status
 
-Working and tested: authentication and session revocation; profiles; coding
-practice; PYQ progress; skill tests and detailed reviews; verified-skill
-assessments; mock interviews and reports; resume versions; company prep;
-dashboard, roadmap, achievements and notifications; jobs and application
-tracking; calendar and QR check-in; document upload/download/review through
-GridFS; and the complete placement-office workflow for cohorts, matching,
-drives, offers, scheduling, recruiters, announcements, training and insights.
+Working and tested: authentication, email verification, password reset and
+session revocation; profiles and GridFS media storage; coding practice;
+PYQ progress; skill tests and detailed reviews; verified-skill assessments;
+mock interviews and reports; resume versions; company prep; dashboard,
+roadmap, achievements and notifications; jobs and application tracking;
+calendar and QR check-in; document upload/download/review through GridFS;
+and the complete placement-office workflow for cohorts, matching, drives,
+offers, scheduling, recruiters, announcements, training and insights.
 
-Not built yet: email verification and password reset, an admin UI for
-authoring reference content (the seed script covers it for now), and external
-object storage for profile avatars/certificate media (mount `server/uploads`
-persistently in production).
+Not built yet: an admin UI for authoring reference content (the seed script
+covers it for now), multi-language judge runners (Python/Java/C++), and
+direct recruiter self-service portal.
+
