@@ -80,18 +80,14 @@ const STUDENT_ROUTES = [
 const ADMIN_ROUTES = [
   { path: '/admin/overview', expect: /priorit|placement health|today/i },
   { path: '/admin/students', expect: /student|cohort/i },
-  { path: '/admin/interventions', expect: /intervention|student cases/i },
-  { path: '/admin/tasks', expect: /task|assigned action/i },
-  { path: '/admin/companies', expect: /compan|recruiter/i },
   { path: '/admin/drives', expect: /opportunit|drive|hiring pipeline/i },
-  { path: '/admin/matching', expect: /eligibility|matching|shortlist/i },
+  { path: '/admin/companies', expect: /compan|recruiter/i },
+  { path: '/admin/actions', expect: /action centre|intervention|assigned action/i },
   { path: '/admin/calendar', expect: /calendar|attendance|interview/i },
-  { path: '/admin/reviews', expect: /review|mentor/i },
   { path: '/admin/communications', expect: /communication|announcement/i },
   { path: '/admin/training', expect: /training|skill gap|programme/i },
-  { path: '/admin/outcomes', expect: /outcome|placement rate|offer/i },
+  { path: '/admin/reports', expect: /report|placement rate|offer/i },
   { path: '/admin/settings', expect: /setting|scoring|institution/i },
-  { path: '/admin/activity', expect: /activity|audit|timeline/i },
 ];
 
 const ADMIN_REDIRECT_ROUTES = [

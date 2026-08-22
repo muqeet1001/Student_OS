@@ -63,33 +63,33 @@ export default function AdminOverview() {
 
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
       {[
-        [summary.students, 'Total students', 'groups'],
-        [summary.eligible, 'Eligible students', 'person_check'],
-        [summary.ready, 'Placement ready', 'verified'],
-        [summary.placed, 'Students placed', 'workspace_premium'],
-        [summary.companies, 'Companies', 'domain'],
-        [summary.offers, 'Total offers', 'contract'],
-        [summary.averagePackage ? `₹${(summary.averagePackage / 100000).toFixed(1)}L` : '—', 'Average package', 'payments'],
-        [`${summary.placementRate}%`, 'Placement percentage', 'monitoring'],
-      ].map(([value, label, icon]) => <div key={label} className="rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-4">
+        [summary.openDrives, 'Active drives', 'business_center', '/admin/drives'],
+        [summary.upcomingDeadlines, 'Upcoming deadlines', 'event_upcoming', '/admin/drives'],
+        [summary.interviewsToday, 'Interviews today', 'groups', '/admin/calendar'],
+        [summary.interventionCases, 'Students requiring action', 'support_agent', '/admin/actions'],
+        [summary.eligibilityExceptions, 'Eligibility exceptions', 'rule', '/admin/drives'],
+        [summary.offersAwaitingResponse, 'Offers awaiting response', 'contract', '/admin/reports'],
+        [summary.joiningRisks, 'Joining risks', 'warning', '/admin/reports'],
+        [summary.overdueActions, 'Overdue actions', 'assignment_late', '/admin/actions'],
+      ].map(([value, label, icon, path]) => <Link to={withYear(path)} key={label} className="rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-4 hover:border-primary/40">
         <span className="material-symbols-outlined text-primary text-lg">{icon}</span>
         <p className="text-2xl font-black font-headline tabular-nums mt-2">{value}</p>
         <p className="text-[10px] font-black uppercase tracking-wider text-on-surface-variant mt-0.5">{label}</p>
-      </div>)}
+      </Link>)}
     </div>
 
-    <div className="flex flex-wrap gap-2">
+    <div className="rounded-2xl border border-outline-variant/60 bg-surface-container-lowest p-4"><p className="text-[10px] font-black uppercase tracking-wider text-primary mb-3">Season performance</p><div className="flex flex-wrap gap-2">
       {[
-        [summary.interventionCases, 'students need support'],
-        [summary.openDrives, 'active drives'],
-        [summary.pendingReviews, 'reviews waiting'],
-        [summary.overdueActions, 'actions overdue'],
+        [summary.students, 'students'], [summary.eligible, 'eligible'], [summary.ready, 'placement ready'],
+        [summary.placed, 'placed'], [summary.companies, 'companies'], [summary.offers, 'offers'],
+        [summary.averagePackage ? `₹${(summary.averagePackage / 100000).toFixed(1)}L` : '—', 'average package'],
+        [`${summary.placementRate}%`, 'placement rate'],
       ].map(([value, label]) => <span key={label} className="rounded-full bg-surface-container px-3 py-1.5 text-xs font-bold"><strong className="text-primary">{value}</strong> {label}</span>)}
-    </div>
+    </div></div>
 
     <div className="grid xl:grid-cols-[1.25fr_.75fr] gap-5 items-start">
       <div className="space-y-5">
-        <Section title="Student cases" eyebrow="Prioritised intervention" action={<Link className="text-xs font-black text-primary" to={withYear('/admin/interventions')}>Open queue</Link>}>
+        <Section title="Student cases" eyebrow="Prioritised intervention" action={<Link className="text-xs font-black text-primary" to={withYear('/admin/actions')}>Open Action Centre</Link>}>
           {interventionCases.length === 0 ? <EmptyLine>Every active student is currently on track.</EmptyLine> : <ul className="divide-y divide-outline-variant/60">
             {interventionCases.slice(0, 6).map((student) => <li key={student._id} className="p-4 flex items-center gap-3 hover:bg-surface-container-low/60">
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black ${student.signals.some((signal) => signal.severity === 'urgent') ? 'bg-error-container text-on-error-container' : 'bg-secondary-container text-on-secondary-container'}`}>{student.signals.length}</div>
@@ -111,7 +111,7 @@ export default function AdminOverview() {
       </div>
 
       <div className="space-y-5">
-        <Section title="My work" eyebrow="Owned actions" action={<Link className="text-xs font-black text-primary" to={withYear('/admin/tasks')}>See all</Link>}>
+        <Section title="My work" eyebrow="Owned actions" action={<Link className="text-xs font-black text-primary" to={withYear('/admin/actions')}>See all</Link>}>
           {actions.length === 0 ? <EmptyLine>No assigned actions are open.</EmptyLine> : <ul className="divide-y divide-outline-variant/60">
             {actions.slice(0, 6).map((item) => <li key={item._id} className="p-4">
               <div className="flex items-start gap-3"><div className="min-w-0 flex-1"><div className="flex gap-2 items-center flex-wrap"><p className="text-sm font-bold">{item.title}</p><span className="text-[9px] font-black uppercase text-primary">{item.priority}</span></div><p className="text-xs text-on-surface-variant mt-0.5">{item.owner?.name} · {shortDate(item.dueAt)}</p></div><button type="button" onClick={() => complete(item._id)} className="w-8 h-8 rounded-full bg-surface-container hover:bg-green-100 hover:text-green-800 flex items-center justify-center" aria-label={`Complete ${item.title}`}><span className="material-symbols-outlined text-base">check</span></button></div>

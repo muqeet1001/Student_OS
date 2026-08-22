@@ -193,3 +193,11 @@ test('a job description with no recognisable skills does not crash or fake a mat
   assert.equal(result.breakdown.skills, 0, 'no demanded skills means no skill credit');
   assert.ok(Number.isFinite(result.score), 'the score must stay a number');
 });
+
+test('missing mandatory academic data is unresolved, not silently eligible', () => {
+  const requirements = parseJobDescription(JD);
+  const result = scoreStudent({ readiness: 80, profile: { skills: strongCandidate.profile.skills, projects: [] } }, requirements);
+  assert.ok(result.verificationIssues.includes('CGPA is missing'));
+  assert.ok(result.verificationIssues.includes('Department is missing'));
+  assert.ok(result.verificationIssues.includes('Graduation year is missing'));
+});

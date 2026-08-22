@@ -57,3 +57,9 @@ export const bulkStageSchema = z.object({
   stage: candidateStage,
   note: z.string().trim().max(500).default(''),
 });
+
+export const eligibilityOverrideSchema = z.object({
+  decision: z.enum(['eligible', 'not-eligible', 'clear']),
+  reason: z.string().trim().min(10, 'Explain why the machine decision is being changed.').max(1000),
+  originalState: z.enum(['eligible', 'recommended', 'not-eligible', 'needs-verification']),
+});

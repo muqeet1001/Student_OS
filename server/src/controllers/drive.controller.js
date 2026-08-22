@@ -5,6 +5,27 @@ import { asyncHandler } from '../utils/asyncHandler.js';
 import { loadCohort } from '../services/cohort.service.js';
 import { parseJobDescription, rankStudents } from '../services/jobMatch.js';
 import { recordAudit } from '../services/audit.service.js';
+import { PlacementEvent } from '../models/PlacementEvent.js';
+import { Announcement } from '../models/Announcement.js';
+import { Offer } from '../models/Offer.js';
+import { AuditEvent } from '../models/AuditEvent.js';
+import { ActionItem } from '../models/StudentJourney.js';
+
+async function automateCandidateAction({ drive, student, stage, actor }) {
+  const recipes = {
+    invited: { title: `Apply to ${drive.company} — ${drive.role}`, category: 'application', priority: 'high', link: '/opportunities' },
+    shortlisted: { title: `Prepare for ${drive.company} selection rounds`, category: 'preparation', priority: 'high', link: '/my-plan' },
+    'technical-interview': { title: `Review your ${drive.company} technical interview slot`, category: 'meeting', priority: 'urgent', link: '/calendar' },
+    'hr-interview': { title: `Prepare for ${drive.company} HR interview`, category: 'meeting', priority: 'urgent', link: '/calendar' },
+  };
+  const recipe = recipes[stage];
+  if (!recipe) return;
+  await ActionItem.findOneAndUpdate(
+    { owner: student, signalKey: `drive:${drive._id}:${stage}`, status: 'todo' },
+    { $setOnInsert: { owner: student, drive: drive._id, source: 'system', assignedBy: actor, staffOwner: drive.ownedBy || actor, dueAt: drive.applicationDeadline || drive.driveDate || null, description: `Automatically created when your candidate stage changed to ${stage.replaceAll('-', ' ')}.`, reminderChannels: ['in-app'], signalKey: `drive:${drive._id}:${stage}`, ...recipe } },
+    { upsert: true, new: true, setDefaultsOnInsert: true },
+  );
+}
 
 export const listDrives = asyncHandler(async (req, res) => {
   const filter = req.query.status ? { status: req.query.status } : {};
@@ -57,21 +78,57 @@ export const getDrive = asyncHandler(async (req, res) => {
     drive.shortlist.map((entry) => [String(entry.student), entry]),
   );
 
-  const candidates = ranked.map((student) => ({
-    _id: student._id,
-    name: student.name,
-    email: student.email,
-    branch: student.branch,
-    graduationYear: student.graduationYear,
-    readiness: student.readiness,
-    band: student.band,
-    solved: student.solved,
-    verifiedSkills: student.verifiedSkills,
-    match: student.match,
-    // Eligibility is the college's bar on top of the JD's own filters.
-    eligible: student.match.blockers.length === 0 && student.readiness >= (drive.minReadiness ?? 0),
-    shortlisted: shortlisted.get(String(student._id)) ?? null,
-  }));
+  const latestOverride = new Map();
+  for (const override of drive.eligibilityOverrides ?? []) {
+    latestOverride.set(String(override.student), override);
+  }
+
+  const candidates = ranked.map((student) => {
+    const baseState = student.match.blockers.length || student.readiness < (drive.minReadiness ?? 0)
+      ? 'not-eligible'
+      : student.match.verificationIssues?.length
+        ? 'needs-verification'
+        : student.match.score >= 70 ? 'recommended' : 'eligible';
+    const override = latestOverride.get(String(student._id));
+    const eligibilityState = override && override.decision !== 'clear'
+      ? override.decision === 'eligible' ? (student.match.score >= 70 ? 'recommended' : 'eligible') : 'not-eligible'
+      : baseState;
+    return {
+      _id: student._id,
+      name: student.name,
+      email: student.email,
+      branch: student.branch,
+      graduationYear: student.graduationYear,
+      cgpa: student.cgpa,
+      readiness: student.readiness,
+      band: student.band,
+      solved: student.solved,
+      verifiedSkills: student.verifiedSkills,
+      match: student.match,
+      baseEligibilityState: baseState,
+      eligibilityState,
+      eligible: ['eligible', 'recommended'].includes(eligibilityState),
+      recommended: eligibilityState === 'recommended',
+      eligibilityOverride: override ?? null,
+      shortlisted: shortlisted.get(String(student._id)) ?? null,
+    };
+  });
+
+  const [events, communications, offers, activity, actions] = await Promise.all([
+    PlacementEvent.find({ drive: drive._id }).populate('slots.student', 'name email').sort({ startsAt: 1 }).lean({ virtuals: true }),
+    Announcement.find({ 'audience.drive': drive._id }).select('subject audience recipients sentAt sentBy emailAvailable emailNote').populate('sentBy', 'name').sort({ sentAt: -1 }).lean({ virtuals: true }),
+    Offer.find({ drive: drive._id }).populate('student', 'name email').sort({ offeredAt: -1 }).lean(),
+    AuditEvent.find({ entityType: 'drive', entityId: drive._id }).populate('actor', 'name email').sort({ createdAt: -1 }).limit(100).lean(),
+    ActionItem.find({ drive: drive._id, status: 'todo' }).populate('owner', 'name email').populate('staffOwner', 'name').sort({ dueAt: 1 }).lean(),
+  ]);
+
+  const now = Date.now();
+  const stuckCandidates = candidates.filter((candidate) => {
+    if (!candidate.shortlisted || ['joined', 'rejected', 'withdrawn'].includes(candidate.shortlisted.stage)) return false;
+    const last = candidate.shortlisted.stageHistory?.at(-1)?.changedAt || candidate.shortlisted.addedAt;
+    return last && now - new Date(last).getTime() > 7 * 86_400_000;
+  });
+  const slots = events.flatMap((event) => event.slots ?? []);
 
   res.json({
     success: true,
@@ -82,10 +139,46 @@ export const getDrive = asyncHandler(async (req, res) => {
         considered: candidates.length,
         eligible: candidates.filter((item) => item.eligible).length,
         strong: candidates.filter((item) => item.eligible && item.match.score >= 70).length,
+        needsVerification: candidates.filter((item) => item.eligibilityState === 'needs-verification').length,
         shortlisted: drive.shortlist.length,
+        interviews: events.filter((event) => event.type === 'interview').length,
+        scheduled: slots.filter((slot) => slot.status === 'scheduled').length,
+        attended: slots.filter((slot) => slot.status === 'attended').length,
+        noShows: slots.filter((slot) => slot.status === 'no-show').length,
+        offers: offers.length,
+        joined: offers.filter((offer) => offer.status === 'joined').length,
+        stuck: stuckCandidates.length,
       },
+      operations: { events, communications, offers, activity, actions, stuckCandidates },
     },
   });
+});
+
+export const overrideEligibility = asyncHandler(async (req, res) => {
+  const drive = await Drive.findById(req.params.driveId);
+  if (!drive) throw new ApiError(404, 'Drive not found.');
+  const student = await User.findOne({ _id: req.params.studentId, role: 'student' }).select('name');
+  if (!student) throw new ApiError(404, 'Student not found.');
+
+  const decision = {
+    student: student._id,
+    decision: req.body.decision,
+    reason: req.body.reason,
+    originalState: req.body.originalState,
+    officer: req.user._id,
+    decidedAt: new Date(),
+  };
+  drive.eligibilityOverrides.push(decision);
+  await drive.save();
+  await recordAudit({
+    actor: req.user._id,
+    action: 'drive.eligibility-overridden',
+    entityType: 'drive',
+    entityId: drive._id,
+    summary: `${req.body.decision === 'clear' ? 'Cleared eligibility override for' : `Marked ${req.body.decision}:`} ${student.name}`,
+    metadata: { student: student._id, ...req.body },
+  });
+  res.json({ success: true, data: { override: drive.eligibilityOverrides.at(-1) } });
 });
 
 /**
@@ -119,6 +212,7 @@ export const addToShortlist = asyncHandler(async (req, res) => {
       })),
     );
     await drive.save();
+    await Promise.all(toAdd.map((student) => automateCandidateAction({ drive, student, stage, actor: req.user._id })));
     await recordAudit({ actor: req.user._id, action: 'drive.shortlist.updated', entityType: 'drive', entityId: drive._id, summary: `Added ${toAdd.length} candidate${toAdd.length === 1 ? '' : 's'} to ${drive.company} — ${drive.role}`, metadata: { added: toAdd } });
   }
 
@@ -159,6 +253,7 @@ export const updateShortlistEntry = asyncHandler(async (req, res) => {
   }
   if (notes !== undefined) entry.notes = notes;
   await drive.save();
+  if (stage) await automateCandidateAction({ drive, student: entry.student, stage: entry.stage, actor: req.user._id });
   await recordAudit({ actor: req.user._id, action: 'drive.candidate-stage.updated', entityType: 'drive', entityId: drive._id, summary: `Moved a candidate to ${entry.stage} for ${drive.company} — ${drive.role}`, metadata: { student: req.params.studentId, stage: entry.stage } });
 
   res.json({ success: true, data: { entry } });
@@ -182,6 +277,7 @@ export const bulkUpdateCandidateStage = asyncHandler(async (req, res) => {
 
   if (!updated) throw new ApiError(400, 'None of those students are available for this stage change.');
   await drive.save();
+  await Promise.all(drive.shortlist.filter((entry) => wanted.has(String(entry.student)) && entry.stage === stage).map((entry) => automateCandidateAction({ drive, student: entry.student, stage, actor: req.user._id })));
   await recordAudit({
     actor: req.user._id,
     action: 'drive.candidate-stage.bulk-updated',

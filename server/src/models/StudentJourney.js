@@ -62,6 +62,7 @@ const messageSchema = new mongoose.Schema(
 const actionItemSchema = new mongoose.Schema(
   {
     owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+    drive: { type: mongoose.Schema.Types.ObjectId, ref: 'Drive', default: null, index: true },
     source: { type: String, enum: ['self', 'staff', 'system'], default: 'self' },
     category: {
       type: String,
@@ -130,6 +131,14 @@ const institutionConfigSchema = new mongoose.Schema(
       email: { type: Boolean, default: false },
       whatsapp: { type: Boolean, default: false },
       sis: { type: String, enum: ['none', 'csv', 'api'], default: 'none' },
+    },
+    placementPolicies: {
+      maximumActiveOffers: { type: Number, default: 0, min: 0, max: 20 },
+      dreamPackage: { type: Number, default: 0, min: 0 },
+      superDreamPackage: { type: Number, default: 0, min: 0 },
+      minimumPackageImprovementPct: { type: Number, default: 0, min: 0, max: 500 },
+      debarAfterNoShows: { type: Number, default: 0, min: 0, max: 20 },
+      allowWithdrawal: { type: Boolean, default: true },
     },
   },
   { timestamps: true },

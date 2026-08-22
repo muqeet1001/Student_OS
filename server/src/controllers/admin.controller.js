@@ -27,6 +27,7 @@ import { SavedCohortView } from '../models/SavedCohortView.js';
 import { recordAudit } from '../services/audit.service.js';
 import { Resume } from '../models/Resume.js';
 import { StudentDocument } from '../models/Document.js';
+import { PlacementEvent } from '../models/PlacementEvent.js';
 
 /** Buckets used by both the filter and the cohort summary. */
 const BANDS = [
@@ -62,12 +63,12 @@ export const getOverview = asyncHandler(async (req, res) => {
   const now = new Date();
   const inFourteenDays = new Date(now.getTime() + 14 * 86_400_000);
 
-  const [applicationRows, offers, actions, reviews, mentoring, drives, recruiters, training, totalCompanies] = await Promise.all([
+  const [applicationRows, offers, actions, reviews, mentoring, drives, recruiters, training, totalCompanies, todaysEvents] = await Promise.all([
     Application.aggregate([
       { $match: { user: { $in: studentIds }, stage: { $ne: 'saved' } } },
       { $group: { _id: '$user', count: { $sum: 1 }, lastAt: { $max: '$updatedAt' } } },
     ]),
-    Offer.find({ student: { $in: studentIds } }).select('student company role status offeredAt ctc').lean(),
+    Offer.find({ student: { $in: studentIds } }).select('student company role status offeredAt ctc joiningDate').lean(),
     ActionItem.find({ source: 'staff', owner: { $in: studentIds }, status: 'todo' })
       .populate('owner', 'name email')
       .populate('staffOwner', 'name')
@@ -85,7 +86,7 @@ export const getOverview = asyncHandler(async (req, res) => {
       .limit(8)
       .lean(),
     Drive.find({ status: { $in: ['planned', 'open', 'in-progress'] } })
-      .select('company role status driveDate applicationDeadline nextAction nextActionDueAt shortlist requirements minReadiness')
+      .select('company role status driveDate applicationDeadline nextAction nextActionDueAt shortlist requirements minReadiness eligibilityOverrides')
       .sort({ applicationDeadline: 1, driveDate: 1 })
       .limit(12)
       .lean(),
@@ -103,6 +104,10 @@ export const getOverview = asyncHandler(async (req, res) => {
       .limit(6)
       .lean(),
     Recruiter.countDocuments(),
+    PlacementEvent.find({
+      startsAt: { $gte: new Date(now.getFullYear(), now.getMonth(), now.getDate()), $lt: new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) },
+      status: { $ne: 'cancelled' },
+    }).select('type title startsAt slots').lean(),
   ]);
 
   const applicationsBy = new Map(applicationRows.map((row) => [String(row._id), row]));
@@ -129,11 +134,18 @@ export const getOverview = asyncHandler(async (req, res) => {
 
   const overdueActions = actions.filter((action) => action.dueAt && new Date(action.dueAt) < now).length;
   const eligibleIds = new Set();
+  let unresolvedEligibilityExceptions = 0;
   for (const drive of drives) {
     const ranked = rankStudents(cohort, drive.requirements, { limit: cohort.length });
+    const overridden = new Map();
+    for (const decision of drive.eligibilityOverrides ?? []) overridden.set(String(decision.student), decision.decision);
     for (const student of ranked) {
-      if (student.match.blockers.length === 0 && student.readiness >= (drive.minReadiness ?? 0)) {
+      const decision = overridden.get(String(student._id));
+      if (decision === 'eligible' || (decision !== 'not-eligible' && student.match.blockers.length === 0 && !student.match.verificationIssues?.length && student.readiness >= (drive.minReadiness ?? 0))) {
         eligibleIds.add(String(student._id));
+      }
+      if (student.match.verificationIssues?.length && !['eligible', 'not-eligible'].includes(overridden.get(String(student._id)))) {
+        unresolvedEligibilityExceptions += 1;
       }
     }
   }
@@ -166,6 +178,11 @@ export const getOverview = asyncHandler(async (req, res) => {
         openDrives: drives.length,
         overdueActions,
         pendingReviews: reviews.length,
+        interviewsToday: todaysEvents.filter((event) => event.type === 'interview').length,
+        upcomingDeadlines: drives.filter((drive) => drive.applicationDeadline && new Date(drive.applicationDeadline) >= now && new Date(drive.applicationDeadline) <= inFourteenDays).length,
+        eligibilityExceptions: unresolvedEligibilityExceptions,
+        offersAwaitingResponse: offers.filter((offer) => offer.status === 'offered').length,
+        joiningRisks: offers.filter((offer) => offer.status === 'accepted' && offer.joiningDate && new Date(offer.joiningDate) <= inFourteenDays).length,
       },
       actions,
       interventionCases: interventionCases.slice(0, 10),
@@ -183,7 +200,18 @@ export const getOverview = asyncHandler(async (req, res) => {
 });
 
 export const getStaff = asyncHandler(async (_req, res) => {
-  const staff = await User.find({ role: 'admin' }).select('name email avatarUrl').sort({ name: 1 }).lean();
+  const staff = await User.find({ role: 'admin' }).select('name email avatarUrl staffRole isActive').sort({ name: 1 }).lean();
+  res.json({ success: true, data: { staff } });
+});
+
+export const updateStaffRole = asyncHandler(async (req, res) => {
+  if ((req.user.staffRole ?? 'placement-head') !== 'placement-head') throw ApiError.forbidden('Only the placement head can change staff permissions.');
+  if (String(req.user._id) === String(req.params.staffId) && req.body.staffRole !== 'placement-head') {
+    throw ApiError.conflict('Transfer placement-head responsibility before changing your own role.');
+  }
+  const staff = await User.findOneAndUpdate({ _id: req.params.staffId, role: 'admin' }, { staffRole: req.body.staffRole }, { new: true, runValidators: true }).select('name email staffRole isActive');
+  if (!staff) throw new ApiError(404, 'Staff member not found.');
+  await recordAudit({ actor: req.user._id, action: 'staff.role-updated', entityType: 'user', entityId: staff._id, summary: `Changed ${staff.name} to ${staff.staffRole}`, metadata: { staffRole: staff.staffRole } });
   res.json({ success: true, data: { staff } });
 });
 
@@ -252,7 +280,7 @@ export const listStudents = asyncHandler(async (req, res) => {
   const students = await User.find(userFilter).select('name email createdAt').lean();
   const ids = students.map((student) => student._id);
 
-  const [profiles, solved, totalProblems, attempts, interviews, applications, institutionConfig] = await Promise.all([
+  const [profiles, solved, totalProblems, attempts, interviews, applications, institutionConfig, resumeOwners, documentOwners] = await Promise.all([
     Profile.find({ user: { $in: ids } })
       .lean(),
 
@@ -293,6 +321,8 @@ export const listStudents = asyncHandler(async (req, res) => {
       { $group: { _id: '$user', count: { $sum: 1 }, lastAt: { $max: '$updatedAt' } } },
     ]),
     InstitutionConfig.findOne({ key: 'default' }).lean(),
+    Resume.distinct('user', { user: { $in: ids } }),
+    StudentDocument.distinct('student', { student: { $in: ids } }),
   ]);
 
   const profileBy = new Map(profiles.map((item) => [String(item.user), item]));
@@ -300,6 +330,8 @@ export const listStudents = asyncHandler(async (req, res) => {
   const testsBy = new Map(attempts.map((item) => [String(item._id), item]));
   const interviewBy = new Map(interviews.map((item) => [String(item._id), item]));
   const applicationsBy = new Map(applications.map((item) => [String(item._id), item]));
+  const hasResume = new Set(resumeOwners.map(String));
+  const hasDocuments = new Set(documentOwners.map(String));
 
   let rows = students.map((student) => {
     const key = String(student._id);
@@ -336,6 +368,8 @@ export const listStudents = asyncHandler(async (req, res) => {
       projectCount: profile?.projects?.length ?? 0,
       certificationCount: profile?.certifications?.length ?? 0,
       profileUpdatedAt: profile?.updatedAt ?? null,
+      hasResume: hasResume.has(key),
+      hasDocuments: hasDocuments.has(key),
       solved: solvedCount,
       testsTaken: test?.taken ?? 0,
       testsPassed: test?.passed ?? 0,
@@ -386,6 +420,13 @@ export const listStudents = asyncHandler(async (req, res) => {
           ...bandDef,
           count: rows.filter((row) => row.band === bandDef.key).length,
         })),
+        dataQuality: {
+          missingCgpa: rows.filter((row) => row.cgpa == null).length,
+          missingBranch: rows.filter((row) => !row.branch).length,
+          missingResume: rows.filter((row) => !row.hasResume).length,
+          missingDocuments: rows.filter((row) => !row.hasDocuments).length,
+          staleProfiles: rows.filter((row) => !row.profileUpdatedAt || Date.now() - new Date(row.profileUpdatedAt).getTime() > 180 * 86_400_000).length,
+        },
       },
     },
   });

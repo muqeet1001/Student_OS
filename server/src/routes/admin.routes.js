@@ -4,7 +4,7 @@ import * as admin from '../controllers/admin.controller.js';
 import * as match from '../controllers/match.controller.js';
 import { validate } from '../middleware/validate.js';
 import { matchSchema } from '../validators/match.validators.js';
-import { savedCohortViewSchema } from '../validators/admin.validators.js';
+import { savedCohortViewSchema, staffRoleSchema } from '../validators/admin.validators.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 
 export const adminRoutes = Router();
@@ -15,6 +15,7 @@ adminRoutes.use(requireAuth, requireRole('admin'));
 
 adminRoutes.get('/overview', admin.getOverview);
 adminRoutes.get('/staff', admin.getStaff);
+adminRoutes.patch('/staff/:staffId/role', validate(staffRoleSchema), admin.updateStaffRole);
 adminRoutes.get('/activity', admin.getActivity);
 adminRoutes.get('/analytics', admin.getAnalytics);
 // Separate from /analytics so the page renders from real numbers first

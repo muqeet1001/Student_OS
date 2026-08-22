@@ -28,3 +28,7 @@ export const savedCohortViewSchema = z.object({
     ctx.addIssue({ code: 'custom', path: ['students'], message: 'Select at least one student.' });
   }
 });
+
+export const staffRoleSchema = z.object({
+  staffRole: z.enum(['placement-head', 'officer', 'faculty-coordinator', 'viewer']),
+});

@@ -82,6 +82,18 @@ const driveSchema = new mongoose.Schema(
     },
 
     shortlist: { type: [shortlistEntrySchema], default: [] },
+    /** Append-only decisions preserve both the machine result and every human exception. */
+    eligibilityOverrides: {
+      type: [{
+        student: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        decision: { type: String, enum: ['eligible', 'not-eligible', 'clear'], required: true },
+        reason: { type: String, required: true, trim: true, maxlength: 1000 },
+        originalState: { type: String, enum: ['eligible', 'recommended', 'not-eligible', 'needs-verification'], required: true },
+        officer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+        decidedAt: { type: Date, default: Date.now },
+      }],
+      default: [],
+    },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   },
   { timestamps: true },

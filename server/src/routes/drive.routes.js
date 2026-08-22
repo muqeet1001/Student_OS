@@ -6,6 +6,7 @@ import { validate } from '../middleware/validate.js';
 import {
   bulkStageSchema,
   createDriveSchema,
+  eligibilityOverrideSchema,
   shortlistEntrySchema,
   shortlistSchema,
   updateDriveSchema,
@@ -26,6 +27,7 @@ driveRoutes.delete('/:driveId', drives.deleteDrive);
 driveRoutes.get('/:driveId/export', drives.exportShortlist);
 driveRoutes.post('/:driveId/shortlist', validate(shortlistSchema), drives.addToShortlist);
 driveRoutes.patch('/:driveId/candidates/stage', validate(bulkStageSchema), drives.bulkUpdateCandidateStage);
+driveRoutes.patch('/:driveId/eligibility/:studentId', validate(eligibilityOverrideSchema), drives.overrideEligibility);
 driveRoutes.patch(
   '/:driveId/shortlist/:studentId',
   validate(shortlistEntrySchema),

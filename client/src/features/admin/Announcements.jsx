@@ -6,6 +6,12 @@ import { api } from '../../lib/api.js';
 const field =
   'w-full bg-surface-container-low border-2 border-transparent rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-container';
 const labelClass = 'text-xs font-bold uppercase tracking-wider text-outline';
+const TEMPLATES = [
+  { label: 'Interview reminder', subject: 'Interview reminder: action required', body: 'Your interview schedule has been published. Review your slot, venue and preparation instructions in Student OS.' },
+  { label: 'Drive update', subject: 'Placement drive update', body: 'There is an important update to your placement drive. Open Student OS to review the latest timeline and required action.' },
+  { label: 'Selected candidates', subject: 'Selection update', body: 'Your placement status has changed. Open Student OS to review the official outcome and next steps.' },
+  { label: 'Missing evidence', subject: 'Complete your placement record', body: 'Your placement record is missing required evidence. Please complete the highlighted fields before the deadline.' },
+];
 
 const shortDate = (value) =>
   new Date(value).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -70,6 +76,8 @@ function Composer({ audienceTypes, filters, onSent, onCancel, defaultYear }) {
   return (
     <div className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-4 space-y-3">
       <h3 className="font-headline text-base font-bold">New announcement</h3>
+
+      <label className="space-y-1 block"><span className={labelClass}>Start from a template</span><select defaultValue="" onChange={(event) => { const template = TEMPLATES[Number(event.target.value)]; if (template) setForm({ subject: template.subject, body: template.body }); }} className={field}><option value="">Blank message</option>{TEMPLATES.map((template, index) => <option key={template.label} value={index}>{template.label}</option>)}</select></label>
 
       <label className="space-y-1 block">
         <span className={labelClass}>Subject</span>
@@ -211,11 +219,19 @@ export default function Announcements({ graduationYear = '' }) {
   const { data, loading, error, refetch } = useApiResource('/announcements');
   const { data: filters } = useApiResource('/admin/students/filters');
   const [composing, setComposing] = useState(false);
+  const [retrying, setRetrying] = useState('');
 
   if (loading && !data) return <LoadingBlock label="Loading announcements" />;
   if (error) return <ErrorBlock error={error} onRetry={refetch} />;
 
   const { announcements, audienceTypes, email } = data;
+
+  async function retry(announcementId) {
+    setRetrying(announcementId);
+    try { const result = await api.post(`/announcements/${announcementId}/retry`, {}); window.alert(`Retry complete: ${result.delivery.sent} sent, ${result.delivery.failed} failed.`); await refetch({ quiet: true }); }
+    catch (caught) { window.alert(caught.message || 'Could not retry delivery.'); }
+    finally { setRetrying(''); }
+  }
 
   return (
     <div className="space-y-4">
@@ -295,6 +311,7 @@ export default function Announcements({ graduationYear = '' }) {
                     announcement.delivery.skipped
                   } in-app only`}
               </p>
+              {announcement.delivery.failed > 0 && email.available && <button type="button" disabled={retrying === announcement._id} onClick={() => retry(announcement._id)} className="mt-2 rounded-lg bg-error-container/25 text-on-error-container px-3 py-1.5 text-[10px] font-black">{retrying === announcement._id ? 'Retrying…' : `Retry ${announcement.delivery.failed} failed`}</button>}
             </li>
           ))}
         </ul>

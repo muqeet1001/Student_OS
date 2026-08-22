@@ -56,18 +56,14 @@ const ROUTES = [
 const ADMIN_ROUTES = [
   '/admin/overview',
   '/admin/students',
-  '/admin/interventions',
-  '/admin/tasks',
-  '/admin/companies',
   '/admin/drives',
-  '/admin/matching',
+  '/admin/companies',
+  '/admin/actions',
   '/admin/calendar',
-  '/admin/reviews',
   '/admin/communications',
   '/admin/training',
-  '/admin/outcomes',
+  '/admin/reports',
   '/admin/settings',
-  '/admin/activity',
 ];
 
 const results = [];
@@ -231,6 +227,24 @@ async function main() {
       }
     }
 
+    await staff.close();
+    if (problems.length) throw new Error(problems.join('; '));
+  });
+
+  await check('a drive is one command centre with all nine operational views', async () => {
+    const staff = await browser.newContext({ viewport: { width: 1366, height: 900 } });
+    await signIn(staff, { email: ADMIN_EMAIL, password: ADMIN_PASSWORD, destination: /\/admin(?:\/overview)?$/ });
+    const page = await staff.newPage();
+    const problems = watch(page);
+    await page.goto(`${BASE}/admin/drives`, { waitUntil: 'networkidle', timeout: 25000 });
+    const firstDrive = page.locator('ul.grid li button').first();
+    if (!(await firstDrive.count())) throw new Error('demo cohort has no drive to open');
+    await firstDrive.click();
+    await page.getByRole('button', { name: /JD & eligibility/i }).waitFor();
+    for (const label of ['Overview', 'JD & eligibility', 'Candidate pipeline', 'Assessments', 'Interviews', 'Attendance', 'Communications', 'Offers & joining', 'Activity']) {
+      await page.getByRole('button', { name: new RegExp(label, 'i') }).first().click();
+      await page.waitForTimeout(100);
+    }
     await staff.close();
     if (problems.length) throw new Error(problems.join('; '));
   });

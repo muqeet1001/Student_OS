@@ -11,6 +11,17 @@ const STATUS_TONES = {
 };
 
 const PIPELINE = ['invited', 'applied', 'shortlisted', 'assessment', 'technical-interview', 'hr-interview', 'selected', 'offered', 'joined', 'rejected', 'withdrawn'];
+const DRIVE_TABS = [
+  ['overview', 'Overview'], ['eligibility', 'JD & eligibility'], ['pipeline', 'Candidate pipeline'],
+  ['assessments', 'Assessments'], ['interviews', 'Interviews'], ['attendance', 'Attendance'],
+  ['communications', 'Communications'], ['offers', 'Offers & joining'], ['activity', 'Activity'],
+];
+const ELIGIBILITY = {
+  recommended: ['Recommended', 'bg-green-100 text-green-800'],
+  eligible: ['Eligible', 'bg-primary/10 text-primary'],
+  'not-eligible': ['Not eligible', 'bg-error-container/30 text-on-error-container'],
+  'needs-verification': ['Needs verification', 'bg-amber-100 text-amber-800'],
+};
 
 function NewDriveForm({ onCreated, onCancel }) {
   const [form, setForm] = useState({
@@ -162,6 +173,8 @@ function DriveDetail({ driveId, onBack }) {
   const [onlyEligible, setOnlyEligible] = useState(true);
   const [editingAction, setEditingAction] = useState(false);
   const [editingRequirements, setEditingRequirements] = useState(false);
+  const [tab, setTab] = useState('overview');
+  const [overrideOpen, setOverrideOpen] = useState(null);
 
   if (loading && !data) return <LoadingBlock label="Finding candidates" />;
   if (error) return <ErrorBlock error={error} onRetry={refetch} />;
@@ -252,6 +265,22 @@ function DriveDetail({ driveId, onBack }) {
     finally { setBusy(false); }
   }
 
+  async function saveOverride(event, candidate) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    setBusy(true);
+    try {
+      await api.patch(`/drives/${driveId}/eligibility/${candidate._id}`, {
+        decision: form.get('decision'),
+        reason: form.get('reason'),
+        originalState: candidate.baseEligibilityState,
+      });
+      setOverrideOpen(null);
+      await refetch({ quiet: true });
+    } catch (caught) { window.alert(caught.message || 'Could not record the eligibility decision.'); }
+    finally { setBusy(false); }
+  }
+
   return (
     <div className="space-y-3">
       <button
@@ -301,27 +330,38 @@ function DriveDetail({ driveId, onBack }) {
         </div>
       </header>
 
-      <section className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-4">
-        {!editingRequirements ? <div className="flex flex-col md:flex-row md:items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-wider text-primary">Eligibility rules extracted from JD</p><div className="flex flex-wrap gap-1.5 mt-2">{drive.requirements.skills.map((skill) => <span key={`${skill.name}-${skill.required}`} className={`rounded-full px-2.5 py-1 text-[10px] font-black ${skill.required ? 'bg-primary/10 text-primary' : 'bg-surface-container text-on-surface-variant'}`}>{skill.name}{skill.required ? ' · required' : ' · preferred'}</span>)}</div><p className="text-xs text-on-surface-variant mt-2">{[drive.requirements.minCgpa && `CGPA ${drive.requirements.minCgpa}+`, drive.requirements.graduationYear && `Class of ${drive.requirements.graduationYear}`, drive.requirements.branches?.length && drive.requirements.branches.join(', ')].filter(Boolean).join(' · ') || 'No academic restrictions extracted.'}</p></div><button type="button" onClick={() => setEditingRequirements(true)} className="px-4 py-2 rounded-lg bg-surface-container text-xs font-black shrink-0">Review rules</button></div> : <form onSubmit={saveRequirements} className="grid md:grid-cols-2 gap-3"><label className="text-xs font-bold">Required skills<input name="requiredSkills" defaultValue={drive.requirements.skills.filter((skill) => skill.required).map((skill) => skill.name).join(', ')} className="mt-1 w-full rounded-lg border border-outline-variant bg-transparent px-3 py-2" /></label><label className="text-xs font-bold">Preferred skills<input name="preferredSkills" defaultValue={drive.requirements.skills.filter((skill) => !skill.required).map((skill) => skill.name).join(', ')} className="mt-1 w-full rounded-lg border border-outline-variant bg-transparent px-3 py-2" /></label><label className="text-xs font-bold">Eligible branches<input name="branches" defaultValue={drive.requirements.branches?.join(', ')} className="mt-1 w-full rounded-lg border border-outline-variant bg-transparent px-3 py-2" /></label><div className="grid grid-cols-2 gap-2"><label className="text-xs font-bold">Minimum CGPA<input name="minCgpa" type="number" min="0" max="10" step="0.1" defaultValue={drive.requirements.minCgpa ?? ''} className="mt-1 w-full rounded-lg border border-outline-variant bg-transparent px-3 py-2" /></label><label className="text-xs font-bold">Graduation year<input name="graduationYear" type="number" min="1950" max="2100" defaultValue={drive.requirements.graduationYear ?? ''} className="mt-1 w-full rounded-lg border border-outline-variant bg-transparent px-3 py-2" /></label></div><div className="md:col-span-2 flex gap-2"><button disabled={busy} className="px-4 py-2 rounded-lg bg-primary text-on-primary text-xs font-black">Save and recalculate</button><button type="button" onClick={() => setEditingRequirements(false)} className="px-3 py-2 text-xs font-bold">Cancel</button></div></form>}
-      </section>
+      <nav className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-2 flex gap-1 overflow-x-auto" aria-label="Drive command centre">
+        {DRIVE_TABS.map(([key, label]) => <button key={key} type="button" onClick={() => setTab(key)} className={`shrink-0 rounded-lg px-3 py-2 text-xs font-black ${tab === key ? 'bg-inverse-surface text-white' : 'text-on-surface-variant hover:bg-surface-container'}`}>{label}{key === 'eligibility' && summary.needsVerification ? <span className="ml-1.5 rounded-full bg-amber-200 text-amber-900 px-1.5">{summary.needsVerification}</span> : ''}{key === 'pipeline' && summary.stuck ? <span className="ml-1.5 rounded-full bg-error-container text-on-error-container px-1.5">{summary.stuck}</span> : ''}</button>)}
+      </nav>
 
-      <section className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-4">
+      {tab === 'overview' && <section className="space-y-3">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">{[
+          ['Unresolved eligibility', summary.needsVerification, 'rule'],
+          ['Stuck over 7 days', summary.stuck, 'hourglass_top'],
+          ['Interviews', summary.interviews, 'event'],
+          ['Offers / joined', `${summary.offers} / ${summary.joined}`, 'contract'],
+        ].map(([label, value, icon]) => <button key={label} type="button" onClick={() => setTab(label.startsWith('Unresolved') ? 'eligibility' : label.startsWith('Stuck') ? 'pipeline' : label === 'Interviews' ? 'interviews' : 'offers')} className="text-left rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-4 hover:border-primary/40"><span className="material-symbols-outlined text-primary">{icon}</span><p className="text-2xl font-black mt-2">{value}</p><p className="text-[10px] font-black uppercase tracking-wider text-on-surface-variant">{label}</p></button>)}</div>
+        <div className="rounded-xl bg-primary/5 border border-primary/15 p-4"><p className="text-xs font-black uppercase tracking-wider text-primary">One drive, one source of truth</p><p className="text-sm text-on-surface-variant mt-1">Eligibility, pipeline movement, interviews, attendance, communication delivery, offers and every officer decision are connected to this drive.</p></div>
+        {(data.operations.actions ?? []).length > 0 && <div className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-4"><h3 className="text-xs font-black uppercase tracking-wider">Automated candidate actions</h3><ul className="mt-2 divide-y divide-outline-variant/60">{data.operations.actions.slice(0, 8).map((action) => <li key={action._id} className="py-2 flex gap-3"><span className="material-symbols-outlined text-primary text-base">automation</span><div className="min-w-0 flex-1"><p className="text-sm font-bold truncate">{action.title}</p><p className="text-xs text-on-surface-variant">{action.owner?.name} · {action.dueAt ? `Due ${new Date(action.dueAt).toLocaleDateString('en-IN')}` : 'No due date'}</p></div><span className="text-[9px] font-black uppercase text-primary">{action.priority}</span></li>)}</ul></div>}
+      </section>}
+
+      {tab === 'eligibility' && <section className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-4">
+        {!editingRequirements ? <div className="flex flex-col md:flex-row md:items-start justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-wider text-primary">Eligibility rules extracted from JD</p><div className="flex flex-wrap gap-1.5 mt-2">{drive.requirements.skills.map((skill) => <span key={`${skill.name}-${skill.required}`} className={`rounded-full px-2.5 py-1 text-[10px] font-black ${skill.required ? 'bg-primary/10 text-primary' : 'bg-surface-container text-on-surface-variant'}`}>{skill.name}{skill.required ? ' · required' : ' · preferred'}</span>)}</div><p className="text-xs text-on-surface-variant mt-2">{[drive.requirements.minCgpa && `CGPA ${drive.requirements.minCgpa}+`, drive.requirements.graduationYear && `Class of ${drive.requirements.graduationYear}`, drive.requirements.branches?.length && drive.requirements.branches.join(', ')].filter(Boolean).join(' · ') || 'No academic restrictions extracted.'}</p></div><button type="button" onClick={() => setEditingRequirements(true)} className="px-4 py-2 rounded-lg bg-surface-container text-xs font-black shrink-0">Review rules</button></div> : <form onSubmit={saveRequirements} className="grid md:grid-cols-2 gap-3"><label className="text-xs font-bold">Required skills<input name="requiredSkills" defaultValue={drive.requirements.skills.filter((skill) => skill.required).map((skill) => skill.name).join(', ')} className="mt-1 w-full rounded-lg border border-outline-variant bg-transparent px-3 py-2" /></label><label className="text-xs font-bold">Preferred skills<input name="preferredSkills" defaultValue={drive.requirements.skills.filter((skill) => !skill.required).map((skill) => skill.name).join(', ')} className="mt-1 w-full rounded-lg border border-outline-variant bg-transparent px-3 py-2" /></label><label className="text-xs font-bold">Eligible branches<input name="branches" defaultValue={drive.requirements.branches?.join(', ')} className="mt-1 w-full rounded-lg border border-outline-variant bg-transparent px-3 py-2" /></label><div className="grid grid-cols-2 gap-2"><label className="text-xs font-bold">Minimum CGPA<input name="minCgpa" type="number" min="0" max="10" step="0.1" defaultValue={drive.requirements.minCgpa ?? ''} className="mt-1 w-full rounded-lg border border-outline-variant bg-transparent px-3 py-2" /></label><label className="text-xs font-bold">Graduation year<input name="graduationYear" type="number" min="1950" max="2100" defaultValue={drive.requirements.graduationYear ?? ''} className="mt-1 w-full rounded-lg border border-outline-variant bg-transparent px-3 py-2" /></label></div><div className="md:col-span-2 flex gap-2"><button disabled={busy} className="px-4 py-2 rounded-lg bg-primary text-on-primary text-xs font-black">Save and recalculate</button><button type="button" onClick={() => setEditingRequirements(false)} className="px-3 py-2 text-xs font-bold">Cancel</button></div></form>}
+      </section>}
+
+      {tab === 'overview' && <section className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-4">
         {!editingAction ? <div className="flex flex-col md:flex-row md:items-center justify-between gap-3"><div><p className="text-[10px] font-black uppercase tracking-wider text-primary">Next action</p><p className="text-sm font-bold mt-1">{drive.nextAction || 'No next action set'}</p><p className="text-xs text-on-surface-variant mt-0.5">{drive.nextActionDueAt ? `Due ${new Date(drive.nextActionDueAt).toLocaleDateString('en-IN')}` : 'Add a due date so this drive appears in Today.'}{drive.applicationDeadline ? ` · Applications close ${new Date(drive.applicationDeadline).toLocaleDateString('en-IN')}` : ''}</p></div><button type="button" onClick={() => setEditingAction(true)} className="px-4 py-2 rounded-lg bg-surface-container text-xs font-black">Update drive plan</button></div> : <form onSubmit={saveOperations} className="grid md:grid-cols-[9rem_1fr_10rem_10rem_auto] gap-3 items-end"><label className="text-xs font-bold">Status<select name="status" defaultValue={drive.status} className="mt-1 w-full rounded-lg border border-outline-variant bg-transparent px-2 py-2"><option value="planned">Planned</option><option value="open">Open</option><option value="in-progress">In progress</option><option value="closed">Closed</option></select></label><label className="text-xs font-bold">Next action<input name="nextAction" defaultValue={drive.nextAction} className="mt-1 w-full rounded-lg border border-outline-variant bg-transparent px-3 py-2" /></label><label className="text-xs font-bold">Action due<input name="nextActionDueAt" type="date" defaultValue={drive.nextActionDueAt ? new Date(drive.nextActionDueAt).toISOString().slice(0, 10) : ''} className="mt-1 w-full rounded-lg border border-outline-variant bg-transparent px-2 py-2" /></label><label className="text-xs font-bold">Apply by<input name="applicationDeadline" type="date" defaultValue={drive.applicationDeadline ? new Date(drive.applicationDeadline).toISOString().slice(0, 10) : ''} className="mt-1 w-full rounded-lg border border-outline-variant bg-transparent px-2 py-2" /></label><div className="flex gap-2"><button type="submit" disabled={busy} className="px-4 py-2 rounded-lg bg-primary text-on-primary text-xs font-black">Save</button><button type="button" onClick={() => setEditingAction(false)} className="px-3 py-2 text-xs font-bold">Cancel</button></div></form>}
-      </section>
+      </section>}
 
       {/* Shortlist */}
-      {drive.shortlist.length > 0 && (
+      {tab === 'pipeline' && drive.shortlist.length > 0 && (
         <section className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-4">
           <div className="flex flex-wrap items-center justify-between gap-3 mb-3"><h3 className="text-xs font-bold uppercase tracking-[0.14em] text-on-surface-variant">Candidate pipeline ({drive.shortlist.length})</h3>{pipelineSelected.size > 0 && <select defaultValue="" onChange={setBulkStage} disabled={busy} className="rounded-lg border border-outline-variant bg-transparent px-3 py-2 text-xs font-black"><option value="">Move {pipelineSelected.size} candidates…</option>{PIPELINE.map((stage) => <option key={stage} value={stage}>{stage.replaceAll('-', ' ')}</option>)}</select>}</div>
 
-          <ul className="space-y-1.5">
-            {candidates
-              .filter((item) => item.shortlisted)
-              .map((item) => (
-                <li
-                  key={item._id}
-                  className="flex items-center gap-3 p-2.5 rounded-lg bg-surface-container-low"
-                >
+          <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-3 items-start">
+            {PIPELINE.map((column) => { const rows = candidates.filter((item) => item.shortlisted?.stage === column); return <section key={column} className="rounded-xl bg-surface-container-low p-2 min-h-24"><div className="flex items-center justify-between px-2 py-1"><h4 className="text-[10px] font-black uppercase tracking-wider">{column.replaceAll('-', ' ')}</h4><span className="text-xs font-black rounded-full bg-surface-container-lowest px-2">{rows.length}</span></div><ul className="space-y-2 mt-1">{rows.map((item) => (
+                <li key={item._id} className="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/50">
+                  <div className="flex items-center gap-2">
                   <input type="checkbox" checked={pipelineSelected.has(item._id)} onChange={() => togglePipeline(item._id)} aria-label={`Select ${item.name} in pipeline`} />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-bold truncate">{item.name}</p>
@@ -329,13 +369,13 @@ function DriveDetail({ driveId, onBack }) {
                       {item.branch} · {item.match.score}% match
                     </p>
                   </div>
-
+                  </div>
                   <select
                     value={item.shortlisted.stage}
                     disabled={busy}
                     onChange={(event) => setStage(item._id, event.target.value)}
                     aria-label={`Stage for ${item.name}`}
-                    className="bg-surface-container-lowest border border-outline-variant/60 rounded-lg px-2 py-1 text-xs font-bold capitalize cursor-pointer shrink-0"
+                    className="mt-2 w-full bg-transparent border border-outline-variant/60 rounded-lg px-2 py-1 text-xs font-bold capitalize cursor-pointer"
                   >
                     {PIPELINE.map((stage) => (
                       <option key={stage} value={stage}>
@@ -343,14 +383,17 @@ function DriveDetail({ driveId, onBack }) {
                       </option>
                     ))}
                   </select>
+                  {item.shortlisted.stageHistory?.at(-1)?.changedAt && <p className={`text-[10px] mt-2 ${Date.now() - new Date(item.shortlisted.stageHistory.at(-1).changedAt).getTime() > 7 * 86400000 ? 'text-error font-bold' : 'text-outline'}`}>In stage since {new Date(item.shortlisted.stageHistory.at(-1).changedAt).toLocaleDateString('en-IN')}</p>}
                 </li>
-              ))}
-          </ul>
+              ))}</ul></section>; })}
+          </div>
         </section>
       )}
 
+      {tab === 'pipeline' && drive.shortlist.length === 0 && <EmptyBlock icon="conversion_path" title="Pipeline is empty" description="Select eligible candidates in JD & eligibility, then shortlist them into this drive." />}
+
       {/* Candidate pool */}
-      <section className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-4">
+      {tab === 'eligibility' && <section className="bg-surface-container-lowest rounded-xl border border-outline-variant/60 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
           <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-on-surface-variant">
             Candidates
@@ -364,7 +407,7 @@ function DriveDetail({ driveId, onBack }) {
                 onChange={(event) => setOnlyEligible(event.target.checked)}
                 className="w-4 h-4 rounded-md cursor-pointer"
               />
-              Eligible only
+              Eligible and recommended only
             </label>
 
             {selected.size > 0 && (
@@ -412,6 +455,8 @@ function DriveDetail({ driveId, onBack }) {
                   </p>
                 </div>
 
+                <span title={item.eligibilityState === 'recommended' ? 'Passes mandatory criteria and has a match score of 70 or more.' : item.eligibilityState === 'eligible' ? 'Passes mandatory company and college criteria.' : item.eligibilityState === 'needs-verification' ? 'A mandatory data field is missing, so the system cannot decide.' : 'Fails one or more mandatory criteria.'} className={`text-[9px] font-black uppercase px-2 py-1 rounded-full shrink-0 ${ELIGIBILITY[item.eligibilityState]?.[1]}`}>{ELIGIBILITY[item.eligibilityState]?.[0]}</span>
+
                 {/* A near miss is shown with its reason rather than hidden. */}
                 {!item.eligible && item.match.blockers.length > 0 && (
                   <span className="hidden md:block text-[10px] text-on-error-container bg-error-container/20 px-2 py-0.5 rounded-2xl shrink-0 max-w-[14rem] truncate">
@@ -428,11 +473,27 @@ function DriveDetail({ driveId, onBack }) {
                     listed
                   </span>
                 )}
+                <button type="button" onClick={() => setOverrideOpen(overrideOpen === item._id ? null : item._id)} className="text-[10px] font-black text-primary shrink-0">{item.eligibilityOverride && item.eligibilityOverride.decision !== 'clear' ? 'Review override' : 'Override'}</button>
+                {overrideOpen === item._id && <form onSubmit={(event) => saveOverride(event, item)} className="basis-full mt-2 grid sm:grid-cols-[10rem_1fr_auto] gap-2 rounded-lg border border-outline-variant bg-surface-container-lowest p-3"><select name="decision" defaultValue={item.eligibilityOverride?.decision === 'not-eligible' ? 'not-eligible' : 'eligible'} className="rounded-lg border border-outline-variant bg-transparent px-2 py-2 text-xs font-bold"><option value="eligible">Mark eligible</option><option value="not-eligible">Mark not eligible</option><option value="clear">Clear override</option></select><input name="reason" required minLength="10" placeholder="Required reason for this exception" className="rounded-lg border border-outline-variant bg-transparent px-3 py-2 text-xs" /><button disabled={busy} className="rounded-lg bg-primary text-on-primary px-4 py-2 text-xs font-black">Record decision</button><p className="sm:col-span-3 text-[10px] text-on-surface-variant">The original <strong>{item.baseEligibilityState.replaceAll('-', ' ')}</strong> decision is retained with officer and timestamp.</p></form>}
               </li>
             ))}
           </ul>
         )}
-      </section>
+      </section>}
+
+      {tab === 'eligibility' && <section className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-4"><h3 className="text-xs font-black uppercase tracking-wider">What each decision means</h3><div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3 mt-3">{[
+        ['Eligible', 'Passes every mandatory criterion.'], ['Match score', 'How closely evidence matches the JD; it does not decide eligibility.'], ['Placement-ready', 'Meets the college-wide readiness threshold.'], ['Recommended', 'Eligible with a match score of at least 70.'], ['Shortlisted', 'Officially added to this drive pipeline by an officer.'],
+      ].map(([name, meaning]) => <div key={name} className="rounded-lg bg-surface-container-low p-3"><p className="text-xs font-black">{name}</p><p className="text-[11px] text-on-surface-variant mt-1">{meaning}</p></div>)}</div></section>}
+
+      {['assessments', 'interviews'].includes(tab) && <section className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-4"><h3 className="text-sm font-black capitalize">{tab}</h3>{(data.operations.events ?? []).filter((event) => tab === 'assessments' ? event.type === 'test' : event.type === 'interview').length ? <ul className="mt-3 divide-y divide-outline-variant/60">{data.operations.events.filter((event) => tab === 'assessments' ? event.type === 'test' : event.type === 'interview').map((event) => <li key={event._id} className="py-3 flex justify-between gap-3"><div><p className="text-sm font-bold">{event.title}</p><p className="text-xs text-on-surface-variant">{new Date(event.startsAt).toLocaleString('en-IN')} · {event.venue || 'Venue pending'}</p></div><span className="text-xs font-black">{event.slots?.length || 0} students</span></li>)}</ul> : <EmptyBlock icon="event_busy" title={`No ${tab} scheduled`} description="Create the drive event from Calendar; it will appear here automatically." />}</section>}
+
+      {tab === 'attendance' && <section className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-4"><div className="grid grid-cols-3 gap-3">{[['Scheduled', summary.scheduled], ['Attended', summary.attended], ['No-show', summary.noShows]].map(([label, value]) => <div key={label} className="rounded-lg bg-surface-container-low p-3"><p className="text-xl font-black">{value}</p><p className="text-[10px] font-black uppercase text-on-surface-variant">{label}</p></div>)}</div><p className="text-xs text-on-surface-variant mt-4">Attendance is recorded against interview slots in Calendar and reflected here immediately.</p></section>}
+
+      {tab === 'communications' && <section className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-4">{data.operations.communications?.length ? <ul className="divide-y divide-outline-variant/60">{data.operations.communications.map((message) => <li key={message._id} className="py-3"><p className="text-sm font-bold">{message.subject}</p><p className="text-xs text-on-surface-variant mt-1">{new Date(message.sentAt).toLocaleString('en-IN')} · {message.recipients?.length || 0} recipients · {message.recipients?.filter((row) => row.delivery === 'failed').length || 0} failed</p></li>)}</ul> : <EmptyBlock icon="campaign" title="No drive communications" description="Send to this drive from Communications and its delivery evidence will appear here." />}</section>}
+
+      {tab === 'offers' && <section className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-4">{data.operations.offers?.length ? <div className="overflow-x-auto"><table className="w-full min-w-[42rem] text-left text-sm"><thead><tr className="text-[10px] uppercase text-on-surface-variant"><th className="py-2">Student</th><th>Status</th><th>Package</th><th>Joining</th></tr></thead><tbody>{data.operations.offers.map((offer) => <tr key={offer._id} className="border-t border-outline-variant/60"><td className="py-3 font-bold">{offer.student?.name}</td><td className="capitalize">{offer.status}</td><td>{offer.ctc ? `₹${(offer.ctc / 100000).toFixed(1)} LPA` : 'Not recorded'}</td><td>{offer.joiningDate ? new Date(offer.joiningDate).toLocaleDateString('en-IN') : 'Pending'}</td></tr>)}</tbody></table></div> : <EmptyBlock icon="contract" title="No offers recorded" description="Offers linked to this drive will appear here and automatically update candidate stages." />}</section>}
+
+      {tab === 'activity' && <section className="rounded-xl border border-outline-variant/60 bg-surface-container-lowest p-4">{data.operations.activity?.length ? <ul className="divide-y divide-outline-variant/60">{data.operations.activity.map((event) => <li key={event._id} className="py-3"><p className="text-sm font-bold">{event.summary}</p><p className="text-xs text-on-surface-variant">{event.actor?.name || 'System'} · {new Date(event.createdAt).toLocaleString('en-IN')}</p></li>)}</ul> : <EmptyBlock icon="history" title="No activity yet" description="Every material officer action on this drive is recorded here." />}</section>}
     </div>
   );
 }

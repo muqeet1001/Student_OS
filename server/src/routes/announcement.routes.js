@@ -20,4 +20,5 @@ announcementRoutes.use(requireRole('admin'));
 
 announcementRoutes.get('/', announcements.listAnnouncements);
 announcementRoutes.post('/preview', validate(audienceSchema), announcements.previewAudience);
+announcementRoutes.post('/:announcementId/retry', announcements.retryAnnouncement);
 announcementRoutes.post('/', validate(sendAnnouncementSchema), announcements.sendAnnouncement);

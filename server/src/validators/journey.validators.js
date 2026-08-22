@@ -107,6 +107,14 @@ export const institutionSchema = z
         sis: z.enum(['none', 'csv', 'api']),
       })
       .optional(),
+    placementPolicies: z.object({
+      maximumActiveOffers: z.number().int().min(0).max(20),
+      dreamPackage: z.number().min(0).max(100_000_000),
+      superDreamPackage: z.number().min(0).max(100_000_000),
+      minimumPackageImprovementPct: z.number().min(0).max(500),
+      debarAfterNoShows: z.number().int().min(0).max(20),
+      allowWithdrawal: z.boolean(),
+    }).optional(),
   })
   .strict();
 

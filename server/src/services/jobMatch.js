@@ -196,6 +196,7 @@ export function scoreStudent(student, requirements) {
   // Hard filters are reported rather than silently dropping a student — a
   // placement officer needs to see a near-miss and decide.
   const blockers = [];
+  const verificationIssues = [];
   const grade = profile.cgpa ?? parseGrade(profile.education);
 
   for (const skill of missing.filter((item) => item.required)) {
@@ -204,6 +205,8 @@ export function scoreStudent(student, requirements) {
 
   if (requirements.minCgpa != null && grade != null && grade < requirements.minCgpa) {
     blockers.push(`CGPA ${grade} is below the required ${requirements.minCgpa}`);
+  } else if (requirements.minCgpa != null && grade == null) {
+    verificationIssues.push('CGPA is missing');
   }
   if (
     requirements.graduationYear != null &&
@@ -211,6 +214,8 @@ export function scoreStudent(student, requirements) {
     profile.graduationYear !== requirements.graduationYear
   ) {
     blockers.push(`Graduates ${profile.graduationYear}, not ${requirements.graduationYear}`);
+  } else if (requirements.graduationYear != null && profile.graduationYear == null) {
+    verificationIssues.push('Graduation year is missing');
   }
   if (
     requirements.branches.length > 0 &&
@@ -218,7 +223,15 @@ export function scoreStudent(student, requirements) {
     !requirements.branches.includes(profile.branch)
   ) {
     blockers.push(`${profile.branch} is outside the listed branches`);
+  } else if (requirements.branches.length > 0 && !profile.branch) {
+    verificationIssues.push('Department is missing');
   }
+
+  if (
+    requirements.skills.some((item) => item.required) &&
+    (profile.skills?.length ?? 0) === 0 &&
+    (profile.projects?.length ?? 0) === 0
+  ) verificationIssues.push('No skill or project evidence is available');
 
   if (blockers.length > 0) score = Math.round(score * 0.5);
 
@@ -242,6 +255,7 @@ export function scoreStudent(student, requirements) {
     matched,
     missing,
     blockers,
+    verificationIssues,
     reasons,
     breakdown: {
       skills: Math.round(skillScore),

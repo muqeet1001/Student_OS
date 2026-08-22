@@ -58,6 +58,18 @@ describe('connected placement operating system', { skip }, () => {
     const entry = drive.data.drive.shortlist.find((candidate) => candidate.student === firstId);
     assert.equal(entry.stage, 'assessment');
     assert.deepEqual(entry.stageHistory.map((change) => change.to), ['invited', 'assessment']);
+    assert.ok((await first.get('/journey/action-center')).data.entries.some((action) => action.title.includes('Apply to Core Systems')));
+  });
+
+  test('retains the machine decision when an officer records and clears an override', async () => {
+    const overridden = await staff.patch(`/drives/${driveId}/eligibility/${secondId}`, { decision: 'eligible', reason: 'Recruiter approved this documented exception.', originalState: 'not-eligible' });
+    assert.equal(overridden.status, 200, JSON.stringify(overridden.body));
+    let drive = await staff.get(`/drives/${driveId}`);
+    assert.equal(drive.data.candidates.find((candidate) => candidate._id === secondId).eligibilityState, 'eligible');
+    await staff.patch(`/drives/${driveId}/eligibility/${secondId}`, { decision: 'clear', reason: 'Recruiter withdrew the exception approval.', originalState: 'not-eligible' });
+    drive = await staff.get(`/drives/${driveId}`);
+    assert.equal(drive.data.candidates.find((candidate) => candidate._id === secondId).eligibilityState, 'not-eligible');
+    assert.equal(drive.data.drive.eligibilityOverrides.length, 2);
   });
 
   test('saves live filters and frozen candidate lists', async () => {

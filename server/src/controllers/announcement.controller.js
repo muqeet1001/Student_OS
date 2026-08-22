@@ -112,6 +112,27 @@ export const listAnnouncements = asyncHandler(async (req, res) => {
   });
 });
 
+export const retryAnnouncement = asyncHandler(async (req, res) => {
+  const announcement = await Announcement.findById(req.params.announcementId);
+  if (!announcement) throw new ApiError(404, 'Announcement not found.');
+  const failed = announcement.recipients.filter((row) => row.delivery === 'failed');
+  if (!failed.length) throw new ApiError(400, 'This announcement has no failed deliveries to retry.');
+  const results = await sendBulkEmail({
+    recipients: failed.map((row) => ({ _id: row.student, email: row.email })),
+    subject: announcement.subject,
+    text: announcement.body,
+    html: `<p>${announcement.body.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>')}</p>`,
+  });
+  const byEmail = new Map(results.map((result) => [result.email, result]));
+  for (const row of announcement.recipients) {
+    if (row.delivery !== 'failed') continue;
+    row.delivery = byEmail.get(row.email)?.status ?? 'failed';
+    row.error = byEmail.get(row.email)?.error ?? '';
+  }
+  await announcement.save();
+  res.json({ success: true, data: { delivery: summariseDelivery(results) } });
+});
+
 /**
  * A student's inbox.
  *

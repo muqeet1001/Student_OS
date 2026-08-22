@@ -43,6 +43,11 @@ const userSchema = new mongoose.Schema(
       default: 'student',
       index: true,
     },
+    staffRole: {
+      type: String,
+      enum: ['placement-head', 'officer', 'faculty-coordinator', 'viewer'],
+      default: 'placement-head',
+    },
     avatarUrl: { type: String, default: '' },
     headline: { type: String, default: '', maxlength: 120 },
     isActive: { type: Boolean, default: true },

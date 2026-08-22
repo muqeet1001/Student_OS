@@ -7,6 +7,7 @@ import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { recordAudit } from '../services/audit.service.js';
 import { Drive } from '../models/Drive.js';
+import { InstitutionConfig } from '../models/StudentJourney.js';
 
 async function syncDrivePipeline(offer, actor) {
   if (!offer.drive) return;
@@ -41,6 +42,18 @@ export const listOffers = asyncHandler(async (req, res) => {
 export const createOffer = asyncHandler(async (req, res) => {
   const student = await User.findOne({ _id: req.body.student, role: 'student' }).lean();
   if (!student) throw new ApiError(404, 'Student not found.');
+
+  const config = await InstitutionConfig.findOne({ key: 'default' }).lean();
+  const policy = config?.placementPolicies ?? {};
+  const active = await Offer.find({ student: student._id, status: { $in: ['offered', 'accepted', 'joined'] } }).select('ctc status').lean();
+  if (policy.maximumActiveOffers > 0 && active.length >= policy.maximumActiveOffers) {
+    throw ApiError.conflict(`College policy allows at most ${policy.maximumActiveOffers} active offer${policy.maximumActiveOffers === 1 ? '' : 's'} per student.`);
+  }
+  const best = Math.max(0, ...active.map((item) => item.ctc ?? 0));
+  if (best > 0 && policy.minimumPackageImprovementPct > 0 && req.body.ctc) {
+    const required = Math.round(best * (1 + policy.minimumPackageImprovementPct / 100));
+    if (req.body.ctc < required) throw ApiError.conflict(`College policy requires the next package to be at least ₹${required.toLocaleString('en-IN')}.`);
+  }
 
   const offer = await Offer.create({ ...req.body, recordedBy: req.user._id });
   await syncDrivePipeline(offer, req.user._id);

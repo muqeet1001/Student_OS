@@ -41,5 +41,8 @@ export const requireRole = (...roles) => (req, _res, next) => {
   if (!roles.includes(req.user.role)) {
     return next(ApiError.forbidden('This action requires elevated permissions'));
   }
+  if (req.user.role === 'admin' && req.user.staffRole === 'viewer' && !['GET', 'HEAD', 'OPTIONS'].includes(req.method)) {
+    return next(ApiError.forbidden('View-only placement staff cannot change records'));
+  }
   return next();
 };
