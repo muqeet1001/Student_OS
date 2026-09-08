@@ -33,7 +33,7 @@ describe('placement journey', { skip }, () => {
 
   test('completes onboarding and records current consent', async () => {
     const res = await student.call('PUT', '/journey/onboarding', {
-      targetRole: 'software-engineer', graduationYear: 2027, branch: 'CSE',
+      targetRole: 'software-engineer', graduationYear: 2027, semester: 8, branch: 'CSE',
       placementDate: '2027-01-15', weeklyGoal: 5, targetCompanies: ['Acme'],
       consents: [{ key: 'data-sharing', granted: true }],
     });

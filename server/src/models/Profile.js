@@ -84,6 +84,10 @@ const profileSchema = new mongoose.Schema(
     externalStudentId: { type: String, default: '', trim: true, maxlength: 80 },
     location: { type: String, default: '', maxlength: 120 },
     graduationYear: { type: Number, min: 1950, max: 2100 },
+    // Current semester (1-8 of a four-year degree). Captured at onboarding and
+    // used to scale what practice content is recommended — foundations for
+    // early semesters, progressive placement work for later ones.
+    semester: { type: Number, min: 1, max: 8, default: null },
     cgpa: { type: Number, min: 0, max: 10, default: null },
     branch: { type: String, default: '', maxlength: 120 },
     track: {

@@ -1,14 +1,51 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Modal from '../components/Modal.jsx';
 import { EmptyBlock, ErrorBlock, LoadingBlock } from '../components/StateBlocks.jsx';
 import { useApiResource } from '../hooks/useApiResource.js';
 
-const CATEGORY_META = {
-  aptitude: { icon: 'calculate', label: 'Aptitude' },
-  technical: { icon: 'terminal', label: 'Technical' },
-  communication: { icon: 'record_voice_over', label: 'Communication' },
+// Icons are limited to glyphs already present in the bundled icon font.
+const ICON_BY_DOMAIN = {
+  aptitude: 'calculate',
+  'cs-core': 'terminal',
+  communication: 'record_voice_over',
 };
+
+// Legacy category fallback for papers whose subject has not been resolved.
+const ICON_BY_CATEGORY = {
+  aptitude: 'calculate',
+  technical: 'terminal',
+  communication: 'record_voice_over',
+};
+
+const LEVEL_CHIP = {
+  foundation: 'bg-surface-container text-on-surface-variant',
+  intermediate: 'bg-primary/10 text-primary',
+  advanced: 'bg-tertiary-fixed text-on-tertiary-fixed',
+};
+
+function iconFor(test) {
+  const domain = test.subject?.domain ?? ICON_BY_CATEGORY[test.category];
+  return ICON_BY_DOMAIN[domain] ?? 'quiz';
+}
+
+/** Subject/domain facet lists with counts, derived from the served tests. */
+function facets(tests) {
+  const subjects = new Map();
+  const domains = new Map();
+
+  for (const test of tests) {
+    if (test.subject) {
+      const current = subjects.get(test.subject.id) ?? { ...test.subject, count: 0 };
+      current.count += 1;
+      subjects.set(test.subject.id, current);
+    }
+    const domain = test.subject?.domain ?? test.category;
+    if (domain) domains.set(domain, (domains.get(domain) ?? 0) + 1);
+  }
+
+  return { subjects: [...subjects.values()], domains: [...domains.entries()].map(([id, count]) => ({ id, count })) };
+}
 
 function AttemptHistory() {
   const navigate = useNavigate();
@@ -63,14 +100,43 @@ function AttemptHistory() {
   );
 }
 
+const DOMAIN_LABEL = { aptitude: 'Aptitude', 'cs-core': 'CS Core', communication: 'Communication' };
+
 export default function SkillTest() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { data, loading, error, refetch } = useApiResource('/tests');
   const { data: history } = useApiResource('/tests/attempts');
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  const tests = data?.tests ?? [];
+  const tests = useMemo(() => data?.tests ?? [], [data?.tests]);
   const summary = history?.summary;
+
+  // Browse the library as courses: first by domain, then by subject. A
+  // subject belongs to exactly one domain, so "Databases" can never surface
+  // under "Aptitude". A ?subject= query param (used by the practice track)
+  // preselects the subject and its domain.
+  const { subjects, domains } = useMemo(() => facets(tests), [tests]);
+  const [subjectId, setSubjectId] = useState(() => {
+    const fromUrl = searchParams.get('subject');
+    return fromUrl && fromUrl !== 'all' ? fromUrl : 'all';
+  });
+  const [domainId, setDomainId] = useState('all');
+
+  const visibleSubjects = domainId === 'all' ? subjects : subjects.filter((subject) => subject.domain === domainId);
+  const visibleTests = useMemo(() => {
+    if (subjectId !== 'all') return tests.filter((test) => test.subject?.id === subjectId);
+    if (domainId !== 'all') return tests.filter((test) => (test.subject?.domain ?? test.category) === domainId);
+    return tests;
+  }, [tests, subjectId, domainId]);
+
+  // A subject deep-link (?subject=…) selects its domain once the catalogue
+  // arrives, so the facet chips stay consistent.
+  useEffect(() => {
+    if (subjectId === 'all') return;
+    const subject = subjects.find((item) => item.id === subjectId);
+    if (subject && subject.domain !== domainId) setDomainId(subject.domain);
+  }, [subjectId, subjects, domainId]);
 
   return (
     <div className="bg-background font-body text-on-surface min-h-dvh">
@@ -182,62 +248,130 @@ export default function SkillTest() {
           )}
 
           {tests.length > 0 && (
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-              {tests.map((test) => {
-                const meta = CATEGORY_META[test.category] ?? CATEGORY_META.technical;
-
-                return (
-                  <article
-                    key={test._id}
-                    className="rounded-xl bg-surface-container-lowest border border-outline-variant/20 p-6 shadow-[0px_16px_32px_rgba(14,14,14,0.04)] flex flex-col"
+            <>
+              <div className="rounded-2xl border border-outline-variant/20 bg-surface-container-lowest p-4 space-y-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-on-surface-variant mr-1">
+                    Area
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => { setDomainId('all'); setSubjectId('all'); }}
+                    className={`px-3.5 py-1.5 rounded-full text-xs font-black ${domainId === 'all' && subjectId === 'all' ? 'bg-inverse-surface text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'}`}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="h-12 w-12 rounded-lg bg-surface-container flex items-center justify-center text-primary">
-                        <span className="material-symbols-outlined">{meta.icon}</span>
-                      </div>
-                      {test.lastAttempt ? (
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-wider ${
-                            test.lastAttempt.passed
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-error-container/30 text-on-error-container'
-                          }`}
-                        >
-                          {test.lastAttempt.percentage}%
-                        </span>
-                      ) : (
-                        <span className="rounded-full bg-tertiary-fixed px-3 py-1 text-xs font-black text-on-tertiary-fixed uppercase tracking-wider">
-                          New
-                        </span>
-                      )}
-                    </div>
-
-                    <h2 className="font-headline text-2xl font-black mt-4">{test.title}</h2>
-                    <p className="text-on-surface-variant leading-7 mt-3 flex-1">{test.description}</p>
-
-                    <div className="flex flex-wrap gap-3 mt-4 text-sm font-bold text-on-surface-variant">
-                      <span className="rounded-full bg-surface-container px-3 py-2">
-                        {test.questionCount} questions
-                      </span>
-                      <span className="rounded-full bg-surface-container px-3 py-2">
-                        {test.durationMinutes} min
-                      </span>
-                      <span className="rounded-full bg-surface-container px-3 py-2">
-                        pass {test.passPercentage}%
-                      </span>
-                    </div>
-
+                    All papers
+                  </button>
+                  {domains.map((domain) => {
+                    const count = domain.id === 'all' ? tests.length : domain.count;
+                    return (
+                      <button
+                        key={domain.id}
+                        type="button"
+                        onClick={() => { setDomainId(domain.id); setSubjectId('all'); }}
+                        className={`px-3.5 py-1.5 rounded-full text-xs font-black ${domainId === domain.id && subjectId === 'all' ? 'bg-inverse-surface text-white' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'}`}
+                      >
+                        {DOMAIN_LABEL[domain.id] ?? domain.id}
+                        <span className="opacity-60 ml-1">{count}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[10px] font-black uppercase tracking-wider text-on-surface-variant mr-1">
+                    Course
+                  </span>
+                  {visibleSubjects.length === 0 && (
+                    <span className="text-xs text-on-surface-variant">No courses in this area yet.</span>
+                  )}
+                  {visibleSubjects.map((subject) => (
                     <button
+                      key={subject.id}
                       type="button"
-                      onClick={() => navigate(`/skill-test/${test.slug}`)}
-                      className="mt-4 w-full py-3 rounded-full bg-primary-container text-on-primary-container font-bold shadow-[0_1px_2px_rgba(0,0,0,0.06)] hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      onClick={() => { setSubjectId(subject.id); setDomainId(subject.domain); }}
+                      className={`px-3.5 py-1.5 rounded-full text-xs font-bold ${
+                        subjectId === subject.id
+                          ? 'bg-primary text-on-primary'
+                          : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high'
+                      }`}
                     >
-                      {test.lastAttempt ? 'Retake test' : 'Start test'}
+                      {subject.label}
+                      <span className="opacity-60 ml-1">{subject.count}</span>
                     </button>
-                  </article>
-                );
-              })}
-            </div>
+                  ))}
+                </div>
+              </div>
+
+              {visibleTests.length === 0 ? (
+                <EmptyBlock
+                  icon="filter_list"
+                  title="No papers in this course yet"
+                  description="Widen the filter — the full library is always one click away."
+                />
+              ) : (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+                  {visibleTests.map((test) => (
+                    <article
+                      key={test._id}
+                      className="rounded-xl bg-surface-container-lowest border border-outline-variant/20 p-6 shadow-[0px_16px_32px_rgba(14,14,14,0.04)] flex flex-col"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="h-12 w-12 rounded-lg bg-surface-container flex items-center justify-center text-primary">
+                          <span className="material-symbols-outlined">{iconFor(test)}</span>
+                        </div>
+                        {test.lastAttempt ? (
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-black uppercase tracking-wider ${
+                              test.lastAttempt.passed
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-error-container/30 text-on-error-container'
+                            }`}
+                          >
+                            {test.lastAttempt.percentage}%
+                          </span>
+                        ) : (
+                          <span className="rounded-full bg-tertiary-fixed px-3 py-1 text-xs font-black text-on-tertiary-fixed uppercase tracking-wider">
+                            New
+                          </span>
+                        )}
+                      </div>
+
+                      <h2 className="font-headline text-2xl font-black mt-4">{test.title}</h2>
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        <span className="rounded-full border border-outline-variant/70 px-3 py-1 text-[10px] font-black uppercase tracking-wider text-on-surface-variant">
+                          {test.subject?.label ?? 'Uncategorised'}
+                        </span>
+                        {test.level && (
+                          <span className={`rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-wider ${LEVEL_CHIP[test.level] ?? LEVEL_CHIP.foundation}`}>
+                            {test.levelLabel ?? test.level}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-on-surface-variant leading-7 mt-3 flex-1">{test.description}</p>
+
+                      <div className="flex flex-wrap gap-3 mt-4 text-sm font-bold text-on-surface-variant">
+                        <span className="rounded-full bg-surface-container px-3 py-2">
+                          {test.questionCount} questions
+                        </span>
+                        <span className="rounded-full bg-surface-container px-3 py-2">
+                          {test.durationMinutes} min
+                        </span>
+                        <span className="rounded-full bg-surface-container px-3 py-2">
+                          pass {test.passPercentage}%
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/skill-test/${test.slug}`)}
+                        className="mt-4 w-full py-3 rounded-full bg-primary-container text-on-primary-container font-bold shadow-[0_1px_2px_rgba(0,0,0,0.06)] hover:scale-[1.02] active:scale-[0.98] transition-all"
+                      >
+                        {test.lastAttempt ? 'Retake test' : 'Start test'}
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </>
           )}
         </section>
       </main>

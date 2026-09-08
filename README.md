@@ -171,6 +171,8 @@ the maps to it rather than serving them.
 - **Eligibility centre** — jobs are separated into recommended, eligible, needs-work, saved and applied views, with the specific blocker shown before a student spends time applying
 - **Coding practice** — live Judge0 execution with real test cases, development-only local fallback, per-problem drafts and streaks
 - **Skill tests** — server-timed and auto-scored, with consent-first on-device camera proctoring; tab/camera, face-count and sustained movement violations receive one warning, while the second persists a disqualified zero and verifies no skill
+- **Course-aware practice hub** — the test library is browsable as real courses (Quantitative, Logical Reasoning, DSA, Databases, OS, Networks, …) under mutually exclusive domains, so Databases can never sit under Aptitude; every paper carries a Foundation/Intermediate/Advanced level
+- **Semester track** — onboarding captures the student's current semester (auto-suggested from graduation year, editable in the profile) and the practice hub leads with the right stage of preparation: foundations in early semesters, progressive placement work — DSA, core CS, mocks and PYQs — in later ones
 - **PYQ library** — previous-year questions filterable by company, year, round and topic
 - **Company prep** — real round structures, strategy notes, most-asked questions
 - **AI mock interview** — scored on relevance, structure, specificity and delivery, with feedback that names what to fix

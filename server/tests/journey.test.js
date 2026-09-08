@@ -19,6 +19,7 @@ test('onboarding captures a real placement target and bounded weekly goal', () =
   const result = onboardingSchema.safeParse({
     targetRole: 'software-engineer',
     graduationYear: 2027,
+    semester: 5,
     branch: 'CSE',
     placementDate: '2027-01-15',
     weeklyGoal: 6,
@@ -35,6 +36,20 @@ test('onboarding rejects an unrealistic weekly commitment', () => {
     placementDate: '2027-01-15', weeklyGoal: 100,
   });
   assert.equal(result.success, false);
+});
+
+test('onboarding requires the current semester and bounds it to 1-8', () => {
+  const missing = onboardingSchema.safeParse({
+    targetRole: 'frontend', graduationYear: 2027, branch: 'IT',
+    placementDate: '2027-01-15',
+  });
+  assert.equal(missing.success, false, 'semester must be provided');
+
+  const outOfRange = onboardingSchema.safeParse({
+    targetRole: 'frontend', graduationYear: 2027, semester: 9, branch: 'IT',
+    placementDate: '2027-01-15',
+  });
+  assert.equal(outOfRange.success, false);
 });
 
 test('institution readiness weights must total exactly one hundred', () => {

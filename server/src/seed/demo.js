@@ -186,6 +186,9 @@ export function buildCohort({ now = new Date(), seed = 20260101 } = {}) {
         email,
         roll,
         graduationYear,
+        // The batch currently being placed sits in its final semester; older
+        // batches have graduated and have no current semester.
+        semester: graduationYear === currentYear ? 8 : null,
         branch: branch.name,
         track: branch.track,
         targetRole: bundle.targetRole,
@@ -350,6 +353,7 @@ async function insertStudents(cohort) {
       location: 'Campus',
       branch: student.branch,
       graduationYear: student.graduationYear,
+      semester: student.semester,
       track: student.track,
       targetRole: student.targetRole,
       publicProfile: {

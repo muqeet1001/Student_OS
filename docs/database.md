@@ -35,13 +35,38 @@ submissions, attempts, profiles — is never touched unless `--fresh` is passed.
 | Collection | Purpose | Key fields |
 |---|---|---|
 | `users` | Account and credentials | `email` (unique), `password` (hashed, `select:false`), `role` (`student`\|`admin`), `refreshTokens[]` |
-| `profiles` | Everything a resume and opt-in public profile are built from | `user` (unique), `headline`, `bio`, `skills[]`, `projects[]`, `education[]`, `experience[]`, `certifications[]`, `publicProfile` |
+| `profiles` | Everything a resume and opt-in public profile are built from | `user` (unique), `headline`, `bio`, `graduationYear`, `semester` (1–8), `branch`, `skills[]`, `projects[]`, `education[]`, `experience[]`, `certifications[]`, `publicProfile` |
 | `studentjourneys` | Onboarding, baseline, locale, delivery channels, integrations and append-only consent history | `user` (unique), `onboarding`, `channels`, `consentHistory[]` |
 | `actionitems` | Personal, staff and system actions with ownership and conversation | `owner`, `source`, `category`, `dueAt`, `status`, `messages[]` |
 | `mentorappointments` | Student mentoring requests and scheduled sessions | `student`, `mentor`, `topic`, `startsAt`, `status` |
 | `institutionconfigs` | College-specific scoring, taxonomy, languages and provider capabilities | `key` (unique), `readinessWeights`, `skillTaxonomy`, `enabledLocales`, `providers` |
 
 One profile per user, enforced by a unique index on `profile.user`.
+
+`profiles.semester` is captured at onboarding and drives the practice track
+(`GET /api/practice/track`): which stage of the placement journey the student
+is in, and which subjects to focus on. It is a *recommendation* — it never
+hides content.
+
+### Course taxonomy and semesters
+
+The practice hub is organised as courses by `server/src/config/courseTaxonomy.js`,
+the single source of truth for:
+
+- **Domains** — `aptitude`, `cs-core`, `communication` — mutually exclusive,
+  so a Databases paper can never sit under Aptitude.
+- **Subjects** — one per paper, e.g. `quantitative`, `logical`,
+  `data-interpretation`, `dsa`, `databases`, `os`, `networks`, `oop`,
+  `cs-foundations`, `verbal`, `communication`, each mapped from a test slug in
+  `TEST_COURSES`. No database migration is needed because the mapping lives in
+  code and `/api/tests` enriches each paper with `subject` and `level`.
+- **Levels** — `foundation` / `intermediate` / `advanced`, each with the
+  semester band and coding-problem difficulties it corresponds to.
+- **Semester stages** — semesters 1–2 *Foundations*, 3–4 *Core building*,
+  5–6 *Interview gear*, 7–8 *Placement mode*, each listing focus subjects and
+  target levels. `suggestSemester(graduationYear)` derives a default from the
+  year (four-year admission in August of `graduationYear − 4`) when a student
+  has not stated one.
 
 ### Coding practice
 
