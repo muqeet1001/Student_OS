@@ -1,19 +1,27 @@
-import fs from 'node:fs';
 import { createApp } from './app.js';
 import { config } from './config/env.js';
 import { connectDatabase, disconnectDatabase } from './config/db.js';
 import { logger } from './utils/logger.js';
 
 async function bootstrap() {
-  fs.mkdirSync(config.uploadsDir, { recursive: true });
-
+  // Nothing is written to disk any more: uploaded media is validated in memory
+  // and stored in GridFS. The uploads directory this used to create was empty
+  // on every deployment.
   await connectDatabase();
 
   const app = createApp();
   const server = app.listen(config.port, () => {
     logger.success(`Student OS API listening on http://localhost:${config.port} [${config.env}]`);
     if (!config.ai.enabled) {
-      logger.warn('AI_API_KEY not set — AI features will use the offline mock provider');
+      /*
+       * There is no offline mock provider — without both variables the written
+       * insight is simply absent, and every number the page shows is computed
+       * without it. Saying "mock provider" made a missing feature look like a
+       * working one.
+       */
+      logger.warn(
+        'AI_API_KEY and AI_MODEL are not both set — written insight is disabled. All numbers are computed without it.',
+      );
     }
   });
 

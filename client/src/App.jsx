@@ -22,6 +22,10 @@ const Dashboard = lazy(() => import('./pages/Dashboard.jsx'));
 const JobDetail = lazy(() => import('./pages/JobDetail.jsx'));
 const Jobs = lazy(() => import('./pages/Jobs.jsx'));
 const Login = lazy(() => import('./pages/Login.jsx'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword.jsx'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword.jsx'));
+const SetPassword = lazy(() => import('./pages/SetPassword.jsx'));
+const VerifyEmail = lazy(() => import('./pages/VerifyEmail.jsx'));
 const NotFound = lazy(() => import('./pages/NotFound.jsx'));
 const Profile = lazy(() => import('./pages/Profile.jsx'));
 const Roadmap = lazy(() => import('./pages/Roadmap.jsx'));
@@ -57,10 +61,33 @@ export default function App() {
           <Route path="/register" element={<Register />} />
         </Route>
 
+        {/*
+          Recovery deliberately sits outside the public-only group. A student
+          who is already signed in — on this device or another one — must still
+          be able to open a reset link, and PublicOnlyRoute would bounce them
+          away from it.
+        */}
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
+
+        {/* Public for the same reason: a confirmation link is opened on whatever
+            device the mail was read on, which is often not a signed-in one.
+            The token is spent by the page's POST, not by loading it, so a mail
+            scanner fetching the link does not burn it. */}
+        <Route path="/verify-email" element={<VerifyEmail />} />
+
         <Route path="/public/:userId" element={<PublicProfile />} />
         <Route path="/recruiter-feedback/:token" element={<RecruiterFeedback />} />
 
         <Route element={<ProtectedRoute />}>
+          {/*
+            Outside the role groups and outside the app chrome. While a
+            temporary password is outstanding this is the only screen that
+            works, and a navigation bar of links that all bounce back here
+            would be noise rather than choice.
+          */}
+          <Route path="/set-password" element={<SetPassword />} />
+
           {/* Screens that share the navigation chrome. */}
           <Route element={<ProtectedRoute roles={['student']} />}>
             <Route element={<AppLayout />}>

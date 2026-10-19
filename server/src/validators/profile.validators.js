@@ -9,6 +9,7 @@ export const updateProfileSchema = z.object({
   phone: z.string().trim().max(32).optional(),
   location: z.string().trim().max(120).optional(),
   graduationYear: year.optional(),
+  semester: z.coerce.number().int().min(1).max(8).nullable().optional(),
   cgpa: z.coerce.number().min(0).max(10).nullable().optional(),
   branch: z.string().trim().max(120).optional(),
   track: z.enum(['technical', 'management', 'design', 'undecided']).optional(),

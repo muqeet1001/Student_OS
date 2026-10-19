@@ -77,12 +77,31 @@ if (!uri) {
  * without a local Mongo still need `npm test` to work. So it skips, loudly.
  */
 if (skipReason) {
-  console.warn(
+  console.log(
     `\n\x1b[33m⚠  INTEGRATION TESTS SKIPPED — ${skipReason}\x1b[0m\n` +
       '   Nothing below has been verified against a real database.\n' +
       '   Start one and re-run:\n' +
-      '     docker run -d -p 27017:27017 --name student-os-mongo mongo:7\n' +
+      '     docker compose up -d\n' +
       '     MONGO_URI="mongodb://127.0.0.1:27017/student_os" npm test\n',
+  );
+
+  /*
+   * A skipped `describe` is counted at the suite level, which node's summary
+   * does not include — so a run that executed nothing still printed
+   * "# skipped 0". This test is reported either way: one visible skip locally,
+   * a hard failure in Actions or under REQUIRE_DB=1.
+   */
+  const required = process.env.GITHUB_ACTIONS === 'true' || process.env.REQUIRE_DB === '1';
+
+  test(
+    'the API integration suite requires a real database',
+    { skip: required ? false : `skipped — ${skipReason}` },
+    () => {
+      assert.fail(
+        `MONGO_URI is not set, so no assertion in this suite ran. ` +
+          'Start MongoDB and re-run: docker compose up -d',
+      );
+    },
   );
 }
 

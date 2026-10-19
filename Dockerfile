@@ -59,9 +59,9 @@ RUN npm cache clean --force
 COPY server/src ./server/src
 COPY --from=build /app/client/dist ./client/dist
 
-# The API writes uploads here; created before dropping privileges so the
-# unprivileged user owns it rather than failing on first write.
-RUN mkdir -p server/uploads && chown -R node:node /app
+# Uploaded media is stored in GridFS, so the image needs no writable data
+# directory — only an owner for the process that runs as `node`.
+RUN chown -R node:node /app
 
 # Never root. A code-execution bug in the judge sandbox is a much smaller
 # problem when the process that escapes it owns nothing.

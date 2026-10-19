@@ -74,9 +74,10 @@ export function createApp() {
     }),
   );
 
-  // Legacy disk uploads are deliberately not exposed. Their client-controlled
-  // extensions made this origin an active-content host. New profile assets
-  // are byte-validated, stored in GridFS and served by the profile routes.
+  // Nothing is served from disk any more. Profile media is byte-validated and
+  // streamed from GridFS by the profile routes; the old uploads directory had
+  // client-controlled extensions, which made this origin an active-content
+  // host.
 
   /*
    * Liveness and readiness are deliberately separate endpoints.
@@ -141,7 +142,7 @@ export function createApp() {
       );
 
       app.get('*', (req, res, next) => {
-        if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) return next();
+        if (req.path.startsWith('/api')) return next();
         // sendFile bypasses the static handler's setHeaders, so the shell's
         // no-cache rule has to be repeated here or a deploy leaves users on
         // an old build that references deleted asset hashes.

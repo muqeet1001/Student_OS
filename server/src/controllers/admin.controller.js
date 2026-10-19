@@ -25,6 +25,7 @@ import { AuditEvent } from '../models/AuditEvent.js';
 import { rankStudents } from '../services/jobMatch.js';
 import { SavedCohortView } from '../models/SavedCohortView.js';
 import { recordAudit } from '../services/audit.service.js';
+import { generateTemporaryPassword, revokeResetTokens } from '../services/passwordReset.js';
 import { Resume } from '../models/Resume.js';
 import { StudentDocument } from '../models/Document.js';
 import { PlacementEvent } from '../models/PlacementEvent.js';
@@ -213,6 +214,76 @@ export const updateStaffRole = asyncHandler(async (req, res) => {
   if (!staff) throw new ApiError(404, 'Staff member not found.');
   await recordAudit({ actor: req.user._id, action: 'staff.role-updated', entityType: 'user', entityId: staff._id, summary: `Changed ${staff.name} to ${staff.staffRole}`, metadata: { staffRole: staff.staffRole } });
   res.json({ success: true, data: { staff } });
+});
+
+/**
+ * Issues a temporary password for one student.
+ *
+ * This is the recovery path that works with nothing configured at all — no SMTP
+ * relay, a registered address the student can no longer reach, a locked account
+ * on the morning of a drive. It is also the path the student-facing help text
+ * points at, so it has to actually exist.
+ *
+ * The password is generated rather than typed by the officer: a password a
+ * person invents is one they may reuse elsewhere, and letting them choose turns
+ * an institution's credential policy into an individual's habits. It is
+ * returned exactly once — only its hash is stored, so nobody, this office
+ * included, can read it back afterwards.
+ */
+export const resetStudentPassword = asyncHandler(async (req, res) => {
+  /*
+   * No viewer check here on purpose. `requireRole` already refuses every
+   * non-GET admin request from a view-only account, and this route sits behind
+   * it — a second guard would be dead code that reads like it is protecting
+   * something. An officer can reset credentials because unblocking a student on
+   * the morning of a drive is the job.
+   */
+  const student = await User.findOne({ _id: req.params.studentId, role: 'student' });
+  if (!student) throw new ApiError(404, 'Student not found.');
+
+  const temporaryPassword = generateTemporaryPassword();
+  student.password = temporaryPassword;
+
+  /*
+   * Every route stays closed until the student replaces this. Without the flag
+   * the office would keep a working credential for the account indefinitely,
+   * and "temporary" would be a word in the response rather than a property of
+   * the system.
+   */
+  student.mustChangePassword = true;
+
+  /*
+   * Sessions go as well. If the student is locked out because someone else has
+   * their password, leaving that session alive would defeat the whole exercise.
+   */
+  student.refreshTokens = [];
+  await student.save();
+
+  // A reset link already sitting in an inbox must not survive either.
+  await revokeResetTokens(student._id);
+
+  /*
+   * The summary names the student, never the password. An audit log is read by
+   * more people than a reset response is, and it is kept far longer.
+   */
+  await recordAudit({
+    actor: req.user._id,
+    action: 'student.password-reset',
+    entityType: 'user',
+    entityId: student._id,
+    summary: `Issued a temporary password for ${student.name}`,
+    metadata: { email: student.email },
+  });
+
+  res.json({
+    success: true,
+    data: {
+      student: { _id: student._id, name: student.name, email: student.email },
+      temporaryPassword,
+      mustChangePassword: true,
+      message: 'Shown once. The student must set their own password at first sign-in.',
+    },
+  });
 });
 
 export const getActivity = asyncHandler(async (req, res) => {

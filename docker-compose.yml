@@ -1,0 +1,39 @@
+# Local MongoDB for the test suites, `seed:demo` and the e2e runs.
+#
+#     docker compose up -d
+#
+# Equivalent to the `docker run` in README.md, which still works if you would
+# rather not use compose. Either way the container is named `student-os-mongo`
+# and listens on 27017, so no other instruction needs to change.
+#
+# Data lives in a named volume rather than the container's own writable layer.
+# That is not only for persistence: a container's writes go through overlayfs,
+# and MongoDB panics on a filesystem that cannot fsync() a directory — the
+# WiredTiger `directory-sync` failure README.md describes. A named volume sits
+# on the host filesystem, so the default here avoids that class of problem
+# instead of requiring the bind-mount workaround.
+#
+#     docker compose down       # stop, keep the data
+#     docker compose down -v    # stop and wipe it
+services:
+  mongo:
+    image: mongo:7
+    container_name: student-os-mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      # mongo:7 ships mongosh. Without this, `up -d` returns as soon as the
+      # container has started, which is before the server accepts connections —
+      # so a test run begun immediately afterwards fails to connect and looks
+      # like a code failure.
+      test: ['CMD', 'mongosh', '--quiet', '--eval', "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  mongo-data:

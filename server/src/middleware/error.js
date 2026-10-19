@@ -37,8 +37,14 @@ export function errorHandler(err, _req, res, _next) {
   } else if (error instanceof mongoose.Error.CastError) {
     error = ApiError.badRequest(`Invalid value for "${error.path}"`);
   } else if (error?.code === 11000) {
+    /*
+     * This handler is router-wide, so it sees duplicates from every collection —
+     * a company slug, a drive title, a spent token hash. Naming the field is
+     * useful; naming "an account" is not, and used to produce messages like
+     * "An account with that slug already exists".
+     */
     const field = Object.keys(error.keyPattern || { field: 1 })[0];
-    error = ApiError.conflict(`An account with that ${field} already exists`);
+    error = ApiError.conflict(`A record with that ${field} already exists`);
   } else if (error?.name === 'JsonWebTokenError') {
     error = ApiError.unauthorized('Invalid token');
   } else if (error?.name === 'TokenExpiredError') {

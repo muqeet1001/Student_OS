@@ -59,7 +59,7 @@ export const getJourney = asyncHandler(async (req, res) => {
 });
 
 export const completeOnboarding = asyncHandler(async (req, res) => {
-  const { targetRole, graduationYear, branch, targetCompanies, placementDate, weeklyGoal, consents } = req.body;
+  const { targetRole, graduationYear, semester, branch, targetCompanies, placementDate, weeklyGoal, consents } = req.body;
 
   const [profile, journey] = await Promise.all([
     Profile.findOrCreateFor(req.user._id),
@@ -68,6 +68,7 @@ export const completeOnboarding = asyncHandler(async (req, res) => {
 
   profile.targetRole = targetRole;
   profile.graduationYear = graduationYear;
+  profile.semester = semester ?? null;
   profile.branch = branch;
   profile.targetCompanies = targetCompanies;
 

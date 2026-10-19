@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Modal from '../../components/Modal.jsx';
 import { ErrorBlock, LoadingBlock } from '../../components/StateBlocks.jsx';
 import { useApiResource } from '../../hooks/useApiResource.js';
+import { api } from '../../lib/api.js';
 
 function Row({ label, value }) {
   return (
@@ -23,6 +24,101 @@ function Section({ title, children }) {
 
 const shortDate = (value) => value ? new Date(value).toLocaleDateString('en-IN') : '—';
 const money = (value) => value ? `₹${(value / 100000).toFixed(1)} LPA` : 'Not reported';
+
+/**
+ * Password recovery for a student who cannot get in.
+ *
+ * This is the path that works with no email configured — the reason a
+ * placement office needs it at all. The password is shown once and never
+ * stored, so the panel says so plainly rather than letting an officer assume
+ * they can come back for it later.
+ */
+function CredentialRecovery({ student }) {
+  const [busy, setBusy] = useState(false);
+  const [issued, setIssued] = useState(null);
+  const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+
+  async function issue() {
+    setBusy(true);
+    setError('');
+    try {
+      const data = await api.post(`/admin/students/${student._id}/password-reset`);
+      setIssued(data);
+    } catch (caught) {
+      setError(caught.message || 'Could not issue a password.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(issued.temporaryPassword);
+      setCopied(true);
+    } catch {
+      // Clipboard access can be refused or unavailable over plain HTTP. The
+      // password is on screen either way, so this is a convenience, not the
+      // mechanism.
+      setCopied(false);
+    }
+  }
+
+  if (issued) {
+    return (
+      <div className="space-y-2">
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3">
+          <p className="text-[10px] font-black uppercase tracking-wider text-primary">
+            Temporary password — shown once
+          </p>
+          <p className="mt-2 select-all break-all font-mono text-base font-bold">
+            {issued.temporaryPassword}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={copy}
+              className="rounded-lg bg-surface-container px-3 py-1.5 text-xs font-black hover:bg-surface-container-high"
+            >
+              {copied ? 'Copied' : 'Copy'}
+            </button>
+            <button
+              type="button"
+              onClick={issue}
+              disabled={busy}
+              className="rounded-lg px-3 py-1.5 text-xs font-bold text-on-surface-variant hover:text-primary disabled:opacity-60"
+            >
+              {busy ? 'Reissuing…' : 'Issue another'}
+            </button>
+          </div>
+        </div>
+        <p className="text-[11px] text-on-surface-variant leading-relaxed">
+          Read this to {student.name}. It is not stored anywhere and cannot be shown again. Every
+          device they were signed in on is now signed out, and they must choose their own password
+          before the workspace opens.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={issue}
+        disabled={busy}
+        className="rounded-lg bg-surface-container px-4 py-2 text-xs font-black hover:bg-surface-container-high disabled:opacity-60"
+      >
+        {busy ? 'Issuing…' : 'Issue a temporary password'}
+      </button>
+      <p className="text-[11px] text-on-surface-variant leading-relaxed">
+        For a student who cannot sign in and has no way to receive a reset email. Signs them out
+        everywhere, and they are asked to replace it at their next sign-in.
+      </p>
+      {error && <p className="text-[11px] font-bold text-error">{error}</p>}
+    </div>
+  );
+}
 
 export default function StudentDetail({ student, onClose }) {
   const { data, loading, error, refetch } = useApiResource(`/admin/students/${student._id}`);
@@ -68,6 +164,14 @@ export default function StudentDetail({ student, onClose }) {
             <Row label="Projects" value={profile?.projects?.length ?? 0} />
             <Row label="Certifications" value={profile?.certifications?.length ?? 0} />
             <Row label="Profile updated" value={shortDate(profile?.updatedAt)} />
+          </Section>
+
+          {/* Near the top rather than at the end: an officer opens a record
+              because a student is locked out, and making them scroll past ten
+              sections to find the fix is the difference between using it and
+              telling the student to email support. */}
+          <Section title="Account access">
+            <CredentialRecovery student={student} />
           </Section>
 
           <Section title="Verified evidence">

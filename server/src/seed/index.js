@@ -248,6 +248,7 @@ async function seedDemoUser() {
     // actively being placed. Any other year strands it in a cohort of one on
     // every batch-wise report.
     graduationYear: new Date().getFullYear(),
+    semester: 8,
     track: 'technical',
   });
 

@@ -65,6 +65,40 @@ export function mailerStatus() {
 }
 
 /**
+ * Sends one message.
+ *
+ * The transactional counterpart to the bulk sender, and it holds to the same
+ * rule: the outcome is reported, never assumed. A caller that needs to tell a
+ * student "a reset link is on its way" has to know whether this installation
+ * can send email at all, because claiming a delivery that did not happen leaves
+ * them waiting for a message that was never sent.
+ *
+ * Never throws. A failure is a returned status, so one bad address cannot take
+ * down the request that triggered it.
+ *
+ * @returns {Promise<{status: 'sent'|'failed'|'skipped', error?: string}>}
+ */
+export async function sendEmail({ to, subject, text, html }) {
+  const status = mailerStatus();
+
+  if (!status.available) {
+    return { status: 'skipped', error: status.reason };
+  }
+
+  const mailer = await getTransport();
+  if (!mailer) {
+    return { status: 'skipped', error: mailerStatus().reason };
+  }
+
+  try {
+    await mailer.sendMail({ from: config.smtp.from, to, subject, text, html });
+    return { status: 'sent' };
+  } catch (error) {
+    return { status: 'failed', error: error.message.slice(0, 200) };
+  }
+}
+
+/**
  * Sends one message per recipient.
  *
  * Sequential rather than parallel: a college SMTP relay will rate-limit or
@@ -79,6 +113,8 @@ export function mailerStatus() {
 export async function sendBulkEmail({ recipients, subject, text, html }) {
   const status = mailerStatus();
 
+  // Decided once for the whole batch: when email is unavailable every recipient
+  // is `skipped` with the same reason, and no transport is ever built.
   if (!status.available) {
     return recipients.map((recipient) => ({
       email: recipient.email,
@@ -87,30 +123,11 @@ export async function sendBulkEmail({ recipients, subject, text, html }) {
     }));
   }
 
-  const mailer = await getTransport();
-  if (!mailer) {
-    return recipients.map((recipient) => ({
-      email: recipient.email,
-      status: 'skipped',
-      error: mailerStatus().reason,
-    }));
-  }
-
   const results = [];
 
   for (const recipient of recipients) {
-    try {
-      await mailer.sendMail({
-        from: config.smtp.from,
-        to: recipient.email,
-        subject,
-        text,
-        html,
-      });
-      results.push({ email: recipient.email, status: 'sent' });
-    } catch (error) {
-      results.push({ email: recipient.email, status: 'failed', error: error.message.slice(0, 200) });
-    }
+    const result = await sendEmail({ to: recipient.email, subject, text, html });
+    results.push({ email: recipient.email, ...result });
   }
 
   return results;

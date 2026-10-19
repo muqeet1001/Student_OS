@@ -13,6 +13,9 @@ const consentKey = z.enum([
 export const onboardingSchema = z.object({
   targetRole: z.enum(['frontend', 'backend', 'fullstack', 'data-analyst', 'software-engineer']),
   graduationYear: z.coerce.number().int().min(1950).max(2100),
+  // Which of the eight semesters the student is in right now. This scales the
+  // recommended practice track: foundations early, progressive later.
+  semester: z.coerce.number().int().min(1).max(8),
   branch: z.string().trim().min(1).max(120),
   placementDate: z.coerce.date(),
   weeklyGoal: z.coerce.number().int().min(1).max(20).default(5),

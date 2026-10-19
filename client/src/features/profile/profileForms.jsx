@@ -54,6 +54,7 @@ export function DetailsForm({ profile, user, onSubmit, onCancel }) {
     phone: profile?.phone ?? '',
     branch: profile?.branch ?? '',
     graduationYear: profile?.graduationYear ?? '',
+    semester: profile?.semester ?? '',
     cgpa: profile?.cgpa ?? '',
     track: profile?.track ?? 'undecided',
     targetRoles: profile?.targetRoles ?? [],
@@ -77,6 +78,7 @@ export function DetailsForm({ profile, user, onSubmit, onCancel }) {
         handleSubmit(event, {
           ...form,
           graduationYear: form.graduationYear === '' ? undefined : Number(form.graduationYear),
+          semester: form.semester === '' ? null : Number(form.semester),
           cgpa: form.cgpa === '' ? null : Number(form.cgpa),
         })
       }
@@ -110,6 +112,19 @@ export function DetailsForm({ profile, user, onSubmit, onCancel }) {
           value={form.graduationYear}
           onChange={set('graduationYear')}
           error={errors.graduationYear}
+        />
+        <Select
+          label="Current semester"
+          value={String(form.semester)}
+          onChange={(event) => set('semester')(event)}
+          options={[
+            { value: '', label: 'Not set' },
+            ...Array.from({ length: 8 }, (_, index) => {
+              const semester = index + 1;
+              const ordinal = semester === 1 ? '1st' : semester === 2 ? '2nd' : semester === 3 ? '3rd' : `${semester}th`;
+              return { value: String(semester), label: `${ordinal} semester` };
+            }),
+          ]}
         />
         <Input label="CGPA" type="number" min="0" max="10" step="0.01" value={form.cgpa} onChange={set('cgpa')} error={errors.cgpa} />
         <Input label="Location" value={form.location} onChange={set('location')} error={errors.location} />

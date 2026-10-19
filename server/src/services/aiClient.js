@@ -28,6 +28,19 @@ export function aiStatus() {
     };
   }
 
+  /*
+   * A key without a model is a half-configured feature: the request would go
+   * out with an empty `model` and come back 400, which reads as an outage
+   * rather than as setup. Say which variable is missing instead.
+   */
+  if (!config.ai.model) {
+    return {
+      available: false,
+      reason:
+        'AI_MODEL is not set, so written insight is unavailable. Every number on this page is computed without it.',
+    };
+  }
+
   return { available: true, reason: null, model: config.ai.model };
 }
 

@@ -35,6 +35,15 @@ function AdminPage() {
   const meta = PAGES[section];
   if (!meta) return <Navigate to={`/admin/overview?year=${scope.graduationYear}`} replace />;
 
+  /*
+   * The institution can name its season ("Placement 2027 — Phase II"), and that
+   * name is what staff should see. It falls back to the same "Class of YYYY"
+   * text the picker already shows, so the fallback keeps the generic label
+   * rather than printing the year twice in one control.
+   */
+  const seasonLabel =
+    scope.seasonName === `Class of ${scope.graduationYear}` ? 'Placement season' : scope.seasonName;
+
   const content = {
     overview: <AdminOverview />,
     students: <AdminStudents />,
@@ -52,7 +61,7 @@ function AdminPage() {
     <div className="max-w-[92rem] mx-auto px-5 md:px-8 pt-16 lg:pt-6 pb-12 space-y-5">
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div><p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Placement office</p><h1 className="font-headline text-2xl md:text-3xl font-black tracking-tight mt-1">{meta[0]}</h1><p className="text-sm text-on-surface-variant mt-1">{meta[1]}</p></div>
-        <label className="flex items-center gap-3 rounded-xl border border-outline-variant/60 bg-surface-container-lowest px-3 py-2 shadow-sm"><span className="material-symbols-outlined text-primary">calendar_month</span><span className="text-[10px] font-black uppercase tracking-wider text-on-surface-variant hidden sm:block">Placement season</span><select aria-label="Placement season" value={scope.graduationYear} onChange={(event) => scope.setGraduationYear(Number(event.target.value))} className="bg-transparent border-0 outline-none text-sm font-black cursor-pointer">{scope.availableYears.map((year) => <option key={year} value={year}>Class of {year}</option>)}</select></label>
+        <label className="flex items-center gap-3 rounded-xl border border-outline-variant/60 bg-surface-container-lowest px-3 py-2 shadow-sm"><span className="material-symbols-outlined text-primary">calendar_month</span><span className="text-[10px] font-black uppercase tracking-wider text-on-surface-variant hidden sm:block">{seasonLabel}</span><select aria-label="Placement season" value={scope.graduationYear} onChange={(event) => scope.setGraduationYear(Number(event.target.value))} className="bg-transparent border-0 outline-none text-sm font-black cursor-pointer">{scope.availableYears.map((year) => <option key={year} value={year}>Class of {year}</option>)}</select></label>
       </header>
       {content}
     </div>

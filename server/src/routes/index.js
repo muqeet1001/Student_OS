@@ -22,6 +22,7 @@ import { testRoutes } from './test.routes.js';
 import { reviewRoutes } from './review.routes.js';
 import { careerRoutes } from './career.routes.js';
 import { journeyRoutes } from './journey.routes.js';
+import { practiceRoutes } from './practice.routes.js';
 
 export const routes = Router();
 
@@ -48,4 +49,5 @@ routes.use('/skills', skillAssessmentRoutes);
 routes.use('/reviews', reviewRoutes);
 routes.use('/career', careerRoutes);
 routes.use('/journey', journeyRoutes);
+routes.use('/practice', practiceRoutes);
 routes.use('/admin', adminRoutes);

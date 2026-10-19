@@ -31,7 +31,7 @@ const HELP = [
   },
   {
     q: 'I forgot my password.',
-    a: 'Password reset needs email, which is not connected yet. Ask the placement office to reset it for you in the meantime.',
+    a: 'Use the forgotten-password link on the sign-in screen and we will email you a link to choose a new one. That part needs your college to have connected email. If it has not, or the link does not arrive, ask the placement office — they can issue a temporary password from your record, and you will be asked to replace it the next time you sign in.',
   },
 ];
 
@@ -210,6 +210,81 @@ function PasswordForm() {
   );
 }
 
+/**
+ * Whether the address on the account has been proved reachable.
+ *
+ * Presented as information rather than a demand, because nothing is gated on
+ * it: a student can sign in, practise and apply unconfirmed. It is worth
+ * showing all the same, since a self-service password reset is only ever as
+ * good as the inbox behind this address, and the moment to find out that it
+ * does not work is not the moment you are locked out.
+ */
+function EmailVerification({ user, onConfirmed }) {
+  const [working, setWorking] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [error, setError] = useState('');
+
+  const verified = Boolean(user?.emailVerifiedAt);
+
+  async function resend() {
+    setWorking(true);
+    setError('');
+    setNotice('');
+
+    try {
+      const data = await api.post('/auth/verify-email/resend');
+      if (data.user) onConfirmed?.(data.user);
+
+      // The server's own wording, including its honest report of whether this
+      // installation can send mail at all. Rewriting it here would lose that.
+      setNotice(data.message ?? 'Confirmation link sent.');
+    } catch (caught) {
+      setError(caught?.message || 'Could not send a confirmation link.');
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="text-sm font-semibold text-on-surface">{user?.email}</span>
+        <span
+          className={
+            verified
+              ? 'rounded-full bg-primary/10 px-2 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide text-primary'
+              : 'rounded-full bg-surface-container-high px-2 py-0.5 text-[0.7rem] font-bold uppercase tracking-wide text-on-surface-variant'
+          }
+        >
+          {verified ? 'Confirmed' : 'Not confirmed'}
+        </span>
+      </div>
+
+      <p className="text-xs font-medium leading-relaxed text-on-surface-variant">
+        {verified
+          ? `Confirmed on ${new Date(user.emailVerifiedAt).toLocaleDateString('en-IN')}.`
+          : 'We have never checked that this address reaches you. Until it does, a password reset link cannot get to you.'}
+      </p>
+
+      {error ? <p className="text-xs font-bold text-error">{error}</p> : null}
+      {notice ? (
+        <p className="text-xs font-medium leading-relaxed text-on-surface-variant">{notice}</p>
+      ) : null}
+
+      {!verified ? (
+        <button
+          type="button"
+          onClick={resend}
+          disabled={working}
+          className="rounded-xl border border-outline-variant bg-white px-4 py-2.5 text-xs font-extrabold text-on-surface transition-all hover:border-primary/40 hover:bg-[#fff8f4] disabled:opacity-60"
+        >
+          {working ? 'Sending…' : 'Send a confirmation link'}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function NotificationPreferences() {
   const { data, loading, error, refetch } = useApiResource('/auth/settings');
   const [choices, setChoices] = useState(null);
@@ -384,6 +459,13 @@ export default function Settings() {
 
         <Section title="Account">
           <AccountForm user={user} onSaved={setUser} />
+        </Section>
+
+        <Section
+          title="Email address"
+          description="A confirmed address is what password recovery depends on. Confirming it changes nothing else — you can sign in, practise and apply without it."
+        >
+          <EmailVerification user={user} onConfirmed={setUser} />
         </Section>
 
         <Section

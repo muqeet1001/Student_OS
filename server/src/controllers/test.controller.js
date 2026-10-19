@@ -1,6 +1,12 @@
 import mongoose from 'mongoose';
 import { Test, TestAttempt, TestQuestion } from '../models/Test.js';
 import { Profile } from '../models/Profile.js';
+import {
+  LEVELS,
+  domainById,
+  subjectById,
+  testCourse,
+} from '../config/courseTaxonomy.js';
 import { ApiError } from '../utils/ApiError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
 import { recordProctoringViolation } from '../services/proctoring.js';
@@ -47,13 +53,59 @@ export const listTests = asyncHandler(async (req, res) => {
     .populate('test', 'slug title')
     .lean();
 
+  // The taxonomy gives each paper a subject and a level, so the hub can be
+  // browsed as courses rather than as one undifferentiated MCQ blob.
+  const augmented = tests.map((test) => {
+    const course = testCourse(test.slug);
+    const subject = course ? subjectById(course.subjectId) : null;
+    const level = course ? LEVELS[course.level] : null;
+
+    return {
+      ...test,
+      subject: subject
+        ? {
+            id: subject.id,
+            label: subject.label,
+            domain: subject.domain,
+            domainLabel: domainById(subject.domain)?.label ?? null,
+          }
+        : null,
+      level: course?.level ?? null,
+      levelLabel: level?.label ?? null,
+      lastAttempt: bestByTest.get(String(test._id)) ?? null,
+    };
+  });
+
+  const subjectCounts = new Map();
+  const domainCounts = new Map();
+  for (const test of augmented) {
+    if (!test.subject) continue;
+    const { id, domain } = test.subject;
+    subjectCounts.set(id, (subjectCounts.get(id) ?? 0) + 1);
+    domainCounts.set(domain, (domainCounts.get(domain) ?? 0) + 1);
+  }
+
   res.json({
     success: true,
     data: {
-      tests: tests.map((test) => ({
-        ...test,
-        lastAttempt: bestByTest.get(String(test._id)) ?? null,
-      })),
+      tests: augmented,
+      meta: {
+        subjects: [...subjectCounts.entries()].map(([id, count]) => {
+          const subject = subjectById(id);
+          return {
+            id,
+            label: subject?.label ?? id,
+            domain: subject?.domain ?? null,
+            domainLabel: subject ? domainById(subject.domain)?.label ?? null : null,
+            count,
+          };
+        }),
+        domains: [...domainCounts.entries()].map(([domain, count]) => ({
+          id: domain,
+          label: domainById(domain)?.label ?? domain,
+          count,
+        })),
+      },
       activeAttempt: active
         ? {
             attemptId: active._id,
