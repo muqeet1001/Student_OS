@@ -31,7 +31,6 @@ export const config = {
   port: Number(process.env.PORT) || 5000,
   clientUrl: process.env.CLIENT_URL || 'http://localhost:5173',
   serverRoot,
-  uploadsDir: path.join(serverRoot, 'uploads'),
 
   mongoUri: process.env.MONGO_URI || '',
 
@@ -66,13 +65,46 @@ export const config = {
     token: process.env.WHATSAPP_WEBHOOK_TOKEN || '',
   },
 
+  /*
+   * The client in `services/aiClient.js` speaks the Anthropic Messages API:
+   * `POST {baseUrl}/messages`, an `anthropic-version` header, and a response
+   * whose text lives in `content[].text`.
+   *
+   * The defaults here previously pointed at `api.openai.com/v1` with
+   * `gpt-4o-mini`, so the shipped configuration sent an Anthropic-shaped body
+   * to an OpenAI endpoint, took a 404, and reported the narrative as merely
+   * "unavailable" — with nothing in the logs saying the two halves disagreed.
+   *
+   * No model name is defaulted, deliberately: a model identifier is a fact
+   * about the account, and a wrong one fails the same way the 404 did. When
+   * either half is missing the feature reports itself unavailable instead.
+   */
   ai: {
-    baseUrl: (process.env.AI_BASE_URL || 'https://api.openai.com/v1').replace(/\/$/, ''),
+    baseUrl: (process.env.AI_BASE_URL || 'https://api.anthropic.com/v1').replace(/\/$/, ''),
     apiKey: process.env.AI_API_KEY || '',
-    model: process.env.AI_MODEL || 'gpt-4o-mini',
+    model: process.env.AI_MODEL || '',
     get enabled() {
-      return Boolean(process.env.AI_API_KEY);
+      return Boolean(process.env.AI_API_KEY && process.env.AI_MODEL);
     },
+  },
+
+  /*
+   * How long a password reset link stays usable. Deliberately short rather than
+   * generous: the link is a way into an account and it travels through email,
+   * where it can sit in an inbox long after the student has moved on.
+   */
+  passwordReset: {
+    ttlMinutes: Number(process.env.PASSWORD_RESET_TTL_MINUTES) || 30,
+  },
+
+  /*
+   * How long an email-verification link stays usable. Deliberately much longer
+   * than a password reset: that link is a way into an account, while this one
+   * only asserts an address is reachable, so it can afford to survive a weekend
+   * away from a laptop. Defaults to a week.
+   */
+  emailVerification: {
+    ttlMinutes: Number(process.env.EMAIL_VERIFICATION_TTL_MINUTES) || 10080,
   },
 
   codeRunner: {

@@ -17,7 +17,7 @@ what makes "this screen is empty" a failure rather than a valid state.
 
 ```bash
 # 1. a database with the demo cohort in it
-docker run -d -p 27017:27017 --name student-os-mongo mongo:7
+docker compose up -d
 MONGO_URI="mongodb://127.0.0.1:27017/student_os" npm run seed:demo
 
 # 2. a production build, served by the API

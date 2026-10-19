@@ -29,3 +29,12 @@ adminRoutes.delete('/students/views/:viewId', admin.deleteSavedCohortView);
 adminRoutes.post('/match', validate(matchSchema), match.matchStudents);
 adminRoutes.get('/students/filters', admin.getFilters);
 adminRoutes.get('/students/:studentId', admin.getStudent);
+
+/*
+ * Credential recovery for a locked-out student.
+ *
+ * The only staff action that hands out a way into someone else's account, so it
+ * is written to the audit trail and the password is returned exactly once
+ * rather than being retrievable later.
+ */
+adminRoutes.post('/students/:studentId/password-reset', admin.resetStudentPassword);

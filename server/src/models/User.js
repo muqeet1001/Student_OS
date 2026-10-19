@@ -51,6 +51,34 @@ const userSchema = new mongoose.Schema(
     avatarUrl: { type: String, default: '' },
     headline: { type: String, default: '', maxlength: 120 },
     isActive: { type: Boolean, default: true },
+    /*
+     * Set when the placement office issues a temporary password, cleared the
+     * moment the student replaces it.
+     *
+     * The office has to be able to hand a locked-out student a way back in, and
+     * the only credential they can hand over is one they have seen. This flag is
+     * what stops that credential remaining valid indefinitely: every route is
+     * closed until it is replaced.
+     */
+    mustChangePassword: { type: Boolean, default: false },
+
+    /*
+     * When the address was proved to belong to this account. Null means it has
+     * never been proved — which is the state every existing row is in, and the
+     * state a row stays in when the installation has no mail relay configured.
+     *
+     * A timestamp rather than a boolean, for the same reason `usedAt` is one on
+     * the token collection: "verified" is a claim someone will one day have to
+     * audit, and "verified on 14 March" is answerable where "verified: true" is
+     * not.
+     *
+     * Nothing is gated on this. Sign-in, practice and applications all work
+     * unverified, because gating them would lock out every student on an
+     * installation that cannot send email — and the placement office can issue
+     * a password but not an inbox.
+     */
+    emailVerifiedAt: { type: Date, default: null },
+
     lastLoginAt: { type: Date },
     refreshTokens: { type: [refreshTokenSchema], default: [], select: false },
 

@@ -34,7 +34,9 @@ Four values are required in production. Everything else has a working default.
 | `JWT_ACCESS_SECRET` | production | `openssl rand -hex 48` |
 | `JWT_REFRESH_SECRET` | production | `openssl rand -hex 48` — must differ from the access secret |
 | `CHECKIN_SECRET` | production | `openssl rand -hex 48` — signs attendance codes. Its own secret, because those codes are displayed on a projector to a room. |
-| `AI_API_KEY` | optional | Only for model-based interview feedback. Scoring works fully without it. |
+| `AI_API_KEY` + `AI_MODEL` | optional | For the career mentor and placement insights; both must be set or the feature reports itself unavailable. Point `AI_BASE_URL` at an Anthropic Messages-compatible endpoint. Interview scoring is deterministic and consults no model, with or without these — see Design decisions. |
+| `PASSWORD_RESET_TTL_MINUTES` | optional | Defaults to 30. How long an emailed reset link stays usable. Set `SMTP_*` too, or no link can be delivered — the placement office can still issue a temporary password, which needs no configuration. |
+| `EMAIL_VERIFICATION_TTL_MINUTES` | optional | Defaults to 10080 (a week). How long an emailed confirmation link stays usable — longer than a reset, since it only asserts an address is reachable. Nothing is gated on confirmation, so this matters only once `SMTP_*` is set. |
 
 `server/.env.example` documents every variable.
 
@@ -51,9 +53,14 @@ a skipped suite that looks like a passing suite is how three real bugs
 survived to production-adjacent code here.
 
 ```bash
-docker run -d -p 27017:27017 --name student-os-mongo mongo:7
+docker compose up -d
 MONGO_URI="mongodb://127.0.0.1:27017/student_os" npm test
 ```
+
+`docker-compose.yml` runs the same `mongo:7` on the same port, with a healthcheck
+so `up -d` is safe to follow immediately with a test run. The documented
+`docker run -d -p 27017:27017 --name student-os-mongo mongo:7` still works if you
+would rather not use compose.
 
 Each suite writes to its own `student_os_<suffix>` database and drops it on
 the way in and out, so your development data is never touched.
@@ -61,7 +68,8 @@ the way in and out, so your development data is never touched.
 If MongoDB dies with a WiredTiger `directory-sync` panic, its data directory
 is on a filesystem that cannot `fsync()` a directory — overlayfs and tmpfs
 both fail this. Bind-mount a real one:
-`-v /var/lib/mongo-data:/data/db`.
+`-v /var/lib/mongo-data:/data/db`. (`docker compose up -d` already avoids this:
+its named volume is on the host filesystem, not overlayfs.)
 
 ## Commands
 
@@ -126,7 +134,7 @@ cost: Material Symbols addresses icons by ligature, so when its stylesheet
 failed, all 115 icons in the app rendered their own names as plain text. This
 runs on college networks, which block third-party origins routinely. Bundling
 also keeps visitors' IPs off a third party on every page load. The icon font is
-subset to the 84 icons actually used — 3.8 MB down to 66 KB — by
+subset to the 115 icons actually used — 3.8 MB down to 91 KB — by
 `client/scripts/build-icon-font.mjs`, which scrapes icon names from both
 workspaces (the server names icons too, in notifications and today's plan) so
 a newly added one cannot be silently left out.
@@ -189,6 +197,8 @@ the maps to it rather than serving them.
 - **Public profiles** — students explicitly choose whether to publish their verified skills, projects, education and accomplishments; phone and email remain private, and referral discovery requires a second opt-in
 - **Progress analytics** — 90-day readiness, coding, verified-skill, ATS and interview trends are shown together in My Plan
 - **Settings** — notification categories, signed-in devices, and help
+- **Account recovery** — a one-time reset link by email, expiring on a short window, or a temporary password from the placement office when email is not connected; both end every open session, and a self-service request never reveals whether an address is registered
+- **Email confirmation** — a single-use link that records when an address was proved reachable, with a resend from Settings that says plainly when the college has no mail relay. Nothing is gated on it: signing in, practising and applying all work unconfirmed
 - **Action centre** — deadlines, personal and staff tasks, application follow-ups, calendar events, expiring documents and placement-office messages share one chronological workspace with `.ics` export
 - **Mentoring and consent** — students can request an alumni mentor, select language and reminder channels, and inspect or revoke consent without support intervention
 
@@ -207,6 +217,7 @@ the maps to it rather than serving them.
 - **Recruiter feedback portal** — expiring one-use links collect structured external feedback without giving recruiters access to student or staff accounts
 - **Training** — sessions, attendance, and effectiveness measured against a comparison group rather than against nothing
 - **Insights** — cohort-wide gaps turned into training recommendations that name a headcount
+- **Credential recovery** — issue a one-time temporary password for a locked-out student, from their record, with no email configured; shown once, never retrievable, signed out everywhere, audited, and replaceable only by the student
 
 ## Architecture
 
@@ -219,7 +230,7 @@ client/                 React 19 + Vite + Tailwind v4
   src/context/          AuthContext — access token in memory, refresh in cookie
 
 server/                 Express + Mongoose
-  src/models/           33 collections — see docs/database.md
+  src/models/           36 collections — see docs/database.md
   src/controllers/      Route handlers
   src/services/         codeRunner (VM sandbox), answerAnalyzer, atsScore,
                         streak, notifications, token
@@ -242,7 +253,9 @@ preflight. Deploy with `npm install && npm run build`, start with `npm start`.
   cannot be extended from the client.
 - **Interview scoring is deterministic**, not a model call. Every point is
   attributable to a named check, which is what makes the feedback actionable.
-  An LLM can be layered on via `AI_API_KEY`.
+  No model is consulted even when `AI_API_KEY` is set: `services/aiClient.js` is
+  wired to the career mentor and placement insights, not to interviews. Model-
+  scored interviews would be an addition, not a switch.
 - **`solvedproblems` is the single source of truth for "solved"**, read by the
   student dashboard, the practice screen and the admin cohort view alike, so
   they cannot disagree.
@@ -251,7 +264,7 @@ preflight. Deploy with `npm install && npm run build`, start with `npm start`.
 
 ## Documentation
 
-- [`docs/database.md`](docs/database.md) — all 28 collections, relationships,
+- [`docs/database.md`](docs/database.md) — all 36 collections, relationships,
   indexes and the readiness weighting
 
 ## Deployment
@@ -269,22 +282,26 @@ Set `NODE_ENV=production`, `MONGO_URI` and both JWT secrets in the host's
 environment. The server refuses to boot in production without them rather than
 falling back to insecure defaults.
 
-Uploaded avatars and certificates are written to `server/uploads`; mount a
-persistent volume there on hosts with ephemeral filesystems. Student vault
-documents are stored in MongoDB GridFS, so their metadata and bytes are backed
-up together and survive application redeploys.
+Every uploaded file — avatars, certificates and student vault documents — is
+byte-validated in memory and stored in MongoDB GridFS, so its metadata and bytes
+are backed up together and survive application redeploys. The image needs no
+writable volume and no shared filesystem. The consequence is that media scales
+with the database rather than with object storage: fine for a college cohort's
+PDFs and photos, not the right home for video (see *Not built yet*).
 
 ## Status
 
-Working and tested: authentication and session revocation; profiles; coding
-practice; PYQ progress; skill tests and detailed reviews; verified-skill
-assessments; mock interviews and reports; resume versions; company prep;
-dashboard, roadmap, achievements and notifications; jobs and application
-tracking; calendar and QR check-in; document upload/download/review through
-GridFS; and the complete placement-office workflow for cohorts, matching,
-drives, offers, scheduling, recruiters, announcements, training and insights.
+Working and tested: authentication and session revocation; password recovery
+through both an emailed one-time link and an office-issued temporary password;
+email verification through a single-use link; profiles; coding
+practice; PYQ progress; skill tests and detailed reviews; verified-skill assessments; mock interviews and reports; resume versions;
+company prep; dashboard, roadmap, achievements and notifications; jobs and
+application tracking; calendar and QR check-in;
+document upload/download/review through GridFS; and the complete
+placement-office workflow for cohorts, matching, drives, offers, scheduling,
+recruiters, announcements, training and insights.
 
-Not built yet: email verification and password reset, an admin UI for
-authoring reference content (the seed script covers it for now), and external
-object storage for profile avatars/certificate media (mount `server/uploads`
-persistently in production).
+Not built yet: an admin UI for authoring reference content — and the write
+endpoints behind it, since problems, questions and tests can currently only be
+created by the seed script — and offloading GridFS media to object storage for
+installations whose media outgrows the database.

@@ -9,6 +9,13 @@
 
 const MAX_TASKS = 4;
 
+/*
+ * The number of problems the daily plan asks for. One constant so the label and
+ * the completion check cannot drift apart — they did: the item read "Solve 3
+ * DSA problems" and was ticked after the first accepted submission of the day.
+ */
+const DAILY_PROBLEM_TARGET = 3;
+
 /**
  * @param {object} input Readiness components plus the raw signals behind them.
  * @returns {{tasks: Array, completed: number, total: number}}
@@ -32,17 +39,17 @@ export function buildTodayPlan({ components, coding, tests, interviews, profile,
   }
 
   if (coding.totalSolved < (roleMatch?.role?.codingTarget ?? 60)) {
-    const solvedToday = coding.streak?.lastSolvedAt
-      ? new Date(coding.streak.lastSolvedAt).toDateString() === new Date().toDateString()
-      : false;
+    // A count of today's accepted submissions, not a yes/no on `lastSolvedAt`:
+    // the item asks for three, so one is progress rather than completion.
+    const solvedToday = coding.streak?.todaySolved ?? 0;
 
     candidates.push({
       id: 'solve-problems',
       weight: 100 - by('coding'),
-      label: 'Solve 3 DSA problems',
-      hint: solvedToday ? 'Started today — keep going' : 'Keeps your streak alive',
+      label: `Solve ${DAILY_PROBLEM_TARGET} DSA problems`,
+      hint: solvedToday ? `${solvedToday} of ${DAILY_PROBLEM_TARGET} done today` : 'Keeps your streak alive',
       to: '/coding-practice',
-      done: solvedToday,
+      done: solvedToday >= DAILY_PROBLEM_TARGET,
     });
   }
 

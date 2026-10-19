@@ -6,8 +6,14 @@ import { adminLinks, mobileLinks } from '../routes/pageRegistry.js';
 export default function MobileRouteNav() {
   const { user } = useAuth();
   const location = useLocation();
+  /*
+   * Keys must match `adminLinks` exactly. They previously named the retired
+   * `/admin/tasks` and `/admin/outcomes` paths, so the filter silently matched
+   * three entries instead of five and two destinations were unreachable from
+   * the mobile bar — with no error, because a shorter nav is still a valid nav.
+   */
   const visibleLinks = user?.role === 'admin'
-    ? adminLinks.filter((link) => ['/admin/overview', '/admin/students', '/admin/drives', '/admin/tasks', '/admin/outcomes'].includes(link.path))
+    ? adminLinks.filter((link) => ['/admin/overview', '/admin/students', '/admin/drives', '/admin/actions', '/admin/reports'].includes(link.path))
     : mobileLinks;
 
   return (

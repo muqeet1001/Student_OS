@@ -5,6 +5,9 @@
  * dance — and so the loud-skip behaviour is guaranteed identical across
  * every suite rather than remembered by whoever writes the next one.
  */
+import assert from 'node:assert/strict';
+import test from 'node:test';
+
 import mongoose from 'mongoose';
 
 // Importing the config first loads server/.env, so MONGO_URI is populated
@@ -70,12 +73,36 @@ export async function startHarness(suffix = 'test') {
    * passing one buys false confidence, which is worse than no suite.
    */
   if (harness.skipReason) {
-    console.warn(
+    console.log(
       `\n\x1b[33m⚠  INTEGRATION TESTS SKIPPED (${suffix}) — ${harness.skipReason}\x1b[0m\n` +
         '   Nothing in this suite has been verified against a real database.\n' +
         '   Start one and re-run:\n' +
-        '     docker run -d -p 27017:27017 --name student-os-mongo mongo:7\n' +
+        '     docker compose up -d\n' +
         '     MONGO_URI="mongodb://127.0.0.1:27017/student_os" npm test\n',
+    );
+
+    /*
+     * A skipped `describe` is counted at the suite level, which node's summary
+     * counters do not include: a run that executed nothing still printed
+     * "# skipped 0", so a missing database was indistinguishable from a clean
+     * pass. This top-level test is reported either way — as one visible skip
+     * locally, or as a hard failure wherever a database is expected.
+     *
+     * GITHUB_ACTIONS rather than CI: `CI` is exported by plenty of local shells
+     * and agent runtimes, and a database-less laptop would then fail for the
+     * same reason a broken pipeline should.
+     */
+    const required = process.env.GITHUB_ACTIONS === 'true' || process.env.REQUIRE_DB === '1';
+
+    test(
+      `integration suite "${suffix}" requires a real database`,
+      { skip: required ? false : `skipped — ${harness.skipReason}` },
+      () => {
+        assert.fail(
+          `MONGO_URI is not set, so no assertion in the "${suffix}" suite ran. ` +
+            'Start MongoDB and re-run: docker compose up -d',
+        );
+      },
     );
   }
 

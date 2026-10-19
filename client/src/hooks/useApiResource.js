@@ -11,12 +11,23 @@ import { api } from '../lib/api.js';
 export function useApiResource(path, { deps = [], enabled = true, initialData = null } = {}) {
   const [data, setData] = useState(initialData);
   const [error, setError] = useState(null);
-  const [loading, setLoading] = useState(enabled);
+  // Seeded from `enabled`, so a resource that will never fetch does not start
+  // life claiming to be loading.
+  const [loading, setLoading] = useState(Boolean(enabled));
   const controllerRef = useRef(null);
 
   const load = useCallback(
     async ({ quiet = false } = {}) => {
-      if (!enabled) return undefined;
+      if (!enabled) {
+        /*
+         * Clear the flag rather than return silently. A disabled resource used
+         * to stay `loading: true` for the life of the component, so the usual
+         * `if (loading) return <LoadingBlock />` guard rendered a spinner that
+         * could never resolve.
+         */
+        setLoading(false);
+        return undefined;
+      }
 
       controllerRef.current?.abort();
       const controller = new AbortController();

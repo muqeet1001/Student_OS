@@ -18,7 +18,15 @@ export default function ResumeBuilder() {
   // The score is computed server-side so a saved version and the live
   // preview can never disagree about the same profile.
   const { data, setData, loading, error, refetch } = useApiResource('/resumes/builder');
-  const { data: targetJob } = useApiResource(targetJobId ? `/jobs/${targetJobId}` : '/jobs/top-matches', { enabled: Boolean(targetJobId) });
+  /*
+   * Only fetched when the builder was opened from a specific posting. The
+   * previous form fell back to `/jobs/top-matches` — but only when `targetJobId`
+   * was absent, which is exactly when `enabled` was false, so that path could
+   * never be requested.
+   */
+  const { data: targetJob } = useApiResource(`/jobs/${targetJobId}`, {
+    enabled: Boolean(targetJobId),
+  });
   const [accent, setAccent] = useState('#a83206');
   const [saving, setSaving] = useState(false);
 

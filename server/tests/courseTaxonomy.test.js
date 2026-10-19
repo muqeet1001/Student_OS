@@ -5,8 +5,12 @@ import { tests } from '../src/seed/data/tests.js';
 import {
   DOMAINS,
   LEVELS,
+  LEVEL_ORDER,
   STAGES,
   SUBJECTS,
+  focusLevelFor,
+  focusReferenceSemester,
+  levelForSemester,
   stageFocus,
   stageForSemester,
   subjectById,
@@ -80,7 +84,13 @@ test('stages cover semesters 1-8 exactly once with valid focus subjects', () => 
 
     for (const entry of stage.focus) {
       assert.ok(subjectById(entry.subjectId), `${stage.id} references unknown subject ${entry.subjectId}`);
-      assert.ok(levelIds.has(entry.level), `${stage.id} references unknown level ${entry.level}`);
+      // `level` is optional on a focus entry: leaving it out means "whatever
+      // this stage's semester band derives". An override still has to name a
+      // level that exists.
+      assert.ok(
+        entry.level === undefined || levelIds.has(entry.level),
+        `${stage.id} references unknown level ${entry.level}`,
+      );
     }
   }
 
@@ -141,4 +151,150 @@ test('suggestSemester derives the semester from the graduation year', () => {
 
 test('testCourse returns null for unknown slugs', () => {
   assert.equal(testCourse('not-a-real-paper'), null);
+});
+
+test('a semester resolves to the highest level band that covers it', () => {
+  /*
+   * The bands overlap at 3 and again across 5-6, deliberately. The higher band
+   * wins, because that is the level the student is moving into rather than the
+   * one they are leaving.
+   */
+  assert.equal(levelForSemester(1), 'foundation');
+  assert.equal(levelForSemester(2), 'foundation');
+  assert.equal(levelForSemester(3), 'intermediate');
+  assert.equal(levelForSemester(4), 'intermediate');
+  assert.equal(levelForSemester(5), 'advanced');
+  assert.equal(levelForSemester(6), 'advanced');
+  assert.equal(levelForSemester(7), 'advanced');
+  assert.equal(levelForSemester(8), 'advanced');
+
+  // Outside the eight semesters there is no answer, rather than a wrong one
+  // dressed up as a default.
+  for (const impossible of [0, 9, -1, 3.5, NaN, '3', null, undefined, {}]) {
+    assert.equal(levelForSemester(impossible), null, `${String(impossible)} should have no level`);
+  }
+});
+
+test('the level bands cover all eight semesters, in order, within range', () => {
+  for (const id of LEVEL_ORDER) {
+    const band = LEVELS[id].semesterBand;
+    assert.equal(band.length, 2, `${id} band must have two ends`);
+    assert.ok(band[0] <= band[1], `${id} band is inverted`);
+    assert.ok(band[0] >= 1 && band[1] <= 8, `${id} band escapes the eight semesters`);
+  }
+
+  // LEVEL_ORDER is the progression itself. A level missing from it would be
+  // unrankable the moment an override is measured against the derived level.
+  assert.deepEqual([...LEVEL_ORDER].sort(), Object.keys(LEVELS).sort());
+
+  for (let semester = 1; semester <= 8; semester += 1) {
+    assert.ok(levelForSemester(semester), `semester ${semester} is covered by no band`);
+  }
+});
+
+test('the resolved focus levels are exactly the ones the app recommends', () => {
+  /*
+   * The behaviour pin. Deriving these levels instead of writing them down is
+   * only safe while the result is identical, so the shipped table is asserted
+   * in full: drift in a band, a stage or an override fails here rather than
+   * quietly repointing what students are told to study.
+   */
+  const expected = {
+    foundations: {
+      quantitative: 'foundation',
+      logical: 'foundation',
+      verbal: 'foundation',
+      'cs-foundations': 'foundation',
+      dsa: 'foundation',
+      communication: 'foundation',
+    },
+    'core-building': {
+      quantitative: 'intermediate',
+      logical: 'intermediate',
+      dsa: 'intermediate',
+      'data-interpretation': 'intermediate',
+      oop: 'intermediate',
+      // The one subject that trails its cohort at this stage.
+      databases: 'foundation',
+      communication: 'intermediate',
+    },
+    'interview-gear': {
+      dsa: 'advanced',
+      databases: 'intermediate',
+      os: 'intermediate',
+      networks: 'intermediate',
+      quantitative: 'advanced',
+      'data-interpretation': 'advanced',
+      communication: 'advanced',
+    },
+    'placement-mode': {
+      dsa: 'advanced',
+      databases: 'advanced',
+      os: 'advanced',
+      networks: 'advanced',
+      quantitative: 'advanced',
+      'data-interpretation': 'advanced',
+      verbal: 'intermediate',
+      communication: 'advanced',
+    },
+  };
+
+  assert.deepEqual(Object.keys(expected).sort(), STAGES.map((stage) => stage.id).sort());
+
+  for (const stage of STAGES) {
+    const resolved = Object.fromEntries(
+      stageFocus(stage).map((entry) => [entry.subjectId, entry.level]),
+    );
+    assert.deepEqual(resolved, expected[stage.id], `${stage.id} recommendations changed`);
+  }
+});
+
+test('the semester band does the work — focus levels are derived, not hand-written', () => {
+  const entries = STAGES.flatMap((stage) => stage.focus);
+  const overrides = entries.filter((entry) => entry.level);
+
+  // If someone re-hardcodes every level, the derivation stops mattering and
+  // this file quietly goes back to being two tables that can drift apart.
+  assert.ok(overrides.length > 0, 'the override path should be exercised, not just declared');
+  assert.ok(
+    overrides.length * 2 < entries.length,
+    `${overrides.length} of ${entries.length} focus levels are hand-written; the band is meant to be the default`,
+  );
+});
+
+test('an override never drops more than one tier below the stage aim', () => {
+  const rank = (id) => LEVEL_ORDER.indexOf(id);
+
+  for (const stage of STAGES) {
+    const derived = levelForSemester(focusReferenceSemester(stage));
+    assert.ok(derived, `${stage.id} has no derivable level`);
+
+    for (const entry of stage.focus) {
+      const resolved = focusLevelFor(stage, entry);
+      assert.ok(LEVEL_ORDER.includes(resolved), `${stage.id}/${entry.subjectId} → ${resolved}`);
+
+      if (entry.level === undefined) {
+        assert.equal(
+          resolved,
+          derived,
+          `${stage.id}/${entry.subjectId} should track the semester band`,
+        );
+        continue;
+      }
+
+      const below = rank(derived) - rank(resolved);
+      assert.ok(below >= 0, `${stage.id}/${entry.subjectId} overrides above the stage aim`);
+      assert.ok(
+        below <= 1,
+        `${stage.id}/${entry.subjectId} sits ${below} tiers below ${derived} — a whole level out of step`,
+      );
+    }
+  }
+});
+
+test('a missing stage or entry yields no level instead of throwing', () => {
+  assert.deepEqual(stageFocus(null), []);
+  assert.deepEqual(stageFocus(undefined), []);
+  assert.equal(focusReferenceSemester(null), null);
+  assert.equal(focusLevelFor({ semesters: [1, 2] }, { subjectId: 'dsa' }), 'foundation');
 });

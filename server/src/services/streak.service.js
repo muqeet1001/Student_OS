@@ -18,15 +18,22 @@ export async function computeStreak(userId) {
     .sort({ createdAt: -1 })
     .lean();
 
+  const today = dayKey(new Date());
+
   if (!accepted.length) {
-    return { current: 0, longest: 0, activeDays: 0, lastSolvedAt: null };
+    return { current: 0, longest: 0, activeDays: 0, lastSolvedAt: null, todaySolved: 0 };
   }
 
   const days = [...new Set(accepted.map((entry) => dayKey(new Date(entry.createdAt))))].sort(
     (a, b) => b - a,
   );
 
-  const today = dayKey(new Date());
+  /*
+   * How many accepted submissions landed today, not merely whether one did.
+   * The daily plan asks for three problems, and "solved something today" was
+   * being used to tick that item off after the first one.
+   */
+  const todaySolved = accepted.filter((entry) => dayKey(new Date(entry.createdAt)) === today).length;
   let current = 0;
 
   // The streak is live if the most recent solve was today or yesterday.
@@ -54,6 +61,7 @@ export async function computeStreak(userId) {
     longest: Math.max(longest, current),
     activeDays: days.length,
     lastSolvedAt: accepted[0].createdAt,
+    todaySolved,
   };
 }
 

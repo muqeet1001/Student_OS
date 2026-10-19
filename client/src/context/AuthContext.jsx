@@ -45,6 +45,19 @@ export function AuthProvider({ children }) {
     return data.user;
   }, []);
 
+  /**
+   * Adopts a session the server handed back from somewhere other than the login
+   * form — completing a password reset, or replacing a temporary password.
+   *
+   * The same bookkeeping as `login`, without a second round trip: those
+   * endpoints have already proved who the caller is and already issued a token.
+   */
+  const adoptSession = useCallback((data) => {
+    if (data?.accessToken) setAccessToken(data.accessToken);
+    if (data?.user) setUser(data.user);
+    return data?.user ?? null;
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout');
@@ -63,9 +76,10 @@ export function AuthProvider({ children }) {
       isAdmin: user?.role === 'admin',
       login,
       register,
+      adoptSession,
       logout,
     }),
-    [user, initializing, login, register, logout],
+    [user, initializing, login, register, adoptSession, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

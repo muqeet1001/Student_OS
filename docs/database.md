@@ -1,6 +1,6 @@
 # Database
 
-MongoDB via Mongoose. 33 collections across 23 model files.
+MongoDB via Mongoose. 36 collections across 26 model files.
 
 ## Connecting
 
@@ -34,14 +34,49 @@ submissions, attempts, profiles — is never touched unless `--fresh` is passed.
 
 | Collection | Purpose | Key fields |
 |---|---|---|
-| `users` | Account and credentials | `email` (unique), `password` (hashed, `select:false`), `role` (`student`\|`admin`), `refreshTokens[]` |
+| `users` | Account and credentials | `email` (unique), `password` (hashed, `select:false`), `role` (`student`\|`admin`), `emailVerifiedAt`, `mustChangePassword`, `refreshTokens[]` |
 | `profiles` | Everything a resume and opt-in public profile are built from | `user` (unique), `headline`, `bio`, `graduationYear`, `semester` (1–8), `branch`, `skills[]`, `projects[]`, `education[]`, `experience[]`, `certifications[]`, `publicProfile` |
 | `studentjourneys` | Onboarding, baseline, locale, delivery channels, integrations and append-only consent history | `user` (unique), `onboarding`, `channels`, `consentHistory[]` |
 | `actionitems` | Personal, staff and system actions with ownership and conversation | `owner`, `source`, `category`, `dueAt`, `status`, `messages[]` |
 | `mentorappointments` | Student mentoring requests and scheduled sessions | `student`, `mentor`, `topic`, `startsAt`, `status` |
 | `institutionconfigs` | College-specific scoring, taxonomy, languages and provider capabilities | `key` (unique), `readinessWeights`, `skillTaxonomy`, `enabledLocales`, `providers` |
+| `onetimetokens` | Single-use grants, scoped by `purpose`: the hash, its expiry, and whether it has been spent | `user`, `purpose` (`password-reset`\|`email-verification`), `tokenHash` (unique), `expiresAt`, `usedAt`, `userAgent` |
 
 One profile per user, enforced by a unique index on `profile.user`.
+
+`onetimetokens` stores only a SHA-256 hash of each link, for the same reason
+refresh tokens are hashed: a database leak must not hand someone a way into an
+account that is part-way through being recovered. A token is claimed with a
+single conditional write, which is what makes a link single-use rather than
+merely short-lived. An office-issued temporary password retires any reset link
+already outstanding for that account, so two live ways in never coexist. Spent
+rows are kept rather than deleted, because "this password was set at 02:14 from
+a link issued at 01:58" is the question asked after a disputed takeover — and
+nothing recoverable is kept with them.
+
+One collection serves both flows, separated by `purpose`, because they need
+identical properties — random, hashed, expiring, claimed in one conditional
+write — and only differ in what happens afterwards. Two collections would have
+meant two copies of the claim logic, and a single-use guarantee is exactly the
+kind of thing that goes missing from the second copy. `purpose` is part of every
+lookup rather than inferred from context: without it a reset link would also
+satisfy a request to prove an email address, which is a different claim about
+the account than the one its holder was given.
+
+Retiring one flow's grants leaves the other's untouched, so asking to reset a
+password does not silently invalidate a confirmation link that is already in
+someone's inbox.
+
+`users.emailVerifiedAt` records when an address was proved reachable, and is
+`null` until then — the state every existing row is in. Nothing is gated on it,
+deliberately: most installations have no mail relay configured, and the
+placement office can issue a password but cannot issue an inbox.
+
+`users.mustChangePassword` is set when the placement office issues a temporary
+password and cleared when the student replaces it. While it is set, every route
+except the change-password screen is closed. Replacing a password through any
+route also clears `users.refreshTokens`, so no session outlives the credential
+it was opened with.
 
 `profiles.semester` is captured at onboarding and drives the practice track
 (`GET /api/practice/track`): which stage of the placement journey the student
@@ -61,12 +96,23 @@ the single source of truth for:
   `TEST_COURSES`. No database migration is needed because the mapping lives in
   code and `/api/tests` enriches each paper with `subject` and `level`.
 - **Levels** — `foundation` / `intermediate` / `advanced`, each with the
-  semester band and coding-problem difficulties it corresponds to.
+  semester band and coding-problem difficulties it corresponds to. The band is
+  not documentation: `levelForSemester` resolves a semester to the *highest*
+  band covering it (the bands overlap at 3 and across 5–6 on purpose, and a
+  student inside an overlap is aimed at the level they are moving into), and
+  that is what every stage's focus levels are derived from.
 - **Semester stages** — semesters 1–2 *Foundations*, 3–4 *Core building*,
   5–6 *Interview gear*, 7–8 *Placement mode*, each listing focus subjects and
-  target levels. `suggestSemester(graduationYear)` derives a default from the
-  year (four-year admission in August of `graduationYear − 4`) when a student
-  has not stated one.
+  target levels. A focus entry's level is **derived** from the stage's last
+  semester via `focusLevelFor`, so there is one table to keep true rather than
+  two that can drift; an entry states `level` only to override the derivation,
+  for a subject that genuinely runs ahead of or behind its cohort — the three
+  systems subjects open a tier lower at *Interview gear*, because that is where
+  they first appear. An override may sit at most one tier below the derived
+  level, which `courseTaxonomy.test.js` enforces.
+  `suggestSemester(graduationYear)` derives a default from the year (four-year
+  admission in August of `graduationYear − 4`) when a student has not stated
+  one.
 
 ### Coding practice
 

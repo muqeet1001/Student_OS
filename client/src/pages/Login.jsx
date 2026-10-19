@@ -101,6 +101,20 @@ export default function Login() {
                 value={form.password}
                 onChange={update('password')}
                 error={fieldErrors.password}
+                action={
+                  /*
+                   * Sits with the field rather than below the button: it is the
+                   * answer to "I cannot get past this box", and someone who
+                   * cannot sign in should not have to read past a sign-in
+                   * button and a signup panel to find it.
+                   */
+                  <Link
+                    to="/forgot-password"
+                    className="text-[0.7rem] font-extrabold uppercase tracking-[0.17em] text-primary underline decoration-primary/30 underline-offset-4 hover:decoration-primary"
+                  >
+                    Forgot?
+                  </Link>
+                }
               />
 
               <label className="flex w-fit cursor-pointer items-center gap-3 text-sm font-semibold text-on-surface-variant">
